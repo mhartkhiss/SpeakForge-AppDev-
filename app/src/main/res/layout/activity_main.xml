@@ -6,45 +6,31 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <ImageButton
-        android:id="@+id/btn_ConversationMode"
+    <Spinner
+        android:id="@+id/languageSpinner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@android:drawable/stat_notify_chat"
-        tools:layout_editor_absoluteX="179dp"
-        tools:layout_editor_absoluteY="668dp" />
-
-    <ImageButton
-        android:id="@+id/btn_BasicMode"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:srcCompat="?attr/actionModeSelectAllDrawable"
-        tools:layout_editor_absoluteX="66dp"
-        tools:layout_editor_absoluteY="668dp" />
-
-    <ImageButton
-        android:id="@+id/imageButton3"
-        android:layout_width="53dp"
-        android:layout_height="44dp"
-        app:srcCompat="@android:drawable/star_big_on"
-        tools:layout_editor_absoluteX="293dp"
-        tools:layout_editor_absoluteY="668dp" />
+        android:layout_marginTop="16dp"
+        android:entries="@array/languages"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/startSpeakingButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="252dp"
+        android:layout_marginTop="16dp"
         android:text="@string/start_speaking"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/languageSpinner" />
 
     <TextView
         android:id="@+id/recognizedTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="44dp"
+        android:layout_marginTop="16dp"
         android:text="Recognized Text Will Appear Here"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
