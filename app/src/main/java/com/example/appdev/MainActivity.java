@@ -12,6 +12,11 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.VolleyError;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -28,9 +33,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         FetchLanguages.fetchSupportedLanguages(this);
+        setListeners();
+        FirebaseApp.initializeApp(this);
 
+
+
+    }
+    private void setListeners() {
         textViewResult = findViewById(R.id.recognizedTextView);
         Button buttonStartSpeech = findViewById(R.id.startSpeakingButton);
+        Button btnLogout = findViewById(R.id.btnLogout);
+        Button btnConversationMode = findViewById(R.id.btnConvoMode);
 
         buttonStartSpeech.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -39,7 +52,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btnLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FirebaseAuth.getInstance().signOut();
+                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                finish();
+            }
+        });
+
+        btnConversationMode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, UserListActivity.class));
+            }
+        });
     }
+
 
 
     private void startSpeechRecognition() {

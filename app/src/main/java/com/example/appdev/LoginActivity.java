@@ -4,51 +4,55 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.NetworkError;
-import com.android.volley.NetworkResponse;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.ServerError;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
+
+    private FirebaseAuth mAuth;
+    private FirebaseAuth.AuthStateListener mAuthListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        TextView txtSignUp = findViewById(R.id.txtSignUp);
+        initializeFirebaseAuth();
+        setListeners();
+    }
+    private void initializeFirebaseAuth() {
+        mAuth = FirebaseAuth.getInstance();
+
+        mAuthListener = firebaseAuth -> {
+            FirebaseUser user = firebaseAuth.getCurrentUser();
+            if (user != null) {
+                // User is signed in
+                Toast.makeText(LoginActivity.this, "Welcome back " + user.getEmail(), Toast.LENGTH_SHORT).show();
+                // Redirect to your main activity or any other authenticated activity
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                finish();
+            }
+        };
+    }
+
+    private void setListeners() {
         Button btnLogin = findViewById(R.id.btnLogin);
+        TextView txtSignUp = findViewById(R.id.txtSignUp);
 
-        txtSignUp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(LoginActivity.this, SignUpActivity.class);
-                startActivity(intent);
-            }
+        txtSignUp.setOnClickListener(v -> {
+            Intent intent = new Intent(LoginActivity.this, SignUpActivity.class);
+            startActivity(intent);
         });
 
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                loginUser();
-            }
-        });
+        btnLogin.setOnClickListener(v -> loginUser());
     }
 
     private void loginUser() {
@@ -58,51 +62,39 @@ public class LoginActivity extends AppCompatActivity {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
 
-        // Make HTTP POST request to Django login API endpoint
-        String url = Variables.loginURL;
-        JSONObject jsonBody = new JSONObject();
-        try {
-            jsonBody.put("username", email);
-            jsonBody.put("password", password);
-        } catch (JSONException e) {
-            e.printStackTrace();
+        // Check if email is empty or invalid
+        if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Invalid email address", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonBody,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        //go to main activity
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        startActivity(intent);
-                        Toast.makeText(getApplicationContext(), Variables.loginSuccess, Toast.LENGTH_SHORT).show();
-                        finish();
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        if (error instanceof NetworkError) {
-                            Toast.makeText(getApplicationContext(), "Network error occurred", Toast.LENGTH_SHORT).show();
-                        } else if (error instanceof ServerError) {
-                            NetworkResponse networkResponse = error.networkResponse;
-                            if (networkResponse != null && networkResponse.data != null) {
-                                String errorMessage = new String(networkResponse.data);
-                                if (errorMessage.contains("does not exist")) {
-                                    Toast.makeText(getApplicationContext(), "Username doesn't exist", Toast.LENGTH_SHORT).show();
-                                } else if (errorMessage.contains("Unathorized")) {
-                                    Toast.makeText(getApplicationContext(), "Incorrect email or password", Toast.LENGTH_SHORT).show();
-                                } else {
-                                    Toast.makeText(getApplicationContext(), "Server error: " + errorMessage, Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        } else {
-                            Toast.makeText(getApplicationContext(), "An error occurred" , Toast.LENGTH_SHORT).show();
-                        }
+        // Check if password is empty
+        if (TextUtils.isEmpty(password)) {
+            Toast.makeText(this, "Password cannot be empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Sign in the user with Firebase Authentication
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (!task.isSuccessful()) {
+                        // If sign in fails, display a message to the user
+                        Toast.makeText(LoginActivity.this, "Authentication failed. Please check your credentials.", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
 
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-        queue.add(request);
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mAuth.addAuthStateListener(mAuthListener);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mAuthListener != null) {
+            mAuth.removeAuthStateListener(mAuthListener);
+        }
     }
 }
