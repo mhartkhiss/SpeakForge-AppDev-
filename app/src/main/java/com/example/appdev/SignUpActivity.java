@@ -27,7 +27,7 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class SignUp extends AppCompatActivity {
+public class SignUpActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +42,7 @@ public class SignUp extends AppCompatActivity {
         txtLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(SignUp.this, Login.class);
+                Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
                 startActivity(intent);
                 finish();
             }
@@ -90,7 +90,7 @@ public class SignUp extends AppCompatActivity {
                     @Override
                     public void onResponse(JSONObject response) {
                         //redirect the user to the login screen
-                        Intent intent = new Intent(SignUp.this, Login.class);
+                        Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
                         startActivity(intent);
                         Toast.makeText(getApplicationContext(), Variables.registerSuccess, Toast.LENGTH_SHORT).show();
                         finish();

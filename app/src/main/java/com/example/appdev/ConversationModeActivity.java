@@ -3,7 +3,7 @@ package com.example.appdev;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 
-public class ConversationMode extends AppCompatActivity {
+public class ConversationModeActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

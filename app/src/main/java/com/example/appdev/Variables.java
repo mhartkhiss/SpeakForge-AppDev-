@@ -2,7 +2,7 @@ package com.example.appdev;
 
 public class Variables {
 
-    public static final String djangoServer = "192.168.10.248:8000"; //change to your server's IP address
+    public static final String djangoServer = "49.148.27.102:25565"; //change to your server's IP address
     //------------------------------------------------------------------------
     public static final String request = "http://"; //change to https if needed, django uses http by default
     public static final String loginURL = request + djangoServer + "/api/login/";
