@@ -1,6 +1,5 @@
 package com.example.appdev;
 
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -8,8 +7,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.appdev.adapter.UserAdapter;
+import com.example.appdev.models.User;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -36,7 +36,7 @@ public class UserListActivity extends AppCompatActivity {
 
         // Initialize RecyclerView
         userList = new ArrayList<>();
-        userAdapter = new UserAdapter(userList, this);
+        userAdapter = new UserAdapter(userList, this, FirebaseAuth.getInstance().getCurrentUser().getUid());
         recyclerViewUsers.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewUsers.setAdapter(userAdapter);
 
@@ -50,10 +50,12 @@ public class UserListActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 userList.clear();
+                String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    // Convert each user data snapshot to a User object and add it to the list
+                    // Convert each user data snapshot to a User object
                     User user = snapshot.getValue(User.class);
-                    if (user != null) {
+                    if (user != null && !user.getUserId().equals(currentUserId)) {
+                        // Exclude the current user from the list
                         userList.add(user);
                     }
                 }
@@ -67,6 +69,5 @@ public class UserListActivity extends AppCompatActivity {
             }
         });
     }
-
 
 }

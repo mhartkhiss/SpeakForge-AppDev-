@@ -15,7 +15,7 @@
         android:paddingBottom="8dp"
         android:textColor="@android:color/black"
         android:text="Sample message sent by the user"
-        android:background="#B294E8"
+        android:background="#87CEEB"
         android:textSize="16sp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"

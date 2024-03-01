@@ -12,6 +12,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.example.appdev.adapter.ChatAdapter;
+import com.example.appdev.models.ChatMessage;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -124,12 +126,8 @@ public class ConversationModeActivity extends AppCompatActivity {
     }
 
     private void loadMessages() {
-        // Get the room ID
         String roomId = this.roomId;
-
-        // Check if roomId is not null
         if (roomId != null) {
-            // Retrieve messages from Firebase and listen for changes in real-time
             messagesRef.child(roomId).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -140,11 +138,9 @@ public class ConversationModeActivity extends AppCompatActivity {
                             messages.add(message);
                         }
                     }
-                    // Update the adapter with the retrieved messages
                     chatAdapter.setMessages(messages);
                     recyclerViewChat.scrollToPosition(chatAdapter.getItemCount() - 1);
                 }
-
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
                     // Handle error
