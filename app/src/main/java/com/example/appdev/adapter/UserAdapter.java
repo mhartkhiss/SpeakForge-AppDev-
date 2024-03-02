@@ -5,11 +5,13 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.appdev.ConversationModeActivity;
 import com.example.appdev.R;
 import com.example.appdev.models.User;
@@ -50,12 +52,14 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
 
         private TextView textViewUsername;
         private TextView textViewEmail;
+        private ImageView imageViewUserPicture; // Add ImageView for user picture
         private User currentUser;
 
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewUsername = itemView.findViewById(R.id.textViewUsername);
             textViewEmail = itemView.findViewById(R.id.textViewEmail);
+            imageViewUserPicture = itemView.findViewById(R.id.imageViewUserPicture); // Initialize ImageView
             itemView.setOnClickListener(this);
         }
 
@@ -65,10 +69,11 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
                 currentUser = user;
                 textViewUsername.setText(user.getUsername());
                 textViewEmail.setText(user.getEmail());
-            } else {
-                currentUser = user;
-                textViewUsername.setText("You");
-                textViewEmail.setText(user.getEmail());
+                if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().equals("none")) {
+                    Glide.with(context).load(user.getProfileImageUrl()).into(imageViewUserPicture);
+                } else {
+                    imageViewUserPicture.setImageResource(R.drawable.default_userpic);
+                }
             }
         }
 
@@ -84,4 +89,5 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         }
     }
 }
+
 
