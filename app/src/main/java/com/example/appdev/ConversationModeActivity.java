@@ -13,6 +13,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.example.appdev.adapter.ChatAdapter;
+import com.example.appdev.classes.Translate;
 import com.example.appdev.models.ChatMessage;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -34,7 +35,9 @@ public class ConversationModeActivity extends AppCompatActivity {
     private ChatAdapter chatAdapter;
     private DatabaseReference messagesRef;
     private TextView textViewRecipient;
+    private TextView textViewTranslate;
     private String roomId;
+    private Translate translator;
 
 
     @Override
@@ -63,8 +66,12 @@ public class ConversationModeActivity extends AppCompatActivity {
 
         recyclerViewChat.setAdapter(chatAdapter);
 
-        recyclerViewChat.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        //layoutManager.setReverseLayout(true);
+        layoutManager.setStackFromEnd(true);
+        recyclerViewChat.setLayoutManager(layoutManager);
         recyclerViewChat.setAdapter(chatAdapter);
+
 
         // Set click listener for send button
         buttonSend.setOnClickListener(v -> sendMessage());

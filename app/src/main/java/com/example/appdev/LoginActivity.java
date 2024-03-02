@@ -7,9 +7,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,6 +31,10 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
 
+        View loadingView = LayoutInflater.from(this).inflate(R.layout.loading, null);
+        ViewGroup rootView = findViewById(android.R.id.content);
+        rootView.addView(loadingView);
+
         initializeFirebaseAuth();
         setListeners();
     }
@@ -38,9 +45,10 @@ public class LoginActivity extends AppCompatActivity {
             FirebaseUser user = firebaseAuth.getCurrentUser();
             if (user != null) {
                 // User is signed in
+                hideProgressBar();
                 Toast.makeText(LoginActivity.this, "Welcome back " + user.getEmail(), Toast.LENGTH_SHORT).show();
                 // Redirect to your main activity or any other authenticated activity
-                startActivity(new Intent(LoginActivity.this, TabActivity.class));
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             }
         };
@@ -55,9 +63,12 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        btnLogin.setOnClickListener(v -> loginUser());
-    }
+        btnLogin.setOnClickListener(v -> {
+            showProgressBar();
+            loginUser();
+        });
 
+    }
     private void loginUser() {
         EditText emailEditText = findViewById(R.id.email);
         EditText passwordEditText = findViewById(R.id.password);
@@ -67,12 +78,14 @@ public class LoginActivity extends AppCompatActivity {
 
         // Check if email is empty or invalid
         if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            hideProgressBar();
             Toast.makeText(this, "Invalid email address", Toast.LENGTH_SHORT).show();
             return;
         }
 
         // Check if password is empty
         if (TextUtils.isEmpty(password)) {
+            hideProgressBar();
             Toast.makeText(this, "Password cannot be empty", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -82,9 +95,12 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     if (!task.isSuccessful()) {
                         // If sign in fails, display a message to the user
+                        hideProgressBar();
                         Toast.makeText(this, "Authentication failed. Please check your credentials.", Toast.LENGTH_SHORT).show();
                     }
                 });
+
+
     }
 
     @Override
@@ -97,7 +113,25 @@ public class LoginActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         if (mAuthListener != null) {
+            hideProgressBar();
             mAuth.removeAuthStateListener(mAuthListener);
         }
     }
+
+    private void showProgressBar() {
+        ProgressBar progressBar = findViewById(R.id.progressBar);
+        if (progressBar != null) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideProgressBar() {
+        ProgressBar progressBar = findViewById(R.id.progressBar);
+        if (progressBar != null) {
+            progressBar.setVisibility(View.GONE);
+        }
+    }
+
+
+
 }

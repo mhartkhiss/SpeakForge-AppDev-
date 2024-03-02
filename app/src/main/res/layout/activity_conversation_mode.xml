@@ -34,10 +34,29 @@
       android:background="@android:color/transparent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
+      app:stackFromEnd="true"
       app:layout_constraintTop_toBottomOf="@id/textViewRecipient"
       app:layout_constraintBottom_toTopOf="@id/inputContainer"/>
 
   <!-- Input message container -->
+
+  <TextView
+      android:id="@+id/textViewTranslate"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:background="@color/white"
+      android:elevation="8dp"
+      android:gravity="center"
+      android:padding="8dp"
+      android:text="translated text here"
+      android:textColor="#000000"
+      android:textSize="18sp"
+      android:visibility="invisible"
+      app:layout_constraintBottom_toBottomOf="@+id/recyclerViewChat"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      tools:visibility="visible" />
+
   <LinearLayout
       android:id="@+id/inputContainer"
       android:layout_width="0dp"

@@ -40,7 +40,7 @@ public class FetchLanguages {
                                 languageNames.add(name);
                             }
                             // Update UI with supported languages
-                            updateLanguagesSpinner(context, languageNames);
+                            //updateLanguagesSpinner(context, languageNames);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -63,6 +63,7 @@ public class FetchLanguages {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, languageNames);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
+
     }
 
 }
