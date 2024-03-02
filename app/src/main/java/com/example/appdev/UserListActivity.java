@@ -1,9 +1,14 @@
 package com.example.appdev;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.LayoutInflater;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -42,6 +47,7 @@ public class UserListActivity extends AppCompatActivity {
 
         // Retrieve list of users from Firebase Authentication
         getUsersFromFirebase();
+
     }
 
     private void getUsersFromFirebase() {

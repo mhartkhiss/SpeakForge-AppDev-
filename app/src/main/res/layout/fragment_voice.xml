@@ -6,36 +6,44 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
+    android:padding="16dp"
+    android:background="@android:color/white"
     tools:context=".fragments.VoiceFragment">
 
     <Spinner
         android:id="@+id/languageSpinner"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="40dp"
         android:layout_marginTop="16dp"
-        android:background="#323232"
-        android:entries="@array/languages" />
+        android:layout_marginRight="40dp"
+        android:background="@drawable/spinner_background"
+        android:dropDownHorizontalOffset="8dp"
+        android:dropDownVerticalOffset="40dp"
+        android:entries="@array/languages"
+        android:padding="8dp"
+        android:popupBackground="#393939"
+        android:textColor="@android:color/black" />
 
     <Button
         android:id="@+id/startSpeakingButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="100dp"
-        android:text="@string/start_speaking" />
+        android:background="@drawable/button_background"
+        android:text="@string/start_speaking"
+        style="@style/AppTheme.Button"
+        app:icon="@drawable/ic_voice" />
 
     <TextView
         android:id="@+id/recognizedTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:textColor="@color/black"
         android:text="Recognized Text Will Appear Here"
         android:gravity="center"
-        android:textSize="18sp" />
-
-
-
-
+        android:textSize="18sp"
+        android:textStyle="italic" />
 
 </LinearLayout>

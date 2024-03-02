@@ -90,7 +90,7 @@ public class SignUpActivity extends AppCompatActivity {
                            // }
                             FirebaseDatabase.getInstance().getReference("users")
                                     .child(userId)
-                                    .setValue(new User(userId, username, email))
+                                    .setValue(new User(userId, username, email, "none"))
                                     .addOnCompleteListener(databaseTask -> {
                                         if (databaseTask.isSuccessful()) {
                                             Toast.makeText(getApplicationContext(), "Sign up successful", Toast.LENGTH_SHORT).show();
