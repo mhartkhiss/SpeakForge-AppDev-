@@ -1,48 +1,62 @@
-package com.example.appdev;
+package com.example.appdev.fragments;
 
 import android.content.Intent;
 import android.speech.RecognizerIntent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.fragment.app.Fragment;
 
 import com.android.volley.VolleyError;
 import com.example.appdev.classes.FetchLanguages;
+import com.example.appdev.R; // Replace with your actual package name
 import com.example.appdev.classes.Translate;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity {
+public class VoiceFragment extends Fragment {
 
     private static final int SPEECH_REQUEST_CODE = 1;
 
     private TextView textViewResult;
 
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        FetchLanguages.fetchSupportedLanguages(this);
-        setListeners();
-        FirebaseApp.initializeApp(this);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
 
-
+        return inflater.inflate(R.layout.fragment_voice, container, false);
     }
-    private void setListeners() {
-        textViewResult = findViewById(R.id.recognizedTextView);
-        Button buttonStartSpeech = findViewById(R.id.startSpeakingButton);
-        Button btnLogout = findViewById(R.id.btnLogout);
-        Button btnConversationMode = findViewById(R.id.btnConvoMode);
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+
+        super.onViewCreated(view, savedInstanceState);
+
+        // Initialize Firebase
+        FirebaseApp.initializeApp(requireContext());
+
+        // Fetch supported languages
+        FetchLanguages.fetchSupportedLanguages(requireContext());
+
+        // Set listeners
+        setListeners(view);
+    }
+
+    private void setListeners(View view) {
+        textViewResult = view.findViewById(R.id.recognizedTextView);
+        Button buttonStartSpeech = view.findViewById(R.id.startSpeakingButton);
 
         buttonStartSpeech.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -51,24 +65,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnLogout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FirebaseAuth.getInstance().signOut();
-                startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                finish();
-            }
-        });
 
-        btnConversationMode.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, UserListActivity.class));
-            }
-        });
     }
-
-
 
     private void startSpeechRecognition() {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -80,17 +78,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == SPEECH_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+        if (requestCode == SPEECH_REQUEST_CODE && resultCode == requireActivity().RESULT_OK && data != null) {
             ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             if (results != null && !results.isEmpty()) {
                 String spokenText = results.get(0);
 
-                Translate translate = new Translate(this);
+                Translate translate = new Translate(requireContext());
                 String textToTranslate = spokenText;
-                Spinner spinner = findViewById(R.id.languageSpinner);
+                Spinner spinner = requireView().findViewById(R.id.languageSpinner);
                 String selectedLanguage = spinner.getSelectedItem().toString();
 
                 translate.translateText(textToTranslate, selectedLanguage, new Translate.TranslateListener() {
@@ -101,14 +99,10 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(VolleyError error) {
-                        Toast.makeText(getApplicationContext(), "Error translating text", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), "Error translating text", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
         }
     }
-
 }
-
-
-
