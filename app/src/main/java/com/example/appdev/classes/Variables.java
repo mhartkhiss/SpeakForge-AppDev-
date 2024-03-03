@@ -12,6 +12,7 @@ public class Variables {
     public static final String loginURL = request + djangoServer + "/api/login/";
     public static final String registerURL = request + djangoServer + "/api/register/";
     public static final String translateURL = request + djangoServer + "/api/translate/";
+    public static final String translateURL2 = request + djangoServer + "/translate/";
     public static final String supportedLanguagesURL = request + djangoServer + "/api/get_supported_languages/";
     public static final String registerSuccess = "Registration Successful";
     public static final String loginSuccess = "Login Successful";

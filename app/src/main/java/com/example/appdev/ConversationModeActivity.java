@@ -18,6 +18,8 @@ import com.example.appdev.adapter.ChatAdapter;
 import com.example.appdev.classes.FetchUserField;
 import com.example.appdev.classes.Translate;
 import com.example.appdev.models.ChatMessage;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -40,7 +42,7 @@ public class ConversationModeActivity extends AppCompatActivity {
     private TextView textViewRecipient;
     private TextView textViewTranslate;
     private String roomId, recipientLanguage, senderLanguage;
-    private Translate translator;
+    private Translate translate;
 
 
     @Override
@@ -105,62 +107,14 @@ public class ConversationModeActivity extends AppCompatActivity {
         return ids[0] + "_" + ids[1];
     }
     private void sendMessage() {
-        Translate translate = new Translate(this);
-
+        // Get the sender and target languages
         FetchUserField.fetchUserField("sourceLanguage", new FetchUserField.UserFieldListener() {
             @Override
-            public void onFieldReceived(String fieldValue) {
-                String senderLanguage = fieldValue;
-                if(senderLanguage== null) {
-                    senderLanguage = "auto";
-                }
-
+            public void onFieldReceived(String senderLanguage) {
                 String targetLanguage = recipientLanguage;
-                if(targetLanguage== null) {
-                    //send the message directly without translation
-                }
-                String messageTextOG = editTextMessage.getText().toString().trim();
-                String roomId = ConversationModeActivity.this.roomId; // Ensure you use the correct reference to the outer class
-                System.out.println("Sender Language: " + senderLanguage);
-                System.out.println("Target Language: " + targetLanguage);
-                translate.translateText(messageTextOG, senderLanguage, targetLanguage, new Translate.TranslateListener() {
-                    @Override
-                    public void onSuccess(String messageText) {
-                        if (!TextUtils.isEmpty(messageText)) {
-                            // Get the current user ID (sender ID)
-                            String senderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-                            // Check if senderId and roomId are not null
-                            if (senderId != null && roomId != null) {
-                                // Create a unique key for the message
-                                String messageId = messagesRef.child(roomId).push().getKey();
-
-                                // Get current timestamp
-                                long timestamp = System.currentTimeMillis();
-
-                                // Create a HashMap to represent the message data
-                                HashMap<String, Object> messageData = new HashMap<>();
-                                messageData.put("message", messageText);
-                                messageData.put("messageOG", messageTextOG);
-                                messageData.put("timestamp", timestamp);
-                                messageData.put("senderId", senderId); // Add sender ID to message data
-
-                                // Save message to Firebase Database
-                                messagesRef.child(roomId).child(messageId).setValue(messageData);
-
-                                // Clear the input field
-                                editTextMessage.setText("");
-                            } else {
-                                Log.e("ConversationModeActivity", "Sender ID or Room ID is null");
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onError(VolleyError error) {
-                        Toast.makeText(ConversationModeActivity.this, "Error translating message", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                // Send the message directly
+                sendDirectMessage(senderLanguage, targetLanguage);
             }
 
             @Override
@@ -169,6 +123,82 @@ public class ConversationModeActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void sendDirectMessage(String senderLanguage, String targetLanguage) {
+        String messageTextOG = editTextMessage.getText().toString().trim();
+        String roomId = ConversationModeActivity.this.roomId;
+
+        // Get the current user ID (sender ID)
+        String senderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        // Check if senderId and roomId are not null
+        if (senderId != null && roomId != null) {
+            // Create a unique key for the message
+            String messageId = messagesRef.child(roomId).push().getKey();
+
+            // Get current timestamp
+            long timestamp = System.currentTimeMillis();
+
+            // Create a HashMap to represent the message data
+            HashMap<String, Object> messageData = new HashMap<>();
+            if(targetLanguage == null){
+                messageData.put("message", messageTextOG);;
+            }
+            else {
+                messageData.put("message", "......");
+            }
+            messageData.put("messageOG", messageTextOG);
+            messageData.put("timestamp", timestamp);
+            messageData.put("senderId", senderId); // Add sender ID to message data
+
+            // Save message to Firebase Database
+            messagesRef.child(roomId).child(messageId).setValue(messageData)
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                // Translate the message after it is sent
+                                translateTextAndSendMessage(senderLanguage, targetLanguage, messageTextOG, messageId);
+                            } else {
+                                Log.e("ConversationModeActivity", "Failed to send message: " + task.getException());
+                            }
+                        }
+                    });
+
+            // Clear the input field
+            editTextMessage.setText("");
+        } else {
+            Log.e("ConversationModeActivity", "Sender ID or Room ID is null");
+        }
+    }
+
+    private void translateTextAndSendMessage(String senderLanguage, String targetLanguage, String messageTextOG, String messageId) {
+        // Translate the message text
+        Translate translate = new Translate(this);
+        translate.translateText(messageTextOG, senderLanguage, targetLanguage, new Translate.TranslateListener() {
+            @Override
+            public void onSuccess(String translatedMessage) {
+                if (!TextUtils.isEmpty(translatedMessage)) {
+                    // Update the message with translated text
+                    updateMessageWithTranslation(messageId, translatedMessage);
+                }
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+                //Toast.makeText(ConversationModeActivity.this, "Error translating message", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateMessageWithTranslation(String messageId, String translatedMessage) {
+        String roomId = ConversationModeActivity.this.roomId;
+
+        // Update the message with translated text
+        messagesRef.child(roomId).child(messageId).child("message").setValue(translatedMessage);
+    }
+
+
 
 
     private void loadMessages() {

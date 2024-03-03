@@ -61,7 +61,7 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
         FirebaseApp.initializeApp(requireContext());
 
         // Fetch supported languages
-        FetchLanguages.fetchSupportedLanguages(requireContext(), this);
+        //FetchLanguages.fetchSupportedLanguages(requireContext(), this);
         setDefaultSpinnerValue();
 
         // Set listeners

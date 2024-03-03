@@ -29,6 +29,9 @@ public class Translate {
 
         // Make HTTP POST request to Django translator API endpoint
         String url = Variables.translateURL;
+        if(sourceLanguage == null){
+            sourceLanguage = "auto";
+        }
 
         JSONObject requestBody = new JSONObject();
         try {
