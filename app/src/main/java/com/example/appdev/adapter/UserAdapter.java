@@ -68,7 +68,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             if (!user.getUserId().equals(currentUserId)) {
                 currentUser = user;
                 textViewUsername.setText(user.getUsername());
-                textViewEmail.setText(user.getEmail());
+                textViewEmail.setText(user.getSourceLanguage());
                 if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().equals("none")) {
                     Glide.with(context).load(user.getProfileImageUrl()).into(imageViewUserPicture);
                 } else {
@@ -85,6 +85,8 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             intent.putExtra("userId", currentUser.getUserId()); // Pass the user's ID to the ConversationModeActivity
             intent.putExtra("username", currentUser.getUsername()); // Pass the username to the ConversationModeActivity
             intent.putExtra("email", currentUser.getEmail()); // Pass the email to the ConversationModeActivity
+            intent.putExtra("profileImageUrl", currentUser.getProfileImageUrl()); // Pass the profile
+            intent.putExtra("recipientLanguage", currentUser.getSourceLanguage());
             context.startActivity(intent);
         }
     }

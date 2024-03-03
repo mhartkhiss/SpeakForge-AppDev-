@@ -1,7 +1,7 @@
 package com.example.appdev.fragments;
 
+import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.speech.RecognizerIntent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -20,9 +20,11 @@ import androidx.fragment.app.Fragment;
 
 import com.android.volley.VolleyError;
 import com.example.appdev.classes.FetchLanguages;
-import com.example.appdev.R;
+import com.example.appdev.R; // Replace with your actual package name
 import com.example.appdev.classes.FetchUserField;
 import com.example.appdev.classes.Translate;
+import com.example.appdev.classes.Variables;
+import com.example.appdev.models.LanguageModel;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseError;
@@ -32,38 +34,166 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.Locale;
 
-public class VoiceFragment extends Fragment {
+public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesListener{
 
     private static final int SPEECH_REQUEST_CODE = 1;
 
     private TextView textViewResult;
-    private Spinner languageSpinner;
-    private DatabaseReference userRef;
-    private String selectedLanguage;
+
+    private Spinner spinner, spinner2;
+    private ArrayList<LanguageModel> languageModels = new ArrayList<>();
+    private String sourceLanguageCode, targetLanguageCode;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+
         return inflater.inflate(R.layout.fragment_voice, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+
         super.onViewCreated(view, savedInstanceState);
 
         // Initialize Firebase
         FirebaseApp.initializeApp(requireContext());
 
         // Fetch supported languages
-        FetchLanguages.fetchSupportedLanguages(requireContext());
+        FetchLanguages.fetchSupportedLanguages(requireContext(), this);
+        setDefaultSpinnerValue();
+
+        // Set listeners
+        setListeners(view);
+
+        spinner = requireView().findViewById(R.id.languageSpinner);
+        spinner2 = requireView().findViewById(R.id.languageSpinner2);
+    }
+
+    public void onLanguagesReceived(ArrayList<LanguageModel> languages) {
+        // Handle received languages
+        languageModels.addAll(languages); // Add the received languages to the list
+
+        // Create an array of language names
+        ArrayList<String> languageNames = new ArrayList<>();
+        for (LanguageModel language : languages) {
+            languageNames.add(language.getName());
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, languageNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner2.setAdapter(adapter);
+
+        // Set up a listener to get the selected item
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // Get the selected language name
+                String selectedLanguageName = languageNames.get(position);
+                // Find the corresponding LanguageModel object
+                LanguageModel selectedLanguage = null;
+                for (LanguageModel language : languageModels) {
+                    if (language.getName().equals(selectedLanguageName)) {
+                        selectedLanguage = language;
+                        break;
+                    }
+                }
+                // If selectedLanguage is not null, you can get the code for the selected language
+                if (selectedLanguage != null) {
+                    targetLanguageCode = selectedLanguage.getCode();
+                    // Do whatever you need with the selected language code
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Handle the case where nothing is selected
+            }
+        });
+
+        spinner2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // Get the selected language name
+                String selectedLanguageName = languageNames.get(position);
+                // Find the corresponding LanguageModel object
+                LanguageModel selectedLanguage = null;
+                for (LanguageModel language : languageModels) {
+                    if (language.getName().equals(selectedLanguageName)) {
+                        selectedLanguage = language;
+                        break;
+                    }
+                }
+                // If selectedLanguage is not null, you can get the code for the selected language
+                if (selectedLanguage != null) {
+                    sourceLanguageCode = selectedLanguage.getCode();
+                    // Do whatever you need with the selected language code
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Handle the case where nothing is selected
+            }
+        });
+    }
+
+
+    @Override
+    public void onError(VolleyError error) {
+        // Handle error
+    }
+
+    private void setListeners(View view) {
+        textViewResult = view.findViewById(R.id.recognizedTextView);
+        Button buttonStartSpeech = view.findViewById(R.id.startSpeakingButton);
+
+        buttonStartSpeech.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startSpeechRecognition();
+            }
+        });
+
+
+    }
+
+    private void setDefaultSpinnerValue() {
         FetchUserField.fetchUserField("targetLanguage", new FetchUserField.UserFieldListener() {
             @Override
             public void onFieldReceived(String fieldValue) {
-                // Use the field value here
-                // Set the default selected value on the spinner
-                if (fieldValue != null && !fieldValue.isEmpty()) {
-                    // Find the spinner
-                    Toast.makeText(requireContext(), fieldValue, Toast.LENGTH_SHORT).show();
+                Spinner spinner = getView().findViewById(R.id.languageSpinner);
+                if (spinner != null) {
+                    ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinner.getAdapter();
+                    if (adapter != null) {
+                        int position = adapter.getPosition(fieldValue);
+                        if (position != -1) {
+                            spinner.setSelection(position);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onError(DatabaseError databaseError) {
+                // Handle error
+            }
+        });
+
+        FetchUserField.fetchUserField("sourceLanguage", new FetchUserField.UserFieldListener() {
+            @Override
+            public void onFieldReceived(String fieldValue) {
+                Spinner spinner = getView().findViewById(R.id.languageSpinner2);
+                if (spinner != null) {
+                    ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinner.getAdapter();
+                    if (adapter != null) {
+                        int position = adapter.getPosition(fieldValue);
+                        if (position != -1) {
+                            spinner.setSelection(position);
+                        }
+                    }
                 }
             }
 
@@ -74,43 +204,12 @@ public class VoiceFragment extends Fragment {
         });
 
 
-        // Set up database reference
-        userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
-
-        // Initialize views and listeners
-        textViewResult = view.findViewById(R.id.recognizedTextView);
-        languageSpinner = view.findViewById(R.id.languageSpinner);
-        Button buttonStartSpeech = view.findViewById(R.id.startSpeakingButton);
-
-        // Set up language spinner
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(requireContext(),
-                R.array.languages, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        languageSpinner.setAdapter(adapter);
-
-        // Spinner item selected listener
-        languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedLanguage = parent.getItemAtPosition(position).toString();
-                saveSelectedLanguage(selectedLanguage);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Handle nothing selected event
-            }
-        });
-
-        buttonStartSpeech.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startSpeechRecognition();
-            }
-        });
     }
 
     private void startSpeechRecognition() {
+
+        Variables.userRef.child("targetLanguage").setValue(spinner.getSelectedItem().toString());
+        Variables.userRef.child("sourceLanguage").setValue(spinner2.getSelectedItem().toString());
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
@@ -130,13 +229,17 @@ public class VoiceFragment extends Fragment {
 
                 Translate translate = new Translate(requireContext());
                 String textToTranslate = spokenText;
+                String sourceLanguage = sourceLanguageCode;
+                String targetLanguage = targetLanguageCode;
+                System.out.println("Source Language: " + sourceLanguage);
+                System.out.println("Target Language: " + targetLanguage);
 
 
-
-                translate.translateText(textToTranslate, selectedLanguage, new Translate.TranslateListener() {
+                translate.translateText(textToTranslate, sourceLanguage, targetLanguage, new Translate.TranslateListener() {
                     @Override
                     public void onSuccess(String translatedText) {
                         textViewResult.setText(translatedText);
+
                     }
 
                     @Override
@@ -147,9 +250,4 @@ public class VoiceFragment extends Fragment {
             }
         }
     }
-
-    private void saveSelectedLanguage(String selectedLanguage) {
-        userRef.child("targetLanguage").setValue(selectedLanguage);
-    }
 }
-

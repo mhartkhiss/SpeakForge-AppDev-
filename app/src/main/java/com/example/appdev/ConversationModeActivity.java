@@ -11,8 +11,11 @@ import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.VolleyError;
 import com.example.appdev.adapter.ChatAdapter;
+import com.example.appdev.classes.FetchUserField;
 import com.example.appdev.classes.Translate;
 import com.example.appdev.models.ChatMessage;
 import com.google.firebase.auth.FirebaseAuth;
@@ -36,7 +39,7 @@ public class ConversationModeActivity extends AppCompatActivity {
     private DatabaseReference messagesRef;
     private TextView textViewRecipient;
     private TextView textViewTranslate;
-    private String roomId;
+    private String roomId, recipientLanguage, senderLanguage;
     private Translate translator;
 
 
@@ -81,6 +84,9 @@ public class ConversationModeActivity extends AppCompatActivity {
         // Retrieve recipient information from intent extras
         String recipientName = getIntent().getStringExtra("username");
         String recipientEmail = getIntent().getStringExtra("email");
+        recipientLanguage = getIntent().getStringExtra("recipientLanguage");
+        System.out.println("Recipient Language: " + recipientLanguage);
+
 
         // Set recipient name or email to the textViewRecipient
         if (recipientName != null && !recipientName.isEmpty()) {
@@ -99,38 +105,71 @@ public class ConversationModeActivity extends AppCompatActivity {
         return ids[0] + "_" + ids[1];
     }
     private void sendMessage() {
-        String messageText = editTextMessage.getText().toString().trim();
-        if (!TextUtils.isEmpty(messageText)) {
-            // Get the current user ID (sender ID)
-            String senderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        Translate translate = new Translate(this);
 
-            // Get the room ID
-            String roomId = this.roomId;
+        FetchUserField.fetchUserField("sourceLanguage", new FetchUserField.UserFieldListener() {
+            @Override
+            public void onFieldReceived(String fieldValue) {
+                String senderLanguage = fieldValue;
+                if(senderLanguage== null) {
+                    senderLanguage = "auto";
+                }
 
-            // Check if senderId and roomId are not null
-            if (senderId != null && roomId != null) {
-                // Create a unique key for the message
-                String messageId = messagesRef.child(roomId).push().getKey();
+                String targetLanguage = recipientLanguage;
+                if(targetLanguage== null) {
+                    //send the message directly without translation
+                }
+                String messageTextOG = editTextMessage.getText().toString().trim();
+                String roomId = ConversationModeActivity.this.roomId; // Ensure you use the correct reference to the outer class
+                System.out.println("Sender Language: " + senderLanguage);
+                System.out.println("Target Language: " + targetLanguage);
+                translate.translateText(messageTextOG, senderLanguage, targetLanguage, new Translate.TranslateListener() {
+                    @Override
+                    public void onSuccess(String messageText) {
+                        if (!TextUtils.isEmpty(messageText)) {
+                            // Get the current user ID (sender ID)
+                            String senderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-                // Get current timestamp
-                long timestamp = System.currentTimeMillis();
+                            // Check if senderId and roomId are not null
+                            if (senderId != null && roomId != null) {
+                                // Create a unique key for the message
+                                String messageId = messagesRef.child(roomId).push().getKey();
 
-                // Create a HashMap to represent the message data
-                HashMap<String, Object> messageData = new HashMap<>();
-                messageData.put("message", messageText);
-                messageData.put("timestamp", timestamp);
-                messageData.put("senderId", senderId); // Add sender ID to message data
+                                // Get current timestamp
+                                long timestamp = System.currentTimeMillis();
 
-                // Save message to Firebase Database
-                messagesRef.child(roomId).child(messageId).setValue(messageData);
+                                // Create a HashMap to represent the message data
+                                HashMap<String, Object> messageData = new HashMap<>();
+                                messageData.put("message", messageText);
+                                messageData.put("messageOG", messageTextOG);
+                                messageData.put("timestamp", timestamp);
+                                messageData.put("senderId", senderId); // Add sender ID to message data
 
-                // Clear the input field
-                editTextMessage.setText("");
-            } else {
-                Log.e("ConversationModeActivity", "Sender ID or Room ID is null");
+                                // Save message to Firebase Database
+                                messagesRef.child(roomId).child(messageId).setValue(messageData);
+
+                                // Clear the input field
+                                editTextMessage.setText("");
+                            } else {
+                                Log.e("ConversationModeActivity", "Sender ID or Room ID is null");
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(VolleyError error) {
+                        Toast.makeText(ConversationModeActivity.this, "Error translating message", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
-        }
+
+            @Override
+            public void onError(DatabaseError databaseError) {
+                // Handle error
+            }
+        });
     }
+
 
     private void loadMessages() {
         String roomId = this.roomId;

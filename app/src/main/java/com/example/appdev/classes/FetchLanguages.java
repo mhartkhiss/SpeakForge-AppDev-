@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -13,6 +14,8 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.appdev.R;
 import com.example.appdev.classes.Variables;
+import com.example.appdev.models.LanguageModel;
+import com.google.firebase.database.DatabaseError;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,7 +25,7 @@ import java.util.ArrayList;
 
 public class FetchLanguages {
 
-    public static void fetchSupportedLanguages(Context context) {
+    public static void fetchSupportedLanguages(Context context, final LanguagesListener listener) {
         String url = Variables.supportedLanguagesURL;
         RequestQueue queue = Volley.newRequestQueue(context);
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
@@ -30,17 +33,22 @@ public class FetchLanguages {
                     @Override
                     public void onResponse(JSONObject response) {
                         // Parse the response
-                        ArrayList<String> languageNames = new ArrayList<>();
+                        ArrayList<LanguageModel> languages = new ArrayList<>();
                         try {
                             // Parse the response here
                             JSONArray jsonArray = response.getJSONArray("languages");
+
                             for (int i = 0; i < jsonArray.length(); i++) {
                                 JSONObject languageObject = jsonArray.getJSONObject(i);
                                 String name = languageObject.getString("name");
-                                languageNames.add(name);
+                                String code = languageObject.getString("code");
+                                languages.add(new LanguageModel(name, code));
                             }
-                            // Update UI with supported languages
-                            //updateLanguagesSpinner(context, languageNames);
+
+                            // Notify listener with supported languages
+                            if (listener != null) {
+                                listener.onLanguagesReceived(languages);
+                            }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -50,21 +58,33 @@ public class FetchLanguages {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         // Handle error
+                        if (listener != null) {
+                            listener.onError(error);
+                        }
                     }
                 });
 
         queue.add(request);
     }
 
-    private static void updateLanguagesSpinner(Context context, ArrayList<String> languageNames) {
+    public interface LanguagesListener {
+        void onLanguagesReceived(ArrayList<LanguageModel> languages);
+        void onError(VolleyError error);
+    }
+
+
+    /*private static void updateLanguagesSpinner(Context context, ArrayList<String> languageNames) {
+
         // Find the spinner directly from the context
         Spinner spinner = ((Activity) context).findViewById(R.id.languageSpinner);
+        Spinner spinner2 = ((Activity) context).findViewById(R.id.languageSpinner2);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(context, android.R.layout.simple_spinner_item, languageNames);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
+        spinner2.setAdapter(adapter);
 
-    }
+    }*/
 
 }
 

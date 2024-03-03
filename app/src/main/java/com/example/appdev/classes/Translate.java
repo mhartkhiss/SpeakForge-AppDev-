@@ -25,7 +25,7 @@ public class Translate {
         this.context = context;
     }
 
-    public void translateText(String textToTranslate, String targetLanguage, TranslateListener listener) {
+    public void translateText(String textToTranslate, String sourceLanguage, String targetLanguage, TranslateListener listener) {
 
         // Make HTTP POST request to Django translator API endpoint
         String url = Variables.translateURL;
@@ -33,6 +33,7 @@ public class Translate {
         JSONObject requestBody = new JSONObject();
         try {
             requestBody.put("text", textToTranslate);
+            requestBody.put("source_language", sourceLanguage);
             requestBody.put("target_language", targetLanguage);
         } catch (JSONException e) {
             e.printStackTrace();

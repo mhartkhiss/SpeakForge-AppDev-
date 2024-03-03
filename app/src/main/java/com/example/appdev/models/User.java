@@ -5,6 +5,7 @@ public class User {
     private String username;
     private String email;
     private String profileImageUrl; // Add profileImageUrl field
+    private String targetLanguage, sourceLanguage;
 
     public User() {
         // Default constructor required for Firebase
@@ -47,6 +48,22 @@ public class User {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void setTargetLanguage(String targetLanguage) {
+        this.targetLanguage = targetLanguage;
+    }
+
+    public String getTargetLanguage() {
+        return targetLanguage;
+    }
+
+    public void setSourceLanguage(String sourceLanguage) {
+        this.sourceLanguage = sourceLanguage;
+    }
+
+    public String getSourceLanguage() {
+        return sourceLanguage;
     }
 }
 

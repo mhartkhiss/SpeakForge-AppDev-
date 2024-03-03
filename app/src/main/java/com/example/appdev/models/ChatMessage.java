@@ -3,6 +3,7 @@ package com.example.appdev.models;
 public class ChatMessage {
     private String messageId;
     private String message;
+    private String messageOG;
     private long timestamp;
     private String senderId; // Add sender ID field
 
@@ -10,9 +11,10 @@ public class ChatMessage {
         // Default constructor required for Firebase
     }
 
-    public ChatMessage(String messageId, String message, long timestamp, String senderId) {
+    public ChatMessage(String messageId, String message, String messageOG, long timestamp, String senderId) {
         this.messageId = messageId;
         this.message = message;
+        this.messageOG = messageOG;
         this.timestamp = timestamp;
         this.senderId = senderId;
     }
@@ -27,6 +29,10 @@ public class ChatMessage {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getMessageOG() {
+        return messageOG;
     }
 
     public void setMessage(String message) {
