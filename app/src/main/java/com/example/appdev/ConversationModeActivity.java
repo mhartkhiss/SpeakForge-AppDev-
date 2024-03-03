@@ -17,6 +17,7 @@ import com.android.volley.VolleyError;
 import com.example.appdev.adapter.ChatAdapter;
 import com.example.appdev.classes.FetchUserField;
 import com.example.appdev.classes.Translate;
+import com.example.appdev.classes.TranslationTask;
 import com.example.appdev.models.ChatMessage;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -158,7 +159,8 @@ public class ConversationModeActivity extends AppCompatActivity {
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
                                 // Translate the message after it is sent
-                                translateTextAndSendMessage(senderLanguage, targetLanguage, messageTextOG, messageId);
+                                String messageTextOG2 = "\"" + messageTextOG + "\"";
+                                translateTextAndSendMessage(senderLanguage, targetLanguage, messageTextOG2, messageId);
                             } else {
                                 Log.e("ConversationModeActivity", "Failed to send message: " + task.getException());
                             }
@@ -173,30 +175,32 @@ public class ConversationModeActivity extends AppCompatActivity {
     }
 
     private void translateTextAndSendMessage(String senderLanguage, String targetLanguage, String messageTextOG, String messageId) {
-        // Translate the message text
-        Translate translate = new Translate(this);
-        translate.translateText(messageTextOG, senderLanguage, targetLanguage, new Translate.TranslateListener() {
+        TranslationTask translationTask = new TranslationTask(targetLanguage, new TranslationTask.TranslationListener() {
             @Override
-            public void onSuccess(String translatedMessage) {
+            public void onTranslationComplete(String translatedMessage) {
                 if (!TextUtils.isEmpty(translatedMessage)) {
-                    // Update the message with translated text
                     updateMessageWithTranslation(messageId, translatedMessage);
                 }
             }
-
-            @Override
-            public void onError(VolleyError error) {
-                //Toast.makeText(ConversationModeActivity.this, "Error translating message", Toast.LENGTH_SHORT).show();
-            }
         });
+        translationTask.execute(messageTextOG);
     }
+
+
 
     private void updateMessageWithTranslation(String messageId, String translatedMessage) {
         String roomId = ConversationModeActivity.this.roomId;
 
+        // Check if the translated message starts and ends with double quotation marks
+        if (translatedMessage.startsWith("\"") && translatedMessage.endsWith("\"")) {
+            // Remove the double quotation marks
+            translatedMessage = translatedMessage.substring(1, translatedMessage.length() - 1);
+        }
+
         // Update the message with translated text
         messagesRef.child(roomId).child(messageId).child("message").setValue(translatedMessage);
     }
+
 
 
 

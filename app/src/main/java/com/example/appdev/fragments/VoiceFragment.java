@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.speech.RecognizerIntent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ import com.example.appdev.classes.FetchLanguages;
 import com.example.appdev.R; // Replace with your actual package name
 import com.example.appdev.classes.FetchUserField;
 import com.example.appdev.classes.Translate;
+import com.example.appdev.classes.TranslationTask;
 import com.example.appdev.classes.Variables;
 import com.example.appdev.models.LanguageModel;
 import com.google.firebase.FirebaseApp;
@@ -69,6 +71,12 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
 
         spinner = requireView().findViewById(R.id.languageSpinner);
         spinner2 = requireView().findViewById(R.id.languageSpinner2);
+        String[] languages = {"English", "Tagalog", "Cebuano", "Bicolano", "Chinese", "Japanese", "Korean", "Arabic", "Russian", "Italian"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, languages);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner2.setAdapter(adapter);
+
     }
 
     public void onLanguagesReceived(ArrayList<LanguageModel> languages) {
@@ -227,26 +235,19 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
             if (results != null && !results.isEmpty()) {
                 String spokenText = results.get(0);
 
-                Translate translate = new Translate(requireContext());
                 String textToTranslate = spokenText;
-                String sourceLanguage = sourceLanguageCode;
-                String targetLanguage = targetLanguageCode;
-                System.out.println("Source Language: " + sourceLanguage);
-                System.out.println("Target Language: " + targetLanguage);
+                String targetLanguage = spinner.getSelectedItem().toString();
 
 
-                translate.translateText(textToTranslate, sourceLanguage, targetLanguage, new Translate.TranslateListener() {
+                TranslationTask translationTask = new TranslationTask(targetLanguage, new TranslationTask.TranslationListener() {
                     @Override
-                    public void onSuccess(String translatedText) {
-                        textViewResult.setText(translatedText);
-
-                    }
-
-                    @Override
-                    public void onError(VolleyError error) {
-                        Toast.makeText(requireContext(), "Error translating text", Toast.LENGTH_SHORT).show();
+                    public void onTranslationComplete(String translatedMessage) {
+                        if (!TextUtils.isEmpty(translatedMessage)) {
+                            textViewResult.setText(translatedMessage);
+                        }
                     }
                 });
+                translationTask.execute(textToTranslate);
             }
         }
     }
