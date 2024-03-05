@@ -208,7 +208,7 @@ public class ConversationModeActivity extends AppCompatActivity {
     private void loadMessages() {
         String roomId = this.roomId;
         if (roomId != null) {
-            messagesRef.child(roomId).addValueEventListener(new ValueEventListener() {
+            messagesRef.child(roomId).orderByChild("timestamp").addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     List<ChatMessage> messages = new ArrayList<>();

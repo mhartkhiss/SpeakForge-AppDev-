@@ -6,7 +6,8 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class Variables {
 
-    public static final String djangoServer = "49.148.27.102:25565"; //change to your server's IP address
+    public static final String djangoServer = "appdev.redirectme.net:25565";
+    public static final String djangoServer2 = "appdev.redirectme.net:24454";
     //------------------------------------------------------------------------
     public static final String request = "http://"; //change to https if needed, django uses http by default
     public static final String loginURL = request + djangoServer + "/api/login/";
