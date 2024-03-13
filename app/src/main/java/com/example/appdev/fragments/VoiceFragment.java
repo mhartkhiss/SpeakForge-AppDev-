@@ -70,12 +70,12 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
         setListeners(view);
 
         spinner = requireView().findViewById(R.id.languageSpinner);
-        spinner2 = requireView().findViewById(R.id.languageSpinner2);
+        //spinner2 = requireView().findViewById(R.id.languageSpinner2);
         String[] languages = {"English", "Tagalog", "Cebuano", "Bicolano", "Chinese", "Japanese", "Korean", "Arabic", "Russian", "Italian"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, languages);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
-        spinner2.setAdapter(adapter);
+        //spinner2.setAdapter(adapter);
 
     }
 
@@ -190,7 +190,7 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
             }
         });
 
-        FetchUserField.fetchUserField("sourceLanguage", new FetchUserField.UserFieldListener() {
+        /*FetchUserField.fetchUserField("sourceLanguage", new FetchUserField.UserFieldListener() {
             @Override
             public void onFieldReceived(String fieldValue) {
                 Spinner spinner = getView().findViewById(R.id.languageSpinner2);
@@ -209,7 +209,7 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
             public void onError(DatabaseError databaseError) {
                 // Handle error
             }
-        });
+        });*/
 
 
     }
@@ -217,7 +217,7 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
     private void startSpeechRecognition() {
 
         Variables.userRef.child("targetLanguage").setValue(spinner.getSelectedItem().toString());
-        Variables.userRef.child("sourceLanguage").setValue(spinner2.getSelectedItem().toString());
+       // Variables.userRef.child("sourceLanguage").setValue(spinner2.getSelectedItem().toString());
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
