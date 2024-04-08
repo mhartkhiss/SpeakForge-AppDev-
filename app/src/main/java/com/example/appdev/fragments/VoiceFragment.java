@@ -71,7 +71,7 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
 
         spinner = requireView().findViewById(R.id.languageSpinner);
         //spinner2 = requireView().findViewById(R.id.languageSpinner2);
-        String[] languages = {"English", "Tagalog", "Cebuano", "Bicolano", "Chinese", "Japanese", "Korean", "Arabic", "Russian", "Italian"};
+        String[] languages = {"English", "Tagalog", "Bisaya"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, languages);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);

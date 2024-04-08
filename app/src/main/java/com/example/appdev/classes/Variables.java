@@ -8,6 +8,8 @@ public class Variables {
 
     public static final String djangoServer = "appdev.redirectme.net:25565";
     public static final String djangoServer2 = "appdev.redirectme.net:24454";
+    public static final String guestUser = "a@gmail.com";
+    public static final String guestUserPassword = "asdasd";
     //------------------------------------------------------------------------
     public static final String request = "http://"; //change to https if needed, django uses http by default
     public static final String loginURL = request + djangoServer + "/api/login/";

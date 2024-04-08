@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.appdev.R;
 import com.example.appdev.adapter.UserAdapter;
+import com.example.appdev.classes.Variables;
 import com.example.appdev.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -33,7 +34,12 @@ public class ChatFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_chat, container, false);
+        View view = inflater.inflate(R.layout.fragment_chat, container, false);
+        String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+        if (Variables.guestUser.equals(userEmail)) {
+            view.setVisibility(View.GONE);
+        }
+        return view;
     }
 
     @Override

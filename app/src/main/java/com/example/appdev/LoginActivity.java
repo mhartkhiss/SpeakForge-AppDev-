@@ -16,6 +16,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.appdev.classes.Variables;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -24,9 +25,10 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        //AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
@@ -46,14 +48,15 @@ public class LoginActivity extends AppCompatActivity {
             if (user != null) {
                 // User is signed in
                 hideProgressBar();
-                Toast.makeText(LoginActivity.this, "Welcome back " + user.getEmail(), Toast.LENGTH_SHORT).show();
+                if (!Variables.guestUser.equals(user.getEmail())) {
+                    Toast.makeText(LoginActivity.this, "Welcome " + user.getEmail(), Toast.LENGTH_SHORT).show();
+                }
                 // Redirect to your main activity or any other authenticated activity
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             }
         };
     }
-
     private void setListeners() {
         Button btnLogin = findViewById(R.id.btnLogin);
         TextView txtSignUp = findViewById(R.id.txtSignUp);
