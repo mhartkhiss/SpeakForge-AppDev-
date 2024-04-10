@@ -13,6 +13,7 @@ import androidx.viewpager.widget.ViewPager;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.appdev.adapter.TabAdapter;
 import com.example.appdev.fragments.ChatFragment;
@@ -21,6 +22,7 @@ import com.example.appdev.fragments.VoiceFragment;
 import com.example.appdev.models.User;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -124,6 +126,28 @@ public class MainActivity extends AppCompatActivity {
                             .create()
                             .show();
                 }
+                /*else if (position == 2) {
+                    // Check if the user has the sourceLanguage field in the users database
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid());
+                    userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.exists() && dataSnapshot.hasChild("sourceLanguage")) {
+                            } else {
+                                // User does not have the sourceLanguage field, start LanguageSetupActivity
+                                startActivity(new Intent(MainActivity.this, LanguageSetupActivity.class));
+                                tabLayout.getTabAt(1).select();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+                            // Handle database error
+                            Toast.makeText(MainActivity.this, "Database error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }*/
             }
 
             @Override
@@ -152,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                         tabIcon.setImageResource(R.drawable.ic_profile);
                         break;
                     case 1:
-                        tabIcon.setImageResource(R.drawable.ic_voice);
+                        tabIcon.setImageResource(R.drawable.ic_translate);
                         break;
                     case 2:
                         tabIcon.setImageResource(R.drawable.ic_chat);

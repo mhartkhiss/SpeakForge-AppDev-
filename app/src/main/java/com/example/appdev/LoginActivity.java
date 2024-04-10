@@ -1,7 +1,7 @@
 package com.example.appdev;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,6 +19,11 @@ import android.widget.Toast;
 import com.example.appdev.classes.Variables;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -28,7 +33,6 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        //AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
@@ -51,12 +55,31 @@ public class LoginActivity extends AppCompatActivity {
                 if (!Variables.guestUser.equals(user.getEmail())) {
                     Toast.makeText(LoginActivity.this, "Welcome " + user.getEmail(), Toast.LENGTH_SHORT).show();
                 }
-                // Redirect to your main activity or any other authenticated activity
-                startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                finish();
+                // Check if the user has the sourceLanguage field in the users database
+                DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid());
+                userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists() && dataSnapshot.hasChild("sourceLanguage")) {
+                            // User has the sourceLanguage field, start MainActivity
+                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                        } else {
+                            // User does not have the sourceLanguage field, start LanguageSetupActivity
+                            startActivity(new Intent(LoginActivity.this, LanguageSetupActivity.class));
+                        }
+                        finish();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        // Handle database error
+                        Toast.makeText(LoginActivity.this, "Database error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         };
     }
+
     private void setListeners() {
         Button btnLogin = findViewById(R.id.btnLogin);
         TextView txtSignUp = findViewById(R.id.txtSignUp);

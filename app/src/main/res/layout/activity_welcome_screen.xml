@@ -1,45 +1,57 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="#DECFF8">
+    android:background="#E6E6E6"
+    android:padding="16dp">
 
     <ImageView
         android:id="@+id/imageView4"
-        android:layout_width="347dp"
-        android:layout_height="427dp"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentTop="true"
-        app:srcCompat="@drawable/welcomescreen_img" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/textView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/speakforgewelcomeimg" />
 
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/imageView4"
-        android:layout_centerHorizontal="true"
-        android:textColor="#353535"
-        android:layout_marginTop="8dp"
+        android:layout_marginBottom="32dp"
         android:fontFamily="@font/akaya_telivigala"
-        android:text="Welcome to SpeakForge!"
-        android:textSize="28dp" />
+        android:gravity="center"
+        android:text="Real-time Voice and Chat Translator..."
+        android:textColor="#6C6C6C"
+        android:textSize="28dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnWLogin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView4" />
 
     <Button
         android:id="@+id/btnWLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/textView"
         android:backgroundTint="#393939"
-        android:layout_marginTop="28dp"
-        android:text="Login" />
+        android:text="Login"
+        app:layout_constraintBottom_toTopOf="@+id/btnWSkip"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/btnWSkip"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/btnWLogin"
+        android:layout_marginBottom="16dp"
         android:backgroundTint="#393939"
-        android:text="Skip" />
+        android:text="Skip"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,15 +2,12 @@ package com.example.appdev.fragments;
 
 import static android.content.ContentValues.TAG;
 
-import static com.example.appdev.MainActivity.currentUser;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -25,10 +22,11 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.appdev.controller.ChangePassControl;
 import com.example.appdev.LoginActivity;
 import com.example.appdev.R;
+import com.example.appdev.classes.FetchUserField;
 import com.example.appdev.classes.Variables;
-import com.example.appdev.models.User;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -41,17 +39,15 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.util.UUID;
-
 public class ProfileFragment extends Fragment {
 
     private TextView textViewUsername;
     private TextView textViewEmail;
     private ImageView imageViewUserPicture;
-    private CardView cardViewEditDetails, cardViewProfile, cardViewLanguage;
-    private Button btnSaveChanges, btnChangeLanguage, btnChangePassword, btnEnglish, btnTagalog, btnBisaya;
+    private CardView cardViewEditDetails, cardViewProfile, cardViewLanguage, cardViewChangePassword;
+    private Button btnSaveChanges, btnChangeLanguage, btnChangePassword, btnEnglish, btnTagalog, btnBisaya, btnChangePassword2;
 
-    private EditText editTextUsername;
+    private EditText editTextUsername, editTextOldPassword, editTextNewPassword, editTextConfirmPassword;
     private static final int IMAGE_PICK_REQUEST = 100;
 
 
@@ -67,13 +63,18 @@ public class ProfileFragment extends Fragment {
         cardViewEditDetails = view.findViewById(R.id.cardViewEditDetails);
         cardViewProfile = view.findViewById(R.id.cardViewProfile);
         cardViewLanguage = view.findViewById(R.id.cardViewLanguage);
+        cardViewChangePassword = view.findViewById(R.id.cardViewChangePassword);
         btnSaveChanges = view.findViewById(R.id.btnSaveChanges);
         btnChangeLanguage = view.findViewById(R.id.btnChangeLanguage);
         btnChangePassword = view.findViewById(R.id.btnChangePassword);
+        btnChangePassword2 = view.findViewById(R.id.btnChangePassword2);
         btnEnglish = view.findViewById(R.id.btnEnglish);
         btnTagalog = view.findViewById(R.id.btnTagalog);
         btnBisaya = view.findViewById(R.id.btnBisaya);
         editTextUsername = view.findViewById(R.id.editTextUsername);
+        editTextOldPassword = view.findViewById(R.id.editTextOldPassword);
+        editTextNewPassword = view.findViewById(R.id.editTextNewPassword);
+        editTextConfirmPassword = view.findViewById(R.id.editTextConfirmPassword);
 
         String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
         if (Variables.guestUser.equals(userEmail)) {
@@ -91,6 +92,15 @@ public class ProfileFragment extends Fragment {
 
         Button btnLogout = view.findViewById(R.id.btnLogout);
         btnLogout.setOnClickListener(v -> logout());
+        FetchUserField.fetchUserField("sourceLanguage", new FetchUserField.UserFieldListener() {
+            @Override
+            public void onFieldReceived(String fieldValue) {
+                btnChangeLanguage.setText("Language: "+fieldValue);
+            }
+            @Override
+            public void onError(DatabaseError databaseError) {
+            }
+        });
 
         setUserDetails();
 
@@ -112,6 +122,19 @@ public class ProfileFragment extends Fragment {
                 cardViewProfile.setVisibility(View.GONE);
             }
         });
+
+        btnChangePassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cardViewChangePassword.setVisibility(View.VISIBLE);
+                cardViewProfile.setVisibility(View.GONE);
+            }
+        });
+
+        btnChangePassword2.setOnClickListener(new ChangePassControl(getContext(), editTextOldPassword, editTextNewPassword,
+                editTextConfirmPassword, cardViewChangePassword, cardViewProfile));
+
+
 
         btnEnglish.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -190,6 +213,7 @@ public class ProfileFragment extends Fragment {
                         @Override
                         public void onSuccess(Void aVoid) {
                             // Language updated successfully
+                            btnChangeLanguage.setText("Language: "+language);
                             Toast.makeText(getActivity(), "Language updated successfully", Toast.LENGTH_SHORT).show();
                         }
                     })

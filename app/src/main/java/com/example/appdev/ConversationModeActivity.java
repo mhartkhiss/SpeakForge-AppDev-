@@ -160,7 +160,12 @@ public class ConversationModeActivity extends AppCompatActivity {
                             if (task.isSuccessful()) {
                                 // Translate the message after it is sent
                                 String messageTextOG2 = "\"" + messageTextOG + "\"";
-                                translateTextAndSendMessage(senderLanguage, targetLanguage, messageTextOG2, messageId);
+                                if(targetLanguage != null){
+                                    translateTextAndSendMessage(senderLanguage, targetLanguage, messageTextOG2, messageId);
+                                }
+                                else{
+                                    messagesRef.child(roomId).child(messageId).child("message").setValue(messageTextOG);
+                                }
                             } else {
                                 Log.e("ConversationModeActivity", "Failed to send message: " + task.getException());
                             }

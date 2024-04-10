@@ -18,6 +18,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class WelcomeScreen extends AppCompatActivity {
 
@@ -46,8 +51,26 @@ public class WelcomeScreen extends AppCompatActivity {
                     if (!Variables.guestUser.equals(user.getEmail())) {
                     Toast.makeText(WelcomeScreen.this, "Welcome back " + user.getEmail(), Toast.LENGTH_SHORT).show();
                     }
-                    startActivity(new Intent(WelcomeScreen.this, MainActivity.class));
-                    finish();
+                    DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid());
+                    userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.exists() && dataSnapshot.hasChild("sourceLanguage")) {
+                                // User has the sourceLanguage field, start MainActivity
+                                startActivity(new Intent(WelcomeScreen.this, MainActivity.class));
+                            } else {
+                                // User does not have the sourceLanguage field, start LanguageSetupActivity
+                                startActivity(new Intent(WelcomeScreen.this, LanguageSetupActivity.class));
+                            }
+                            finish();
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+                            // Handle database error
+                            Toast.makeText(WelcomeScreen.this, "Database error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 } else {
                     btnWLogin.setVisibility(View.VISIBLE);
                     btnWSkip.setVisibility(View.VISIBLE);
