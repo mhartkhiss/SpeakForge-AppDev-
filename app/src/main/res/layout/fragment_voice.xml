@@ -48,21 +48,24 @@
     <com.google.android.material.textfield.TextInputLayout
         style="@style/CustomOutlinedBox"
         android:layout_width="match_parent"
+        android:id="@+id/textInputLayout"
         android:layout_height="wrap_content"
         android:layout_above="@id/startSpeakingButton"
         android:layout_marginLeft="20dp"
+        android:hint="Enter text to translate"
+        android:textColorHint="#555454"
         android:layout_marginRight="20dp"
         android:layout_marginBottom="20dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/TextInput"
+            android:id="@+id/textInputEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:foregroundTint="#673AB7"
+            android:singleLine="true"
             android:textColor="@color/black"
-            android:textColorHint="@color/black"
-            android:hint="Enter text to translate" />
+            android:textColorHint="@color/black" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button

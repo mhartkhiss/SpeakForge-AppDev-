@@ -5,12 +5,15 @@ import android.content.Intent;
 import android.speech.RecognizerIntent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,6 +30,8 @@ import com.example.appdev.classes.Translate;
 import com.example.appdev.classes.TranslationTask;
 import com.example.appdev.classes.Variables;
 import com.example.appdev.models.LanguageModel;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseError;
@@ -46,6 +51,9 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
     private ArrayList<LanguageModel> languageModels = new ArrayList<>();
     private String sourceLanguageCode, targetLanguageCode;
 
+    private TextInputEditText textInputEditText;
+    private TextInputLayout textInputLayout;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -58,6 +66,9 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 
         super.onViewCreated(view, savedInstanceState);
+
+        textInputEditText = view.findViewById(R.id.textInputEditText);
+        textInputLayout = view.findViewById(R.id.textInputLayout);
 
         // Initialize Firebase
         FirebaseApp.initializeApp(requireContext());
@@ -75,7 +86,25 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, languages);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
-        //spinner2.setAdapter(adapter);
+
+        textInputEditText.setOnKeyListener((v, keyCode, event) -> {
+            if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                String targetLanguage = spinner.getSelectedItem().toString();
+                TranslationTask translationTask = new TranslationTask(targetLanguage, new TranslationTask.TranslationListener() {
+                    @Override
+                    public void onTranslationComplete(String translatedMessage) {
+                        if (!TextUtils.isEmpty(translatedMessage)) {
+                            textViewResult.setText(translatedMessage);
+                        }
+                    }
+                });
+                translationTask.execute(textInputEditText.getText().toString());
+                return true;
+            }
+            return false;
+        });
+
+
 
     }
 
@@ -251,4 +280,5 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
             }
         }
     }
+
 }
