@@ -19,6 +19,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class ChangePassControl implements View.OnClickListener {
 
+    private Boolean cpStatus = false;
     private Context context;
     private EditText editTextOldPassword, editTextNewPassword, editTextConfirmPassword;
     private CardView cardViewChangePassword, cardViewProfile;
@@ -85,6 +86,8 @@ public class ChangePassControl implements View.OnClickListener {
                                         // Hide the change password card view and show the profile card view
                                         cardViewChangePassword.setVisibility(View.GONE);
                                         cardViewProfile.setVisibility(View.VISIBLE);
+                                        // Set cpStatus to true as password change was successful
+                                        cpStatus = true;
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
@@ -92,6 +95,8 @@ public class ChangePassControl implements View.OnClickListener {
                                     public void onFailure(@NonNull Exception e) {
                                         // Password update failed
                                         Toast.makeText(context, "Failed to change password: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        // Set cpStatus to false as password change failed
+                                        cpStatus = false;
                                     }
                                 });
                     }
@@ -101,6 +106,8 @@ public class ChangePassControl implements View.OnClickListener {
                     public void onFailure(@NonNull Exception e) {
                         // Reauthentication failed
                         Toast.makeText(context, "Failed to reauthenticate: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        // Set cpStatus to false as reauthentication failed
+                        cpStatus = false;
                     }
                 });
     }

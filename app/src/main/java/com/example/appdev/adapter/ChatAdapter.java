@@ -128,12 +128,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                         messageVariations.add(message.getMessageVar1().replace("\"", ""));
                         messageVariations.add(message.getMessageVar2().replace("\"", ""));
                         messageVariations.add(message.getMessageVar3().replace("\"", ""));
-                        //messageVariations.add(message.getMessageVar4().replace("\"", ""));
-                        //messageVariations.add(message.getMessageVar5().replace("\"", ""));
 
-                        //Toast.makeText(v.getContext(), roomId, Toast.LENGTH_SHORT).show();
-
-                        // Find the index of the current message in the messageVariations list
                         int currentIndex = messageVariations.indexOf(currentMessage);
 
                         // Select the next variation in the list

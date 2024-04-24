@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -93,7 +94,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             intent.putExtra("username", currentUser.getUsername()); // Pass the username to the ConversationModeActivity
             intent.putExtra("email", currentUser.getEmail()); // Pass the email to the ConversationModeActivity
             intent.putExtra("profileImageUrl", currentUser.getProfileImageUrl()); // Pass the profile
-            intent.putExtra("recipientLanguage", currentUser.getSourceLanguage());
+            intent.putExtra("recipientLanguage", currentUser.getLanguage());
             context.startActivity(intent);
         }
     }

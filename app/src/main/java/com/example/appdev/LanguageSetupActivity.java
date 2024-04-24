@@ -50,7 +50,7 @@ public class LanguageSetupActivity extends AppCompatActivity {
         if (currentUser != null) {
             String uid = currentUser.getUid();
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
-            userRef.child("sourceLanguage").setValue(language)
+            userRef.child("language").setValue(language)
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {

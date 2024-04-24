@@ -17,8 +17,8 @@
         android:background="@drawable/spinner_background"
         android:entries="@array/languages"
         android:padding="8dp"
-        android:popupBackground="#393939"
-        android:textColor="@android:color/black" />
+        android:popupBackground="#C3C3C3"
+        android:textColor="@android:color/white" />
 
     <LinearLayout
         android:id="@+id/linearLayout"

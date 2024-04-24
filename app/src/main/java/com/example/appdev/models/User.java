@@ -4,18 +4,27 @@ public class User {
     private String userId;
     private String username;
     private String email;
-    private String profileImageUrl; // Add profileImageUrl field
-    private String targetLanguage, sourceLanguage;
+    private String profileImageUrl;
+    private String targetLanguage, language;
+    private String role;
+    private String createdAt;
+    private String lastLoginDate;
+
 
     public User() {
         // Default constructor required for Firebase
     }
 
-    public User(String userId, String username, String email, String profileImageUrl) {
+    public User(String userId, String username, String email, String profileImageUrl, String role,
+                String language, String createdAt, String lastLoginDate) {
         this.userId = userId;
         this.username = username;
         this.email = email;
-        this.profileImageUrl = profileImageUrl; // Initialize profileImageUrl field
+        this.profileImageUrl = profileImageUrl;
+        this.role = role;
+        this.language = language;
+        this.createdAt = createdAt;
+        this.lastLoginDate = lastLoginDate;
     }
 
     public String getUserId() {
@@ -58,12 +67,37 @@ public class User {
         return targetLanguage;
     }
 
-    public void setSourceLanguage(String sourceLanguage) {
-        this.sourceLanguage = sourceLanguage;
+    public void setLanguage(String language) {
+        this.language = language;
     }
 
-    public String getSourceLanguage() {
-        return sourceLanguage;
+    public String getLanguage() {
+        return language;
     }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setLastLoginDate(String lastLoginDate) {
+        this.lastLoginDate = lastLoginDate;
+    }
+
+    public String getLastLoginDate() {
+        return lastLoginDate;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
 }
 

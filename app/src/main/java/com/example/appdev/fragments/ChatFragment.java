@@ -103,7 +103,7 @@ public class ChatFragment extends Fragment {
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     // Convert each user data snapshot to a User object
                     User user = snapshot.getValue(User.class);
-                    if (user != null && !user.getUserId().equals(currentUserId) && !Variables.guestUser.equals(user.getEmail())) {
+                    if (user != null && user.getUserId() != null && !user.getUserId().equals(currentUserId) && user.getEmail() != null && !Variables.guestUser.equals(user.getEmail())) {
                         userList.add(user);
                     }
                 }

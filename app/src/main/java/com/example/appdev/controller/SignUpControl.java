@@ -17,8 +17,16 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class SignUpControl implements View.OnClickListener {
+
+    private Boolean isSignUpValid;
+
+
+
 
     private Context context;
     private EditText emailEditText, passwordEditText, confirmPasswordEditText;
@@ -44,7 +52,9 @@ public class SignUpControl implements View.OnClickListener {
         String password = passwordEditText.getText().toString().trim();
         String confirmPassword = confirmPasswordEditText.getText().toString().trim();
 
-        if (validateSignUpFields(email, password, confirmPassword)) {
+        isSignUpValid = validateSignUpFields(email, password, confirmPassword);
+
+        if (isSignUpValid) {
             FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
@@ -52,9 +62,10 @@ public class SignUpControl implements View.OnClickListener {
                             if (user != null) {
                                 String userId = user.getUid();
                                 String username = email;
+                                String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
                                 FirebaseDatabase.getInstance().getReference("users")
                                         .child(userId)
-                                        .setValue(new User(userId, username, email, "none"))
+                                        .setValue(new User(userId, username, email, "none", "user", null, timestamp, timestamp))
                                         .addOnCompleteListener(databaseTask -> {
                                             if (databaseTask.isSuccessful()) {
                                                 Toast.makeText(context, "Sign up successful", Toast.LENGTH_SHORT).show();

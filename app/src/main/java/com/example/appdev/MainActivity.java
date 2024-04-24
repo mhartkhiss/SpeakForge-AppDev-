@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,19 +11,17 @@ import android.os.Bundle;
 import androidx.viewpager.widget.ViewPager;
 
 import android.util.Log;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.appdev.adapter.TabAdapter;
+import com.example.appdev.classes.Variables;
 import com.example.appdev.fragments.ChatFragment;
 import com.example.appdev.fragments.ProfileFragment;
 import com.example.appdev.fragments.VoiceFragment;
 import com.example.appdev.models.User;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -34,6 +31,7 @@ import com.google.firebase.database.ValueEventListener;
 public class MainActivity extends AppCompatActivity {
 
     public static User currentUser;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +56,8 @@ public class MainActivity extends AppCompatActivity {
                     String targetLanguage = dataSnapshot.child("targetLanguage").getValue(String.class);
 
                     // Create User object
-                    currentUser = new User(userId, username, email, profileImageUrl);
-                    currentUser.setSourceLanguage(sourceLanguage);
+                    //currentUser = new User(userId, username, email, profileImageUrl);
+                    //currentUser.setUserLanguage(sourceLanguage);
                     currentUser.setTargetLanguage(targetLanguage);
                 }
             }
@@ -95,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                 String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
 
                 // Check if the selected tab is the profile or chat tab and user's email is "a@gmail.com"
-                if ((position == 0 || position == 2) && userEmail.equals("a@gmail.com")) {
+                if ((position == 0 || position == 2) && userEmail.equals(Variables.guestUser)) {
 
                     // Display a dialog with message and options to login or cancel
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -128,28 +126,6 @@ public class MainActivity extends AppCompatActivity {
                             .create()
                             .show();
                 }
-                /*else if (position == 2) {
-                    // Check if the user has the sourceLanguage field in the users database
-                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                    DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid());
-                    userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.exists() && dataSnapshot.hasChild("sourceLanguage")) {
-                            } else {
-                                // User does not have the sourceLanguage field, start LanguageSetupActivity
-                                startActivity(new Intent(MainActivity.this, LanguageSetupActivity.class));
-                                tabLayout.getTabAt(1).select();
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-                            // Handle database error
-                            Toast.makeText(MainActivity.this, "Database error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }*/
             }
 
             @Override

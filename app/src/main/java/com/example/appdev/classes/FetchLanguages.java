@@ -1,10 +1,6 @@
 package com.example.appdev.classes;
 
-import android.app.Activity;
 import android.content.Context;
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
-import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -12,10 +8,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.appdev.R;
-import com.example.appdev.classes.Variables;
-import com.example.appdev.models.LanguageModel;
-import com.google.firebase.database.DatabaseError;
+import com.example.appdev.models.Languages;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,7 +26,7 @@ public class FetchLanguages {
                     @Override
                     public void onResponse(JSONObject response) {
                         // Parse the response
-                        ArrayList<LanguageModel> languages = new ArrayList<>();
+                        ArrayList<Languages> languages = new ArrayList<>();
                         try {
                             // Parse the response here
                             JSONArray jsonArray = response.getJSONArray("languages");
@@ -42,7 +35,7 @@ public class FetchLanguages {
                                 JSONObject languageObject = jsonArray.getJSONObject(i);
                                 String name = languageObject.getString("name");
                                 String code = languageObject.getString("code");
-                                languages.add(new LanguageModel(name, code));
+                                languages.add(new Languages(name, code));
                             }
 
                             // Notify listener with supported languages
@@ -68,7 +61,7 @@ public class FetchLanguages {
     }
 
     public interface LanguagesListener {
-        void onLanguagesReceived(ArrayList<LanguageModel> languages);
+        void onLanguagesReceived(ArrayList<Languages> languages);
         void onError(VolleyError error);
     }
 

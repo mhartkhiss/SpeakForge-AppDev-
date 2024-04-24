@@ -155,7 +155,7 @@ public class ConversationModeActivity extends AppCompatActivity {
     }
     private void sendMessage() {
         // Get the sender and target languages
-        FetchUserField.fetchUserField("sourceLanguage", new FetchUserField.UserFieldListener() {
+        FetchUserField.fetchUserField("language", new FetchUserField.UserFieldListener() {
             @Override
             public void onFieldReceived(String senderLanguage) {
                 String targetLanguage = recipientLanguage;

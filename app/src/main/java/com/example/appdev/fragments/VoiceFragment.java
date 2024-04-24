@@ -29,7 +29,7 @@ import com.example.appdev.R; // Replace with your actual package name
 import com.example.appdev.classes.FetchUserField;
 import com.example.appdev.classes.TranslationTask_OpenAI;
 import com.example.appdev.classes.Variables;
-import com.example.appdev.models.LanguageModel;
+import com.example.appdev.models.Languages;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
@@ -45,7 +45,7 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
     private TextView textViewResult;
 
     private Spinner spinner, spinner2;
-    private ArrayList<LanguageModel> languageModels = new ArrayList<>();
+    private ArrayList<Languages> languageModels = new ArrayList<>();
     private String sourceLanguageCode, targetLanguageCode;
 
     private TextInputEditText textInputEditText;
@@ -70,11 +70,7 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
         // Initialize Firebase
         FirebaseApp.initializeApp(requireContext());
 
-        // Fetch supported languages
-        //FetchLanguages.fetchSupportedLanguages(requireContext(), this);
         setDefaultSpinnerValue();
-
-        // Set listeners
         setListeners(view);
 
         spinner = requireView().findViewById(R.id.languageSpinner);
@@ -91,24 +87,15 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
                     @Override
                     public void onTranslationComplete(String translatedMessage) {
                         if (!TextUtils.isEmpty(translatedMessage)) {
-                           /* String[] lines = translatedMessage.split("\n");
-
-                            // Check if there are at least 5 lines
-                            if (lines.length >= 3) {
-                                // Store each line in a separate variable
-                                String messageVar1 = lines[0];
-                                String messageVar2 = lines[1];
-                                String messageVar3 = lines[2];
-
-                                messageVar1.replace("\"", "");
-                                messageVar2.replace("\"", "");
-                                messageVar3.replace("\"", "");
-
-                                messageVar1 = messageVar1.replaceFirst("^\\d+\\.\\s*", "");
-                                messageVar2 = messageVar2.replaceFirst("^\\d+\\.\\s*", "");
-                                messageVar3 = messageVar3.replaceFirst("^\\d+\\.\\s*", "");
-                            }*/
-                            textViewResult.setText(translatedMessage);
+                            // Split the translatedMessage by newline character
+                            String[] lines = translatedMessage.split("\n");
+                            // Check if there is at least one line
+                            if (lines.length > 0) {
+                                // Remove the number from the first line
+                                String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
+                                // Set the text of textViewResult to the first line
+                                textViewResult.setText(firstLine);
+                            }
                         }
                     }
                 });
@@ -134,7 +121,11 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
                     @Override
                     public void onTranslationComplete(String translatedMessage) {
                         if (!TextUtils.isEmpty(translatedMessage)) {
-                            textViewResult.setText(translatedMessage);
+                            String[] lines = translatedMessage.split("\n");
+                            if (lines.length > 0) {
+                                String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
+                                textViewResult.setText(firstLine);
+                            }
                             textInputEditText.setText("");
                             textInputEditText.clearFocus();
 
@@ -182,13 +173,13 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
 
     }
 
-    public void onLanguagesReceived(ArrayList<LanguageModel> languages) {
+    public void onLanguagesReceived(ArrayList<Languages> languages) {
         // Handle received languages
         languageModels.addAll(languages); // Add the received languages to the list
 
         // Create an array of language names
         ArrayList<String> languageNames = new ArrayList<>();
-        for (LanguageModel language : languages) {
+        for (Languages language : languages) {
             languageNames.add(language.getName());
         }
 
@@ -204,23 +195,21 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
                 // Get the selected language name
                 String selectedLanguageName = languageNames.get(position);
                 // Find the corresponding LanguageModel object
-                LanguageModel selectedLanguage = null;
-                for (LanguageModel language : languageModels) {
+                Languages selectedLanguage = null;
+                for (Languages language : languageModels) {
                     if (language.getName().equals(selectedLanguageName)) {
                         selectedLanguage = language;
                         break;
                     }
                 }
-                // If selectedLanguage is not null, you can get the code for the selected language
                 if (selectedLanguage != null) {
                     targetLanguageCode = selectedLanguage.getCode();
-                    // Do whatever you need with the selected language code
                 }
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // Handle the case where nothing is selected
+
             }
         });
 
@@ -230,8 +219,8 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
                 // Get the selected language name
                 String selectedLanguageName = languageNames.get(position);
                 // Find the corresponding LanguageModel object
-                LanguageModel selectedLanguage = null;
-                for (LanguageModel language : languageModels) {
+                Languages selectedLanguage = null;
+                for (Languages language : languageModels) {
                     if (language.getName().equals(selectedLanguageName)) {
                         selectedLanguage = language;
                         break;
@@ -240,13 +229,12 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
                 // If selectedLanguage is not null, you can get the code for the selected language
                 if (selectedLanguage != null) {
                     sourceLanguageCode = selectedLanguage.getCode();
-                    // Do whatever you need with the selected language code
                 }
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // Handle the case where nothing is selected
+
             }
         });
     }
@@ -293,34 +281,12 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
             }
         });
 
-        /*FetchUserField.fetchUserField("sourceLanguage", new FetchUserField.UserFieldListener() {
-            @Override
-            public void onFieldReceived(String fieldValue) {
-                Spinner spinner = getView().findViewById(R.id.languageSpinner2);
-                if (spinner != null) {
-                    ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinner.getAdapter();
-                    if (adapter != null) {
-                        int position = adapter.getPosition(fieldValue);
-                        if (position != -1) {
-                            spinner.setSelection(position);
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onError(DatabaseError databaseError) {
-                // Handle error
-            }
-        });*/
-
-
     }
 
     private void startSpeechRecognition() {
 
         Variables.userRef.child("targetLanguage").setValue(spinner.getSelectedItem().toString());
-       // Variables.userRef.child("sourceLanguage").setValue(spinner2.getSelectedItem().toString());
+       // Variables.userRef.child("language").setValue(spinner2.getSelectedItem().toString());
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
@@ -346,7 +312,14 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
                     @Override
                     public void onTranslationComplete(String translatedMessage) {
                         if (!TextUtils.isEmpty(translatedMessage)) {
-                            textViewResult.setText(translatedMessage);
+                            String[] lines = translatedMessage.split("\n");
+                            // Check if there is at least one line
+                            if (lines.length > 0) {
+                                // Remove the number from the first line
+                                String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
+                                // Set the text of textViewResult to the first line
+                                textViewResult.setText(firstLine);
+                            }
                         }
                     }
                 });

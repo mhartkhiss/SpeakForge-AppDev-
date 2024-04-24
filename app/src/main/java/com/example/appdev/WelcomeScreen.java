@@ -55,12 +55,15 @@ public class WelcomeScreen extends AppCompatActivity {
                     userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.exists() && dataSnapshot.hasChild("sourceLanguage")) {
-                                // User has the sourceLanguage field, start MainActivity
-                                startActivity(new Intent(WelcomeScreen.this, MainActivity.class));
-                            } else {
-                                // User does not have the sourceLanguage field, start LanguageSetupActivity
-                                startActivity(new Intent(WelcomeScreen.this, LanguageSetupActivity.class));
+                            if (dataSnapshot.exists()) {
+                                String language = dataSnapshot.child("language").getValue(String.class);
+                                if (language != null) {
+                                    // User has the sourceLanguage field, start MainActivity
+                                    startActivity(new Intent(WelcomeScreen.this, MainActivity.class));
+                                } else {
+                                    // User does not have the sourceLanguage field, start LanguageSetupActivity
+                                    startActivity(new Intent(WelcomeScreen.this, LanguageSetupActivity.class));
+                                }
                             }
                             finish();
                         }
