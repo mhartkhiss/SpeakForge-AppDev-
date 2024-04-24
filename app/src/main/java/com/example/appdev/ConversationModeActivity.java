@@ -6,18 +6,21 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.android.volley.VolleyError;
+import com.bumptech.glide.Glide;
 import com.example.appdev.adapter.ChatAdapter;
 import com.example.appdev.classes.FetchUserField;
 import com.example.appdev.classes.Translate;
-import com.example.appdev.classes.TranslationTask;
+import com.example.appdev.classes.TranslationTask_OpenAI;
 import com.example.appdev.models.ChatMessage;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -68,7 +71,7 @@ public class ConversationModeActivity extends AppCompatActivity {
         buttonSend = findViewById(R.id.buttonSend);
 
         // Initialize RecyclerView
-        chatAdapter = new ChatAdapter();
+        chatAdapter = new ChatAdapter(messagesRef, roomId);
 
         recyclerViewChat.setAdapter(chatAdapter);
 
@@ -81,22 +84,65 @@ public class ConversationModeActivity extends AppCompatActivity {
 
         // Set click listener for send button
         buttonSend.setOnClickListener(v -> sendMessage());
+
+        ImageButton buttonMic = findViewById(R.id.buttonMic);
+        editTextMessage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // This method is called to notify you that, within s, the count characters
+                // beginning at start are about to be replaced by new text with length after.
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // This method is called to notify you that, within s, the count characters
+                // beginning at start have just replaced old text that had length before.
+                if(s.toString().trim().length() > 0) {
+                    buttonMic.setVisibility(View.GONE);
+                    buttonSend.setVisibility(View.VISIBLE);
+                } else {
+                    buttonMic.setVisibility(View.VISIBLE);
+                    buttonSend.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // This method is called to notify you that, somewhere within s, the text has
+                // been changed.
+            }
+        });
+        ImageView imageViewBack = findViewById(R.id.imageViewBack);
+        imageViewBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
         loadMessages();
-        textViewRecipient = findViewById(R.id.textViewRecipient);
+        //textViewRecipient = findViewById(R.id.textViewRecipient);
 
         // Retrieve recipient information from intent extras
         String recipientName = getIntent().getStringExtra("username");
         String recipientEmail = getIntent().getStringExtra("email");
         recipientLanguage = getIntent().getStringExtra("recipientLanguage");
-        System.out.println("Recipient Language: " + recipientLanguage);
+        String profileImageUrl = getIntent().getStringExtra("profileImageUrl");
+        de.hdodenhof.circleimageview.CircleImageView imageViewUserPicture = findViewById(R.id.imageViewUserPicture);
 
-
-        // Set recipient name or email to the textViewRecipient
-        if (recipientName != null && !recipientName.isEmpty()) {
-            textViewRecipient.setText(recipientName);
-        } else if (recipientEmail != null && !recipientEmail.isEmpty()) {
-            textViewRecipient.setText(recipientEmail);
+        if (profileImageUrl != null && !profileImageUrl.equals("none")) {
+            Glide.with(this)
+                    .load(profileImageUrl) // Replace with the URL or URI of the user's image
+                    .into(imageViewUserPicture);
+        } else {
+            imageViewUserPicture.setImageResource(R.drawable.default_userpic);
         }
+
+        TextView textViewUsername = findViewById(R.id.textViewUsername);
+        TextView textViewRecipientLanguage = findViewById(R.id.textViewRecipientLanguage);
+
+        textViewUsername.setText(recipientName);
+        textViewRecipientLanguage.setText(recipientLanguage);
     }
 
     private String generateRoomId(String senderId, String recipientId) {
@@ -150,7 +196,8 @@ public class ConversationModeActivity extends AppCompatActivity {
             }
             messageData.put("messageOG", messageTextOG);
             messageData.put("timestamp", timestamp);
-            messageData.put("senderId", senderId); // Add sender ID to message data
+            messageData.put("senderId", senderId);
+            messageData.put("messageId", messageId);
 
             // Save message to Firebase Database
             messagesRef.child(roomId).child(messageId).setValue(messageData)
@@ -180,11 +227,12 @@ public class ConversationModeActivity extends AppCompatActivity {
     }
 
     private void translateTextAndSendMessage(String senderLanguage, String targetLanguage, String messageTextOG, String messageId) {
-        TranslationTask translationTask = new TranslationTask(targetLanguage, new TranslationTask.TranslationListener() {
+        TranslationTask_OpenAI translationTask = new TranslationTask_OpenAI(targetLanguage, new TranslationTask_OpenAI.TranslationListener() {
             @Override
             public void onTranslationComplete(String translatedMessage) {
                 if (!TextUtils.isEmpty(translatedMessage)) {
-                    updateMessageWithTranslation(messageId, translatedMessage);
+                    //updateMessageWithTranslation(messageId, translatedMessage);
+                    storeTranslatedText(translatedMessage, messageId);
                 }
             }
         });
@@ -206,7 +254,42 @@ public class ConversationModeActivity extends AppCompatActivity {
         messagesRef.child(roomId).child(messageId).child("message").setValue(translatedMessage);
     }
 
+    private void storeTranslatedText(String translatedMessage, String messageId) {
+        // Split the translated text by line breaks
+        String[] lines = translatedMessage.split("\n");
 
+        // Check if there are at least 5 lines
+        if (lines.length >= 3) {
+            // Store each line in a separate variable
+            String messageVar1 = lines[0];
+            String messageVar2 = lines[1];
+            String messageVar3 = lines[2];
+
+            messageVar1 = removeQuotationMarks(messageVar1);
+            messageVar2 = removeQuotationMarks(messageVar2);
+            messageVar3 = removeQuotationMarks(messageVar3);
+
+            messageVar1 = messageVar1.replaceFirst("^\\d+\\.\\s*", "");
+            messageVar2 = messageVar2.replaceFirst("^\\d+\\.\\s*", "");
+            messageVar3 = messageVar3.replaceFirst("^\\d+\\.\\s*", "");
+
+            // Update the message with translated text
+            messagesRef.child(roomId).child(messageId).child("messageVar1").setValue(messageVar1);
+            messagesRef.child(roomId).child(messageId).child("messageVar2").setValue(messageVar2);
+            messagesRef.child(roomId).child(messageId).child("messageVar3").setValue(messageVar3);
+
+            updateMessageWithTranslation(messageId, messageVar1);
+        } else {
+            Log.e("ConversationModeActivity", "Translated text does not have at least 5 lines");
+        }
+    }
+
+    private String removeQuotationMarks(String text) {
+        if (text.startsWith("\"") && text.endsWith("\"")) {
+            return text.substring(1, text.length() - 1);
+        }
+        return text;
+    }
 
 
 

@@ -45,6 +45,7 @@
 
     </LinearLayout>
 
+
     <com.google.android.material.textfield.TextInputLayout
         style="@style/CustomOutlinedBox"
         android:layout_width="match_parent"
@@ -81,5 +82,19 @@
         android:background="@drawable/button_background"
         android:text="@string/start_speaking"
         app:icon="@drawable/ic_voice" />
+    <Button
+        android:id="@+id/translateButton"
+        style="@style/AppTheme.Button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="48dp"
+        android:visibility="gone"
+        android:background="@drawable/button_background"
+        android:text="@string/translate_button"
+        app:icon="@drawable/ic_translate" />
 
 </RelativeLayout>

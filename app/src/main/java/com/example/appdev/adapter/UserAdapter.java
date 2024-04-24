@@ -16,6 +16,7 @@ import com.example.appdev.ConversationModeActivity;
 import com.example.appdev.R;
 import com.example.appdev.models.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
@@ -48,6 +49,12 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         return userList.size();
     }
 
+    public void updateList(List<User> newList) {
+        userList = new ArrayList<>();
+        userList.addAll(newList);
+        notifyDataSetChanged();
+    }
+
     public class UserViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private TextView textViewUsername;
@@ -68,7 +75,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             if (!user.getUserId().equals(currentUserId)) {
                 currentUser = user;
                 textViewUsername.setText(user.getUsername());
-                textViewEmail.setText(user.getSourceLanguage());
+                textViewEmail.setText(user.getEmail());
                 if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().equals("none")) {
                     Glide.with(context).load(user.getProfileImageUrl()).into(imageViewUserPicture);
                 } else {

@@ -4,19 +4,20 @@ import android.app.Activity;
 import android.content.Intent;
 import android.speech.RecognizerIntent;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,17 +27,13 @@ import com.android.volley.VolleyError;
 import com.example.appdev.classes.FetchLanguages;
 import com.example.appdev.R; // Replace with your actual package name
 import com.example.appdev.classes.FetchUserField;
-import com.example.appdev.classes.Translate;
-import com.example.appdev.classes.TranslationTask;
+import com.example.appdev.classes.TranslationTask_OpenAI;
 import com.example.appdev.classes.Variables;
 import com.example.appdev.models.LanguageModel;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -90,10 +87,27 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
         textInputEditText.setOnKeyListener((v, keyCode, event) -> {
             if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
                 String targetLanguage = spinner.getSelectedItem().toString();
-                TranslationTask translationTask = new TranslationTask(targetLanguage, new TranslationTask.TranslationListener() {
+                TranslationTask_OpenAI translationTask = new TranslationTask_OpenAI(targetLanguage, new TranslationTask_OpenAI.TranslationListener() {
                     @Override
                     public void onTranslationComplete(String translatedMessage) {
                         if (!TextUtils.isEmpty(translatedMessage)) {
+                           /* String[] lines = translatedMessage.split("\n");
+
+                            // Check if there are at least 5 lines
+                            if (lines.length >= 3) {
+                                // Store each line in a separate variable
+                                String messageVar1 = lines[0];
+                                String messageVar2 = lines[1];
+                                String messageVar3 = lines[2];
+
+                                messageVar1.replace("\"", "");
+                                messageVar2.replace("\"", "");
+                                messageVar3.replace("\"", "");
+
+                                messageVar1 = messageVar1.replaceFirst("^\\d+\\.\\s*", "");
+                                messageVar2 = messageVar2.replaceFirst("^\\d+\\.\\s*", "");
+                                messageVar3 = messageVar3.replaceFirst("^\\d+\\.\\s*", "");
+                            }*/
                             textViewResult.setText(translatedMessage);
                         }
                     }
@@ -102,6 +116,66 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
                 return true;
             }
             return false;
+        });
+
+        Button startSpeakingButton = view.findViewById(R.id.startSpeakingButton);
+        Button translateButton = view.findViewById(R.id.translateButton);
+
+        translateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.hideSoftInputFromWindow(textInputEditText.getWindowToken(), 0);
+                }
+                String targetLanguage = spinner.getSelectedItem().toString();
+
+                TranslationTask_OpenAI translationTask = new TranslationTask_OpenAI(targetLanguage, new TranslationTask_OpenAI.TranslationListener() {
+                    @Override
+                    public void onTranslationComplete(String translatedMessage) {
+                        if (!TextUtils.isEmpty(translatedMessage)) {
+                            textViewResult.setText(translatedMessage);
+                            textInputEditText.setText("");
+                            textInputEditText.clearFocus();
+
+                        }
+                    }
+                });
+                translationTask.execute(textInputEditText.getText().toString());
+            }
+        });
+        textInputEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // This method is called to notify you that, within s, the count characters
+                // beginning at start are about to be replaced by new text with length after.
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // This method is called to notify you that, within s, the count characters
+                // beginning at start have just replaced old text that had length before.
+                if(s.toString().trim().length() > 0) {
+                    startSpeakingButton.setVisibility(View.GONE);
+                    translateButton.setVisibility(View.VISIBLE);
+                    // Get the current LayoutParams of the textInputLayout
+                    RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) textInputLayout.getLayoutParams();
+                    params.addRule(RelativeLayout.ABOVE, R.id.translateButton);
+                    textInputLayout.setLayoutParams(params);
+                } else {
+                    RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) textInputLayout.getLayoutParams();
+                    params.addRule(RelativeLayout.ABOVE, R.id.startSpeakingButton);
+                    textInputLayout.setLayoutParams(params);
+                    startSpeakingButton.setVisibility(View.VISIBLE);
+                    translateButton.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // This method is called to notify you that, somewhere within s, the text has
+                // been changed.
+            }
         });
 
 
@@ -268,7 +342,7 @@ public class VoiceFragment extends Fragment implements FetchLanguages.LanguagesL
                 String targetLanguage = spinner.getSelectedItem().toString();
 
 
-                TranslationTask translationTask = new TranslationTask(targetLanguage, new TranslationTask.TranslationListener() {
+                TranslationTask_OpenAI translationTask = new TranslationTask_OpenAI(targetLanguage, new TranslationTask_OpenAI.TranslationListener() {
                     @Override
                     public void onTranslationComplete(String translatedMessage) {
                         if (!TextUtils.isEmpty(translatedMessage)) {

@@ -43,21 +43,55 @@ public class ChatFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Initialize userList and userAdapter
+        userList = new ArrayList<>();
+        userAdapter = new UserAdapter(userList, requireContext(), FirebaseAuth.getInstance().getCurrentUser().getUid());
+    }
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         // Initialize views
         recyclerViewUsers = view.findViewById(R.id.recyclerViewUsers);
+        androidx.appcompat.widget.SearchView searchViewUsers = view.findViewById(R.id.searchViewUsers);
 
         // Initialize RecyclerView
-        userList = new ArrayList<>();
-        userAdapter = new UserAdapter(userList, requireContext(), FirebaseAuth.getInstance().getCurrentUser().getUid());
+
         recyclerViewUsers.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerViewUsers.setAdapter(userAdapter);
 
+        // Add listener to SearchView
+        searchViewUsers.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                // Create a new list to hold the filtered users
+                List<User> filteredList = new ArrayList<>();
+
+                // Iterate over the userList and add any users whose email or username contains the search query to the filteredList
+                for (User user : userList) {
+                    if (user.getEmail().toLowerCase().contains(newText.toLowerCase()) || user.getUsername().toLowerCase().contains(newText.toLowerCase())) {
+                        filteredList.add(user);
+                    }
+                }
+
+                // Update the RecyclerView with the filtered list
+                userAdapter.updateList(filteredList);
+
+                return false;
+            }
+        });
         // Retrieve list of users from Firebase Authentication
         getUsersFromFirebase();
     }
+
 
     private void getUsersFromFirebase() {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");

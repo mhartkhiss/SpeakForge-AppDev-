@@ -14,12 +14,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 
-public class TranslationTask extends AsyncTask<String, Void, String> {
+public class TranslationTask_OpenAI extends AsyncTask<String, Void, String> {
 
     private String targetLanguage;
     private TranslationListener listener;
 
-    public TranslationTask(String targetLanguage, TranslationListener listener) {
+    public TranslationTask_OpenAI(String targetLanguage, TranslationListener listener) {
         this.targetLanguage = targetLanguage;
         this.listener = listener;
     }
