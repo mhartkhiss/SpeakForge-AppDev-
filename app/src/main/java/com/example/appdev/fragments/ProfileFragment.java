@@ -43,6 +43,7 @@ public class ProfileFragment extends Fragment {
     private ImageView imageViewUserPicture;
     private CardView cardViewEditDetails, cardViewProfile, cardViewLanguage, cardViewChangePassword;
     private Button btnSaveChanges, btnChangeLanguage, btnChangePassword, btnChangePassword2, btnEnglish, btnTagalog, btnBisaya;
+    private Button[] btnLanguages = new Button[3];
     private EditText editTextUsername, editTextOldPassword, editTextNewPassword, editTextConfirmPassword;
     private ChangeProfilePicControl changeProfilePicControl;
     private UserLanguageControl userLanguageControl;
@@ -82,23 +83,12 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        setUserDetails();
-
         changeProfilePicControl = new ChangeProfilePicControl(this);
-        imageViewUserPicture.setOnClickListener(v -> changeProfilePicControl.selectImage());
 
-        textViewUsername.setOnClickListener(v -> toggleCardViews(cardViewEditDetails, cardViewProfile));
-        btnChangeLanguage.setOnClickListener(v -> toggleCardViews(cardViewLanguage, cardViewProfile));
-        btnChangePassword.setOnClickListener(v -> toggleCardViews(cardViewChangePassword, cardViewProfile));
+        setUserDetails();
+        setListeners();
 
-        btnChangePassword2.setOnClickListener(new ChangePassControl(getContext(), editTextOldPassword, editTextNewPassword,
-                editTextConfirmPassword, cardViewChangePassword, cardViewProfile));
 
-        btnEnglish.setOnClickListener(v -> userLanguageControl.updateUserLanguage("English", btnChangeLanguage));
-        btnTagalog.setOnClickListener(v -> userLanguageControl.updateUserLanguage("Tagalog", btnChangeLanguage));
-        btnBisaya.setOnClickListener(v -> userLanguageControl.updateUserLanguage("Bisaya", btnChangeLanguage));
-
-        btnSaveChanges.setOnClickListener(v -> saveChanges());
     }
 
     private void initializeViews(View view) {
@@ -113,9 +103,9 @@ public class ProfileFragment extends Fragment {
         btnChangeLanguage = view.findViewById(R.id.btnChangeLanguage);
         btnChangePassword = view.findViewById(R.id.btnChangePassword);
         btnChangePassword2 = view.findViewById(R.id.btnChangePassword2);
-        btnEnglish = view.findViewById(R.id.btnEnglish);
-        btnTagalog = view.findViewById(R.id.btnTagalog);
-        btnBisaya = view.findViewById(R.id.btnBisaya);
+        btnLanguages[0] = view.findViewById(R.id.btnBisaya);
+        btnLanguages[1] = view.findViewById(R.id.btnTagalog);
+        btnLanguages[2] = view.findViewById(R.id.btnEnglish);
         editTextUsername = view.findViewById(R.id.editTextUsername);
         editTextOldPassword = view.findViewById(R.id.editTextOldPassword);
         editTextNewPassword = view.findViewById(R.id.editTextNewPassword);
@@ -123,6 +113,34 @@ public class ProfileFragment extends Fragment {
         userLanguageControl = new UserLanguageControl(this);
     }
 
+    private void setListeners(){
+
+        //CHANGE PROFILE PIC LISTENER
+        imageViewUserPicture.setOnClickListener(v ->
+                changeProfilePicControl.selectImage()
+        );
+
+
+        //CHANGE LANGUAGE LISTENERS
+        btnChangeLanguage.setOnClickListener(v ->
+                toggleCardViews(cardViewLanguage, cardViewProfile)
+        );
+        //LANGUAGE BUTTONS LISTENERS
+        for (Button btnLanguage : btnLanguages) {
+            btnLanguage.setOnClickListener(v -> userLanguageControl.updateUserLanguage(btnLanguage.getText().toString(), btnChangeLanguage));
+        }
+
+        //CHANGE PASSWORD LISTENERS
+        btnChangePassword.setOnClickListener(v -> toggleCardViews(cardViewChangePassword, cardViewProfile));
+        btnChangePassword2.setOnClickListener(new ChangePassControl(getContext(), editTextOldPassword, editTextNewPassword,
+                editTextConfirmPassword, cardViewChangePassword, cardViewProfile));
+
+
+        //CHANGE USERNAME LISTENERS
+        textViewUsername.setOnClickListener(v -> toggleCardViews(cardViewEditDetails, cardViewProfile));
+        btnSaveChanges.setOnClickListener(v -> saveChanges());
+
+    }
     private void toggleCardViews(CardView cardViewToShow, CardView cardViewToHide) {
         cardViewToShow.setVisibility(View.VISIBLE);
         cardViewToHide.setVisibility(View.GONE);
