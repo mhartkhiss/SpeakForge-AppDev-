@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.speech.RecognizerIntent;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.example.appdev.classes.TranslationTask_OpenAI;
 

@@ -115,7 +115,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             } else {
                 textViewMessage.setText(message.getMessage());
                 // Add OnClickListener to textViewMessage
-                // Add OnClickListener to textViewMessage
                 textViewMessage.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
