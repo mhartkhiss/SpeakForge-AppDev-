@@ -25,7 +25,7 @@
         android:layout_marginBottom="32dp"
         android:fontFamily="@font/akaya_telivigala"
         android:gravity="center"
-        android:text="Real-time Voice and Chat Translator..."
+        android:text="Voice and Chat Translator"
         android:textColor="#6C6C6C"
         android:textSize="28dp"
         app:layout_constraintBottom_toTopOf="@+id/btnWLogin"

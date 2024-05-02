@@ -133,6 +133,8 @@ public class BasicTranslationFragment extends Fragment {
                             if (lines.length > 0) {
                                 String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
                                 textViewResult.setText(firstLine);
+                                textViewResult.setTextColor(getResources().getColor(R.color.black));
+                                textViewResult.setTextSize(38);
                             }
                             textInputEditText.setText("");
                             textInputEditText.clearFocus();
@@ -181,6 +183,8 @@ public class BasicTranslationFragment extends Fragment {
                             if (lines.length > 0) {
                                 String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
                                 textViewResult.setText(firstLine);
+                                textViewResult.setTextColor(getResources().getColor(R.color.black));
+                                textViewResult.setTextSize(38);
                             }
                         }
                     }
@@ -224,12 +228,11 @@ public class BasicTranslationFragment extends Fragment {
                     public void onTranslationComplete(String translatedMessage) {
                         if (!TextUtils.isEmpty(translatedMessage)) {
                             String[] lines = translatedMessage.split("\n");
-                            // Check if there is at least one line
                             if (lines.length > 0) {
-                                // Remove the number from the first line
                                 String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
-                                // Set the text of textViewResult to the first line
                                 textViewResult.setText(firstLine);
+                                textViewResult.setTextColor(getResources().getColor(R.color.black));
+                                textViewResult.setTextSize(38);
                             }
                         }
                     }

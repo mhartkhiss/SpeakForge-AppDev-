@@ -104,7 +104,7 @@
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
-
+        <!-- CHANGE PASSWORD LAYOUT -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardViewChangePassword"
             android:layout_width="match_parent"

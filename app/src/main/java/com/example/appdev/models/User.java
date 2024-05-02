@@ -5,7 +5,7 @@ public class User {
     private String username;
     private String email;
     private String profileImageUrl;
-    private String targetLanguage, language;
+    private String language;
     private String role;
     private String createdAt;
     private String lastLoginDate;
@@ -57,14 +57,6 @@ public class User {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
-    }
-
-    public void setTargetLanguage(String targetLanguage) {
-        this.targetLanguage = targetLanguage;
-    }
-
-    public String getTargetLanguage() {
-        return targetLanguage;
     }
 
     public void setLanguage(String language) {

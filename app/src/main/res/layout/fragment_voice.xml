@@ -36,9 +36,9 @@
             android:layout_width="match_parent"
             android:layout_height="450dp"
             android:gravity="center"
-            android:text="Recognized Text Will Appear Here"
-            android:textColor="@color/black"
-            android:textSize="38sp"
+            android:text="Start typing in the textbox or press the button to start speaking"
+            android:textColor="#B8B8B8"
+            android:textSize="29sp"
             android:textStyle="italic"
             android:visibility="visible"
             tools:visibility="visible" />

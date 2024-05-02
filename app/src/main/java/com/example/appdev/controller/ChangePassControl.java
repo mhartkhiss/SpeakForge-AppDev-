@@ -19,7 +19,6 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class ChangePassControl implements View.OnClickListener {
 
-    private Boolean cpStatus = false;
     private Context context;
     private EditText editTextOldPassword, editTextNewPassword, editTextConfirmPassword;
     private CardView cardViewChangePassword, cardViewProfile;
@@ -42,18 +41,15 @@ public class ChangePassControl implements View.OnClickListener {
     }
 
     private void validatePasswordFields() {
-        // Get the text entered in the old password, new password, and confirm password fields
         String oldPassword = editTextOldPassword.getText().toString().trim();
         String newPassword = editTextNewPassword.getText().toString().trim();
         String confirmPassword = editTextConfirmPassword.getText().toString().trim();
 
-        // Validate that all fields are not empty
         if (TextUtils.isEmpty(oldPassword) || TextUtils.isEmpty(newPassword) || TextUtils.isEmpty(confirmPassword)) {
             Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Check if new password matches confirm password
         if (!newPassword.equals(confirmPassword)) {
             Toast.makeText(context, "New password and confirm password do not match", Toast.LENGTH_SHORT).show();
             return;
@@ -63,40 +59,29 @@ public class ChangePassControl implements View.OnClickListener {
     }
 
     private void changePassword(String oldPassword, String newPassword) {
-        // Get the current user from FirebaseAuth
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        // Reauthenticate the user to ensure they are the legitimate owner of the account
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         AuthCredential credential = EmailAuthProvider.getCredential(currentUser.getEmail(), oldPassword);
         currentUser.reauthenticate(credential)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        // If reauthentication is successful, update the password
                         currentUser.updatePassword(newPassword)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
-                                        // Password updated successfully
                                         Toast.makeText(context, "Password changed successfully", Toast.LENGTH_SHORT).show();
-                                        // Clear the password fields
                                         editTextOldPassword.setText("");
                                         editTextNewPassword.setText("");
                                         editTextConfirmPassword.setText("");
-                                        // Hide the change password card view and show the profile card view
                                         cardViewChangePassword.setVisibility(View.GONE);
                                         cardViewProfile.setVisibility(View.VISIBLE);
-                                        // Set cpStatus to true as password change was successful
-                                        cpStatus = true;
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
                                     @Override
                                     public void onFailure(@NonNull Exception e) {
-                                        // Password update failed
                                         Toast.makeText(context, "Failed to change password: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                        // Set cpStatus to false as password change failed
-                                        cpStatus = false;
                                     }
                                 });
                     }
@@ -104,10 +89,7 @@ public class ChangePassControl implements View.OnClickListener {
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        // Reauthentication failed
                         Toast.makeText(context, "Failed to reauthenticate: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        // Set cpStatus to false as reauthentication failed
-                        cpStatus = false;
                     }
                 });
     }
