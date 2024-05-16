@@ -11,4 +11,5 @@
     <color name="orange">#F4AE7B</color>
     <color name="lightGrey">#DFDFDF</color>
     <color name="selectedCardColor">#FF4081</color>
+    <color name="transparent">#00000000</color>
 </resources>

@@ -35,7 +35,6 @@ public class UserLanguageControl {
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            // Language updated successfully
                             btnChangeLanguage.setText("Language: " + language);
                             Toast.makeText(fragment.getActivity(), "Language updated successfully", Toast.LENGTH_SHORT).show();
                         }
@@ -43,7 +42,6 @@ public class UserLanguageControl {
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            // Failed to update language
                             Toast.makeText(fragment.getActivity(), "Failed to update language", Toast.LENGTH_SHORT).show();
                             Log.e(TAG, "Failed to update language: " + e.getMessage());
                         }

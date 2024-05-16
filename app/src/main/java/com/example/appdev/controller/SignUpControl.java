@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 
 import com.example.appdev.LoginActivity;
+import com.example.appdev.ProgressDialog;
 import com.example.appdev.R;
 import com.example.appdev.models.User;
 import com.google.firebase.auth.FirebaseAuth;
@@ -24,6 +25,7 @@ import java.util.Locale;
 public class SignUpControl implements View.OnClickListener {
 
     private Boolean isSignUpValid;
+    private ProgressDialog progressDialog;
 
 
 
@@ -36,10 +38,12 @@ public class SignUpControl implements View.OnClickListener {
         this.emailEditText = emailEditText;
         this.passwordEditText = passwordEditText;
         this.confirmPasswordEditText = confirmPasswordEditText;
+        this.progressDialog = new ProgressDialog((Activity) context);
     }
 
     @Override
     public void onClick(View v) {
+
         if (v.getId() == R.id.btnSignUp) {
             signUpUser();
         } else if (v.getId() == R.id.txtLogin) {
@@ -55,8 +59,11 @@ public class SignUpControl implements View.OnClickListener {
         isSignUpValid = validateSignUpFields(email, password, confirmPassword);
 
         if (isSignUpValid) {
+            progressDialog.show();
+            progressDialog.setText("Signing up...");
             FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
+                        progressDialog.dismiss();
                         if (task.isSuccessful()) {
                             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                             if (user != null) {
@@ -113,6 +120,7 @@ public class SignUpControl implements View.OnClickListener {
         Intent intent = new Intent(context, LoginActivity.class);
         context.startActivity(intent);
         ((Activity) context).finish();
+
     }
 }
 

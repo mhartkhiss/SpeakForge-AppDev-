@@ -49,6 +49,7 @@ public class ConversationModeActivity extends AppCompatActivity {
     private Translate translate;
 
 
+    //Establish Connection
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

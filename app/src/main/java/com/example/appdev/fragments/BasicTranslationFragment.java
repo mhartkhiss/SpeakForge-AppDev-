@@ -3,6 +3,7 @@ package com.example.appdev.fragments;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.os.Handler;
 import android.speech.RecognizerIntent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -13,6 +14,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -54,7 +57,7 @@ public class BasicTranslationFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         // HIDING THE TEXTVIEW WHEN THE KEYBOARD IS OPEN
-        rootView = inflater.inflate(R.layout.fragment_voice, container, false);
+        rootView = inflater.inflate(R.layout.fragment_basictranslation, container, false);
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -65,10 +68,8 @@ public class BasicTranslationFragment extends Fragment {
                 int keypadHeight = screenHeight - r.bottom;
 
                 if (keypadHeight > screenHeight * 0.15) {
-                    // keyboard is opened
                     textViewResult.setVisibility(View.GONE);
                 } else {
-                    // keyboard is closed
                     textViewResult.setVisibility(View.VISIBLE);
                 }
             }
@@ -119,6 +120,8 @@ public class BasicTranslationFragment extends Fragment {
         translateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                translateAnimation();
                 InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
                 if (imm != null) {
                     imm.hideSoftInputFromWindow(textInputEditText.getWindowToken(), 0);
@@ -195,6 +198,26 @@ public class BasicTranslationFragment extends Fragment {
 
             return false;
         });
+    }
+
+    private void translateAnimation(){
+
+        textViewResult.setText("Translating");
+        textViewResult.setTextColor(getResources().getColor(R.color.grey));
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            private int dotCount = 0;
+
+            @Override
+            public void run() {
+                textViewResult.append(".");
+                dotCount++;
+                if (dotCount < 3) {
+                    handler.postDelayed(this, 500);
+                }
+            }
+        }, 500);
+
     }
 
 

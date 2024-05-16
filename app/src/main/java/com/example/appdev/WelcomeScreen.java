@@ -29,6 +29,7 @@ public class WelcomeScreen extends AppCompatActivity {
     private Button btnWLogin, btnWSkip;
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +43,7 @@ public class WelcomeScreen extends AppCompatActivity {
         btnWSkip.setVisibility(View.GONE);
 
         mAuth = FirebaseAuth.getInstance();
+        progressDialog = new ProgressDialog(WelcomeScreen.this);
 
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -91,7 +93,7 @@ public class WelcomeScreen extends AppCompatActivity {
         btnWSkip.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Perform sign in with provided credentials
+                progressDialog.show();
                 String email = Variables.guestUser;
                 String password = Variables.guestUserPassword;
 
@@ -111,6 +113,7 @@ public class WelcomeScreen extends AppCompatActivity {
                                     Toast.makeText(WelcomeScreen.this, "Authentication failed.",
                                             Toast.LENGTH_SHORT).show();
                                 }
+                                progressDialog.dismiss();
                             }
                         });
             }
