@@ -13,7 +13,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.appdev.adapter.TabAdapter;
-import com.example.appdev.classes.Variables;
 import com.example.appdev.fragments.ChatFragment;
 import com.example.appdev.fragments.ProfileFragment;
 import com.example.appdev.fragments.BasicTranslationFragment;
@@ -57,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
                 String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
 
                 // Check if the selected tab is the profile or chat tab and user's email is "a@gmail.com"
-                if ((position == 0 || position == 2) && userEmail.equals(Variables.guestUser)) {
+                if ((position == 0 || position == 2) && userEmail.equals(Constants.guestUser)) {
 
                     // Display a dialog with message and options to login or cancel
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);

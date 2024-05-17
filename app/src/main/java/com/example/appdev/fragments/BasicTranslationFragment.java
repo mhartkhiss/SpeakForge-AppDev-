@@ -14,8 +14,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -28,8 +26,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.appdev.R;
-import com.example.appdev.classes.TranslationTask_OpenAI;
-import com.example.appdev.classes.Variables;
+import com.example.appdev.tasks.Translation;
+import com.example.appdev.Constants;
 import com.example.appdev.models.Languages;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -128,7 +126,7 @@ public class BasicTranslationFragment extends Fragment {
                 }
                 String targetLanguage = spinner.getSelectedItem().toString();
 
-                TranslationTask_OpenAI translationTask = new TranslationTask_OpenAI(targetLanguage, new TranslationTask_OpenAI.TranslationListener() {
+                Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {
                     @Override
                     public void onTranslationComplete(String translatedMessage) {
                         if (!TextUtils.isEmpty(translatedMessage)) {
@@ -178,7 +176,7 @@ public class BasicTranslationFragment extends Fragment {
         textInputEditText.setOnKeyListener((v, keyCode, event) -> {
             if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
                 String targetLanguage = spinner.getSelectedItem().toString();
-                TranslationTask_OpenAI translationTask = new TranslationTask_OpenAI(targetLanguage, new TranslationTask_OpenAI.TranslationListener() {
+                Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {
                     @Override
                     public void onTranslationComplete(String translatedMessage) {
                         if (!TextUtils.isEmpty(translatedMessage)) {
@@ -224,7 +222,7 @@ public class BasicTranslationFragment extends Fragment {
 
     private void startSpeechRecognition() {
 
-        Variables.userRef.child("targetLanguage").setValue(spinner.getSelectedItem().toString());
+        Constants.userRef.child("targetLanguage").setValue(spinner.getSelectedItem().toString());
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
@@ -246,7 +244,7 @@ public class BasicTranslationFragment extends Fragment {
                 String targetLanguage = spinner.getSelectedItem().toString();
 
 
-                TranslationTask_OpenAI translationTask = new TranslationTask_OpenAI(targetLanguage, new TranslationTask_OpenAI.TranslationListener() {
+                Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {
                     @Override
                     public void onTranslationComplete(String translatedMessage) {
                         if (!TextUtils.isEmpty(translatedMessage)) {

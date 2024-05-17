@@ -1,4 +1,4 @@
-package com.example.appdev.controller;
+package com.example.appdev.othercontrollers;
 
 import android.app.Activity;
 import android.content.Intent;

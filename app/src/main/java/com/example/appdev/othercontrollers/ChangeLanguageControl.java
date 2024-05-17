@@ -1,5 +1,4 @@
-// UserLanguageControl.java
-package com.example.appdev.controller;
+package com.example.appdev.othercontrollers;
 
 import android.util.Log;
 import android.view.View;
@@ -8,6 +7,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.example.appdev.Constants;
 import com.example.appdev.fragments.ProfileFragment;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -16,22 +16,20 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class UserLanguageControl {
+public class ChangeLanguageControl {
 
     private boolean status;
     private static final String TAG = "UserLanguageControl";
     private final ProfileFragment fragment;
 
-    public UserLanguageControl(ProfileFragment fragment) {
+    public ChangeLanguageControl(ProfileFragment fragment) {
         this.fragment = fragment;
     }
 
     public void updateUserLanguage(String language, Button btnChangeLanguage) {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            String uid = currentUser.getUid();
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
-            userRef.child("language").setValue(language)
+
+        if (Constants.currentUser != null) {
+            Constants.userRef.child("language").setValue(language)
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
@@ -47,7 +45,7 @@ public class UserLanguageControl {
                         }
                     });
         }
-        fragment.getCardViewLanguage().setVisibility(View.GONE);
+        fragment.getLayoutLanguageSelection().setVisibility(View.GONE);
         fragment.getCardViewProfile().setVisibility(View.VISIBLE);
     }
 }

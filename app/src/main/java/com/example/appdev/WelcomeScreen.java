@@ -12,7 +12,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.example.appdev.classes.Variables;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -50,7 +49,7 @@ public class WelcomeScreen extends AppCompatActivity {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
-                    if (!Variables.guestUser.equals(user.getEmail())) {
+                    if (!Constants.guestUser.equals(user.getEmail())) {
                     Toast.makeText(WelcomeScreen.this, "Welcome back " + user.getEmail(), Toast.LENGTH_SHORT).show();
                     }
                     DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(user.getUid());
@@ -94,8 +93,8 @@ public class WelcomeScreen extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 progressDialog.show();
-                String email = Variables.guestUser;
-                String password = Variables.guestUserPassword;
+                String email = Constants.guestUser;
+                String password = Constants.guestUserPassword;
 
                 FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener(WelcomeScreen.this, new OnCompleteListener<AuthResult>() {

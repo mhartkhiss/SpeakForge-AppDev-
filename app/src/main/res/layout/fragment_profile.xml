@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- ImageView2 - Positioned at the back -->
     <ImageView
         android:id="@+id/imageView2"
         android:layout_width="match_parent"
@@ -17,6 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="16dp">
+
     <!-- User Picture -->
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/imageViewUserPicture"
@@ -104,144 +104,22 @@
         </LinearLayout>
 
     </androidx.cardview.widget.CardView>
-        <!-- CHANGE PASSWORD LAYOUT -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardViewChangePassword"
+
+        <include
+            android:id="@+id/includeChangePassword"
+            layout="@layout/fragment_profile_sub_changepass"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp"
-            app:cardUseCompatPadding="true"
-            android:layout_below="@id/imageViewUserPicture"
             android:visibility="gone"
-            app:cardBackgroundColor="@color/lightGrey">
+            android:layout_below="@id/imageViewUserPicture" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/textInputLayoutOldPassword"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColorHint="#555454"
-                    app:boxStrokeColor="@color/black"
-                    android:hint="Old Password">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editTextOldPassword"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:backgroundTint="@color/lightGrey"
-                        android:textColor="@color/black"
-                        android:inputType="textPassword" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/textInputLayoutNewPassword"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColorHint="#555454"
-                    app:boxStrokeColor="@color/black"
-                    android:hint="New Password">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editTextNewPassword"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:backgroundTint="@color/lightGrey"
-                        android:textColor="@color/black"
-                        android:inputType="textPassword" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/textInputLayoutConfirmPassword"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColorHint="#555454"
-                    app:boxStrokeColor="@color/black"
-                    android:hint="Confirm Password">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editTextConfirmPassword"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:backgroundTint="@color/lightGrey"
-                        android:textColor="@color/black"
-                        android:inputType="textPassword" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <Button
-                    android:id="@+id/btnChangePassword2"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Change Password"
-                    android:backgroundTint="@color/orange"
-                    android:textColor="@color/black"
-                    android:layout_marginTop="8dp" />
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Change Language -->
-        <androidx.cardview.widget.CardView
+        <include
+            android:id="@+id/includeLanguageSelection"
+            layout="@layout/fragment_profile_sub_changelanguage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/cardViewLanguage"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp"
-            app:cardUseCompatPadding="true"
-            android:layout_below="@id/imageViewUserPicture"
-            app:cardBackgroundColor="@color/lightGrey"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:id="@+id/textViewLanguage"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Select Language"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/black"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="8dp"
-                    android:drawablePadding="8dp"/>
-
-                <Button
-                    android:id="@+id/btnEnglish"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="English"
-                    android:backgroundTint="#3DB8EF"
-                    android:textColor="@android:color/black"
-                    android:layout_marginBottom="8dp"/>
-
-                <Button
-                    android:id="@+id/btnTagalog"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Tagalog"
-                    android:backgroundTint="#3DB8EF"
-                    android:textColor="@android:color/black"/>
-                <Button
-                    android:id="@+id/btnBisaya"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Bisaya"
-                    android:backgroundTint="#3DB8EF"
-                    android:textColor="@android:color/black"/>
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+            android:visibility="gone"
+            android:layout_below="@id/imageViewUserPicture" />
 
         <androidx.cardview.widget.CardView
             android:id="@+id/cardViewEditDetails"

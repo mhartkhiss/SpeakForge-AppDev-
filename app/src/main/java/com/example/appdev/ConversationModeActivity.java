@@ -18,9 +18,8 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.example.appdev.adapter.ChatAdapter;
-import com.example.appdev.classes.FetchUserField;
-import com.example.appdev.classes.Translate;
-import com.example.appdev.classes.TranslationTask_OpenAI;
+import com.example.appdev.tasks.FetchUserField;
+import com.example.appdev.tasks.Translation;
 import com.example.appdev.models.ChatMessage;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -46,7 +45,6 @@ public class ConversationModeActivity extends AppCompatActivity {
     private TextView textViewRecipient;
     private TextView textViewTranslate;
     private String roomId, recipientLanguage, senderLanguage;
-    private Translate translate;
 
 
     //Establish Connection
@@ -228,7 +226,7 @@ public class ConversationModeActivity extends AppCompatActivity {
     }
 
     private void translateTextAndSendMessage(String senderLanguage, String targetLanguage, String messageTextOG, String messageId) {
-        TranslationTask_OpenAI translationTask = new TranslationTask_OpenAI(targetLanguage, new TranslationTask_OpenAI.TranslationListener() {
+        Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {
             @Override
             public void onTranslationComplete(String translatedMessage) {
                 if (!TextUtils.isEmpty(translatedMessage)) {
