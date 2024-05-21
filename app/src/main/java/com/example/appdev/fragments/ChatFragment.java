@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.appdev.R;
 import com.example.appdev.adapter.UserAdapter;
-import com.example.appdev.Constants;
+import com.example.appdev.Variables;
 import com.example.appdev.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -36,7 +36,7 @@ public class ChatFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chat, container, false);
         String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
-        if (Constants.guestUser.equals(userEmail)) {
+        if (Variables.guestUser.equals(userEmail)) {
             view.setVisibility(View.GONE);
         }
         return view;
@@ -105,7 +105,7 @@ public class ChatFragment extends Fragment {
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     // Convert each user data snapshot to a User object
                     User user = snapshot.getValue(User.class);
-                    if (user != null && user.getUserId() != null && !user.getUserId().equals(currentUserId) && user.getEmail() != null && !Constants.guestUser.equals(user.getEmail())) {
+                    if (user != null && user.getUserId() != null && !user.getUserId().equals(currentUserId) && user.getEmail() != null && !Variables.guestUser.equals(user.getEmail())) {
                         userList.add(user);
                     }
                 }

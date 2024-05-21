@@ -15,6 +15,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 
+//TRANSLATION API OPENAI
 public class Translation extends AsyncTask<String, Void, String> {
 
     private static final String[] API_KEYS = {
@@ -38,7 +39,6 @@ public class Translation extends AsyncTask<String, Void, String> {
 
         for (int attempt = 0; attempt < API_KEYS.length; attempt++) {
             try {
-                // Set up the URL for the OpenAI API
                 URL url = new URL("https://api.openai.com/v1/chat/completions");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
@@ -46,7 +46,6 @@ public class Translation extends AsyncTask<String, Void, String> {
                 connection.setRequestProperty("Authorization", "Bearer " + API_KEYS[currentKeyIndex]);
                 connection.setDoOutput(true);
 
-                // Construct the JSON request body
                 JSONObject requestBody = new JSONObject();
                 requestBody.put("model", "gpt-3.5-turbo");
                 requestBody.put("temperature", 0.7);
@@ -63,16 +62,13 @@ public class Translation extends AsyncTask<String, Void, String> {
 
                 requestBody.put("messages", new JSONArray(Arrays.asList(messageSystem, messageUser)));
 
-                // Write the JSON request body to the connection
                 OutputStream outputStream = connection.getOutputStream();
                 outputStream.write(requestBody.toString().getBytes());
                 outputStream.flush();
                 outputStream.close();
 
-                // Check the HTTP response code
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
-                    // Read the response from the server
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     StringBuilder response = new StringBuilder();
                     String line;
@@ -81,7 +77,6 @@ public class Translation extends AsyncTask<String, Void, String> {
                     }
                     reader.close();
 
-                    // Parse the JSON response to extract the translated text
                     JSONObject jsonResponse = new JSONObject(response.toString());
                     translatedText = jsonResponse.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim();
                     break;
@@ -89,11 +84,9 @@ public class Translation extends AsyncTask<String, Void, String> {
                     Log.e("TranslationTask", "Error: " + responseCode);
                 }
 
-                // Close the connection
                 connection.disconnect();
             } catch (IOException | JSONException e) {
                 Log.e("TranslationTask", "Error: " + e.getMessage());
-                // Switch to the next API key
                 currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
             }
         }

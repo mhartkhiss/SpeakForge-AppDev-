@@ -1,23 +1,21 @@
 package com.example.appdev.models;
 
-public class ChatMessage {
+public class Message {
     private String messageId;
     private String message;
     private String messageOG;
     private long timestamp;
-    private String senderId; // Add sender ID field
+    private String senderId;
     private String messageVar1;
     private String messageVar2;
     private String messageVar3;
-    private String messageVar4;
-    private String messageVar5;
 
 
-    public ChatMessage() {
+    public Message() {
         // Default constructor required for Firebase
     }
 
-    public ChatMessage(String messageId, String message, String messageOG, long timestamp, String senderId) {
+    public Message(String messageId, String message, String messageOG, long timestamp, String senderId) {
         this.messageId = messageId;
         this.message = message;
         this.messageOG = messageOG;
@@ -57,7 +55,6 @@ public class ChatMessage {
         return senderId;
     }
 
-    // add getter and setter for messageVar1, messageVar2, messageVar3, messageVar4, and messageVar5
 
     public void setSenderId(String senderId) {
         this.senderId = senderId;
@@ -86,21 +83,6 @@ public class ChatMessage {
         this.messageVar3 = messageVar3;
     }
 
-    public String getMessageVar4() {
-        return messageVar4;
-    }
-
-    public void setMessageVar4(String messageVar4) {
-        this.messageVar4 = messageVar4;
-    }
-
-    public String getMessageVar5() {
-        return messageVar5;
-    }
-
-    public void setMessageVar5(String messageVar5) {
-        this.messageVar5 = messageVar5;
-    }
 }
 
 

@@ -12,11 +12,11 @@
     tools:context=".LoginActivity">
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/speakForgeLogo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/speakforgelogo"
-        tools:srcCompat="@drawable/speakforgelogo" />
+        app:srcCompat="@drawable/speakforgelogo_light"
+        tools:srcCompat="@drawable/speakforgelogo_light" />
 
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"

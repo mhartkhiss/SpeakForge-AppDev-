@@ -2,9 +2,7 @@ package com.example.appdev.tasks;
 
 import androidx.annotation.NonNull;
 
-import com.example.appdev.Constants;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.example.appdev.Variables;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -17,8 +15,8 @@ public class FetchUserField {
     }
 
     public static void fetchUserField(String field, UserFieldListener listener) {
-        if (Constants.currentUser != null) {
-            Constants.userRef.child(field).addListenerForSingleValueEvent(new ValueEventListener() {
+        if (Variables.currentUser != null) {
+            Variables.userRef.child(field).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     String fieldValue = dataSnapshot.getValue(String.class);

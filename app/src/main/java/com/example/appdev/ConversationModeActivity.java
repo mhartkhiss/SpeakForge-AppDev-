@@ -20,7 +20,7 @@ import com.bumptech.glide.Glide;
 import com.example.appdev.adapter.ChatAdapter;
 import com.example.appdev.tasks.FetchUserField;
 import com.example.appdev.tasks.Translation;
-import com.example.appdev.models.ChatMessage;
+import com.example.appdev.models.Message;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -38,13 +38,11 @@ import java.util.List;
 public class ConversationModeActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewChat;
-    private EditText editTextMessage;
+    private EditText chatBox;
     private ImageButton buttonSend;
     private ChatAdapter chatAdapter;
     private DatabaseReference messagesRef;
-    private TextView textViewRecipient;
-    private TextView textViewTranslate;
-    private String roomId, recipientLanguage, senderLanguage;
+    private String roomId, recipientLanguage;
 
 
     //Establish Connection
@@ -66,7 +64,7 @@ public class ConversationModeActivity extends AppCompatActivity {
 
         // Initialize views
         recyclerViewChat = findViewById(R.id.recyclerViewChat);
-        editTextMessage = findViewById(R.id.editTextMessage);
+        chatBox = findViewById(R.id.chatBox);
         buttonSend = findViewById(R.id.buttonSend);
 
         // Initialize RecyclerView
@@ -85,7 +83,7 @@ public class ConversationModeActivity extends AppCompatActivity {
         buttonSend.setOnClickListener(v -> sendMessage());
 
         ImageButton buttonMic = findViewById(R.id.buttonMic);
-        editTextMessage.addTextChangedListener(new TextWatcher() {
+        chatBox.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 // This method is called to notify you that, within s, the count characters
@@ -171,7 +169,7 @@ public class ConversationModeActivity extends AppCompatActivity {
     }
 
     private void sendDirectMessage(String senderLanguage, String targetLanguage) {
-        String messageTextOG = editTextMessage.getText().toString().trim();
+        String messageTextOG = chatBox.getText().toString().trim();
         String roomId = ConversationModeActivity.this.roomId;
 
         // Get the current user ID (sender ID)
@@ -219,7 +217,7 @@ public class ConversationModeActivity extends AppCompatActivity {
                     });
 
             // Clear the input field
-            editTextMessage.setText("");
+            chatBox.setText("");
         } else {
             Log.e("ConversationModeActivity", "Sender ID or Room ID is null");
         }
@@ -298,9 +296,9 @@ public class ConversationModeActivity extends AppCompatActivity {
             messagesRef.child(roomId).orderByChild("timestamp").addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    List<ChatMessage> messages = new ArrayList<>();
+                    List<Message> messages = new ArrayList<>();
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        ChatMessage message = snapshot.getValue(ChatMessage.class);
+                        Message message = snapshot.getValue(Message.class);
                         if (message != null) {
                             messages.add(message);
                         }

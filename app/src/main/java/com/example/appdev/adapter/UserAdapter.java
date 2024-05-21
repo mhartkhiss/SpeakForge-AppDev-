@@ -24,12 +24,12 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
 
     private List<User> userList;
     private Context context;
-    private String currentUserId; // Add current user ID field
+    private String currentUserId;
 
     public UserAdapter(List<User> userList, Context context, String currentUserId) {
         this.userList = userList;
         this.context = context;
-        this.currentUserId = currentUserId; // Initialize current user ID
+        this.currentUserId = currentUserId;
     }
 
     @NonNull

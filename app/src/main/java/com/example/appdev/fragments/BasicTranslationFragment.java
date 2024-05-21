@@ -27,7 +27,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.appdev.R;
 import com.example.appdev.tasks.Translation;
-import com.example.appdev.Constants;
+import com.example.appdev.Variables;
 import com.example.appdev.models.Languages;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -39,15 +39,11 @@ import java.util.Locale;
 public class BasicTranslationFragment extends Fragment {
 
     private static final int SPEECH_REQUEST_CODE = 1;
-
     private TextView textViewResult;
-
-    private Spinner spinner;
-    private ArrayList<Languages> languageModels = new ArrayList<>();
-
-    private TextInputEditText textInputEditText;
+    private Spinner outputLanguageSelection;
+    private TextInputEditText textInput;
     private TextInputLayout textInputLayout;
-    private Button buttonStartSpeech, translateButton;
+    private Button btnStartSpeech, btnTranslate;
     private View rootView;
 
     @Nullable
@@ -81,19 +77,19 @@ public class BasicTranslationFragment extends Fragment {
 
         super.onViewCreated(view, savedInstanceState);
 
-        textInputEditText = view.findViewById(R.id.textInputEditText);
+        textInput = view.findViewById(R.id.textInputEditText);
         textInputLayout = view.findViewById(R.id.textInputLayout);
-        textViewResult = view.findViewById(R.id.recognizedTextView);
+        textViewResult = view.findViewById(R.id.txtTranslatedText);
 
         // Initialize Firebase
         FirebaseApp.initializeApp(requireContext());
 
 
-        spinner = requireView().findViewById(R.id.languageSpinner);
+        outputLanguageSelection = requireView().findViewById(R.id.languageSpinner);
         String[] languages = Languages.getLanguages().toArray(new String[0]);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, languages);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
+        outputLanguageSelection.setAdapter(adapter);
 
         setListeners(view);
 
@@ -104,8 +100,8 @@ public class BasicTranslationFragment extends Fragment {
     private void setListeners(View view) {
 
         //VOICE-TO-TEXT TRANSLATION LISTENERS
-        buttonStartSpeech = view.findViewById(R.id.startSpeakingButton);
-        buttonStartSpeech.setOnClickListener(new View.OnClickListener() {
+        btnStartSpeech = view.findViewById(R.id.startSpeakingButton);
+        btnStartSpeech.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startSpeechRecognition();
@@ -113,18 +109,18 @@ public class BasicTranslationFragment extends Fragment {
         });
 
         //TEXT-TO-TEXT TRANSLATION LISTENERS
-        textInputEditText = view.findViewById(R.id.textInputEditText);
-        translateButton = view.findViewById(R.id.translateButton);
-        translateButton.setOnClickListener(new View.OnClickListener() {
+        textInput = view.findViewById(R.id.textInputEditText);
+        btnTranslate = view.findViewById(R.id.translateButton);
+        btnTranslate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 translateAnimation();
                 InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
                 if (imm != null) {
-                    imm.hideSoftInputFromWindow(textInputEditText.getWindowToken(), 0);
+                    imm.hideSoftInputFromWindow(textInput.getWindowToken(), 0);
                 }
-                String targetLanguage = spinner.getSelectedItem().toString();
+                String targetLanguage = BasicTranslationFragment.this.outputLanguageSelection.getSelectedItem().toString();
 
                 Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {
                     @Override
@@ -137,16 +133,16 @@ public class BasicTranslationFragment extends Fragment {
                                 textViewResult.setTextColor(getResources().getColor(R.color.black));
                                 textViewResult.setTextSize(38);
                             }
-                            textInputEditText.setText("");
-                            textInputEditText.clearFocus();
+                            textInput.setText("");
+                            textInput.clearFocus();
                         }
                     }
                 });
-                translationTask.execute(textInputEditText.getText().toString());
+                translationTask.execute(textInput.getText().toString());
             }
         });
 
-        textInputEditText.addTextChangedListener(new TextWatcher() {
+        textInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -154,8 +150,8 @@ public class BasicTranslationFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if(s.toString().trim().length() > 0) {
-                    buttonStartSpeech.setVisibility(View.GONE);
-                    translateButton.setVisibility(View.VISIBLE);
+                    btnStartSpeech.setVisibility(View.GONE);
+                    btnTranslate.setVisibility(View.VISIBLE);
                     RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) textInputLayout.getLayoutParams();
                     params.addRule(RelativeLayout.ABOVE, R.id.translateButton);
                     textInputLayout.setLayoutParams(params);
@@ -163,8 +159,8 @@ public class BasicTranslationFragment extends Fragment {
                     RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) textInputLayout.getLayoutParams();
                     params.addRule(RelativeLayout.ABOVE, R.id.startSpeakingButton);
                     textInputLayout.setLayoutParams(params);
-                    buttonStartSpeech.setVisibility(View.VISIBLE);
-                    translateButton.setVisibility(View.GONE);
+                    btnStartSpeech.setVisibility(View.VISIBLE);
+                    btnTranslate.setVisibility(View.GONE);
                 }
             }
 
@@ -173,9 +169,9 @@ public class BasicTranslationFragment extends Fragment {
             }
         });
 
-        textInputEditText.setOnKeyListener((v, keyCode, event) -> {
+        textInput.setOnKeyListener((v, keyCode, event) -> {
             if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                String targetLanguage = spinner.getSelectedItem().toString();
+                String targetLanguage = this.outputLanguageSelection.getSelectedItem().toString();
                 Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {
                     @Override
                     public void onTranslationComplete(String translatedMessage) {
@@ -190,7 +186,7 @@ public class BasicTranslationFragment extends Fragment {
                         }
                     }
                 });
-                translationTask.execute(textInputEditText.getText().toString());
+                translationTask.execute(textInput.getText().toString());
                 return true;
             }
 
@@ -222,7 +218,7 @@ public class BasicTranslationFragment extends Fragment {
 
     private void startSpeechRecognition() {
 
-        Constants.userRef.child("targetLanguage").setValue(spinner.getSelectedItem().toString());
+        Variables.userRef.child("targetLanguage").setValue(outputLanguageSelection.getSelectedItem().toString());
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
@@ -241,7 +237,7 @@ public class BasicTranslationFragment extends Fragment {
                 String spokenText = results.get(0);
 
                 String textToTranslate = spokenText;
-                String targetLanguage = spinner.getSelectedItem().toString();
+                String targetLanguage = this.outputLanguageSelection.getSelectedItem().toString();
 
 
                 Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {

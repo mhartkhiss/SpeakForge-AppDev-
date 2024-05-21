@@ -5,7 +5,7 @@
     android:layout_height="match_parent">
 
     <ImageView
-        android:id="@+id/imageView2"
+        android:id="@+id/imageProfileBackground"
         android:layout_width="match_parent"
         android:layout_height="95dp"
         android:layout_centerHorizontal="true"
@@ -28,22 +28,9 @@
         android:onClick="selectImage"
         android:src="@drawable/default_userpic"
         app:civ_border_color="#3A3A3A"
+        android:contentDescription="Update Profile Picture"
         app:civ_border_width="2dp" />
 
-
-        <TextView
-            android:id="@+id/textViewUploadPicture"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Upload Picture"
-            android:textColor="#000000"
-            android:padding="8dp"
-            android:layout_marginLeft="165dp"
-            android:visibility="gone"
-            android:textSize="16dp"
-            android:layout_marginTop="90dp"
-            app:layout_constraintEnd_toEndOf="@id/imageViewUserPicture"
-            app:layout_constraintTop_toTopOf="@id/imageViewUserPicture" />
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
@@ -85,7 +72,7 @@
                 android:layout_marginBottom="16dp"/>
 
             <Button
-                android:id="@+id/btnChangePassword"
+                android:id="@+id/btnMenuChangePassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Change Password"
@@ -94,7 +81,7 @@
                 android:layout_marginBottom="8dp"/>
 
             <Button
-                android:id="@+id/btnChangeLanguage"
+                android:id="@+id/btnMenuChangeLanguage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Change Language"
@@ -121,49 +108,51 @@
             android:visibility="gone"
             android:layout_below="@id/imageViewUserPicture" />
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardViewEditDetails"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardViewChangeUsername"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:cardUseCompatPadding="true"
+        android:layout_below="@id/imageViewUserPicture"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/lightGrey">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp"
-            app:cardUseCompatPadding="true"
-            android:layout_below="@id/imageViewUserPicture"
-            app:cardBackgroundColor="@color/lightGrey"
-            android:visibility="gone">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <LinearLayout
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputLayoutUsername"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:textColorHint="#555454"
+                android:layout_height="wrap_content">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/textInputLayoutUsername"
-                    android:layout_width="match_parent"
-                    android:textColorHint="#555454"
-                    android:layout_height="wrap_content">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editTextUsername"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:backgroundTint="@color/lightGrey"
-                        android:textColor="@color/black"
-                        android:hint="Username"
-                        android:text="username" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <Button
-                    android:id="@+id/btnSaveChanges"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextUsername"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="@color/orange"
+                    android:backgroundTint="@color/lightGrey"
                     android:textColor="@color/black"
-                    android:text="Update Profile" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+                    android:hint="Username"
+                    android:text="username" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/btnSaveChanges"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/orange"
+                android:textColor="@color/black"
+                android:text="Update Username" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+
 
 
     <Button

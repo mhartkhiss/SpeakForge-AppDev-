@@ -5,7 +5,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class Constants {
+public class Variables {
 
     public static final String guestUser = "a@gmail.com";
     public static final String guestUserPassword = "asdasd";
