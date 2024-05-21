@@ -19,8 +19,8 @@ import java.util.Arrays;
 public class Translation extends AsyncTask<String, Void, String> {
 
     private static final String[] API_KEYS = {
-            "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",
-            "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"
+            "",
+            ""
     };
     private static int currentKeyIndex = 0;
 
