@@ -28,7 +28,7 @@ def user_list(request):
     
     user_list = [{'id': key, **value} for key, value in users.items()]
     
-    return render(request, 'speakforgeadminapp/user_list.html', {'users': user_list})
+    return render(request, 'speakforgeadminapp/dashboard.html', {'users': user_list})
 
 @login_required
 def delete_user(request):

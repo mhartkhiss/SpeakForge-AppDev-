@@ -1,0 +1,44 @@
+<!-- Modal CreateUser -->
+<div class="modal fade" id="createUserModal" tabindex="-1" role="dialog" aria-labelledby="createUserModalLabel" aria-hidden="true" data-backdrop="static" style="z-index: 1050;">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createUserModalLabel">Create New User</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: red;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm">
+                    <div class="form-group">
+                        <label for="inputEmail">Email address</label>
+                        <input type="email" class="form-control" id="inputEmail" aria-describedby="emailHelp" placeholder="Enter email">
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPassword">Password</label>
+                        <input type="password" class="form-control" id="inputPassword" placeholder="Password">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer center-button">
+                <button type="button" class="btn btn-primary" id="createUserBtn" >Create User</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset email Modal -->
+<div id="loadingModal" class="modal">
+    <div class="modal-content">
+        <div class="loader"></div>
+        <p>Sending password reset link...</p>
+    </div>
+</div>
+
+<!-- Delete user Modal -->
+<div id="deleteUserModal" class="modal">
+    <div class="modal-content">
+        <div class="loader"></div>
+        <p>Deleting user...</p>
+    </div>
+</div>

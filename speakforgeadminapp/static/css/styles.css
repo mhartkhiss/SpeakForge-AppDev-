@@ -26,6 +26,7 @@ h1 {
 .user-table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 0.9em;
 }
 
 .user-table th, .user-table td {
@@ -98,6 +99,16 @@ h1 {
     padding: 8px 16px;
     cursor: pointer;
 }
+
+.context-menu-header {
+    background-color: #36393f;
+    color: #cecece;
+    font-weight: bold;
+    padding: 8px 16px;
+    font-style: italic;
+    text-align: center;
+}
+
 .context-menu-item:hover {
     background-color: #ffcc00;
 }
@@ -155,4 +166,16 @@ h1 {
 }
 #logoutbtn:hover {
     background-color: #b07000e9;
+}
+
+.highlight {
+    background-color: yellow !important; /* Or any preferred highlight color */
+}
+
+.logout-text {
+    display: none;
+}
+
+.logout-link:hover + .logout-text {
+    display: inline;
 }
