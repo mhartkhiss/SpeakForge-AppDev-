@@ -75,7 +75,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                                 String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
                                 FirebaseDatabase.getInstance().getReference("users")
                                         .child(userId)
-                                        .setValue(new User(userId, username, email, "none", "user", null, timestamp, timestamp))
+                                        .setValue(new User(userId, username, email, "none", "free", null, timestamp, timestamp, "google", ""))
                                         .addOnCompleteListener(databaseTask -> {
                                             if (databaseTask.isSuccessful()) {
                                                 Toast.makeText(this, "Sign up successful", Toast.LENGTH_SHORT).show();

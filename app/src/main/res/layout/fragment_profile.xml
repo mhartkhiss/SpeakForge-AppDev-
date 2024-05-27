@@ -75,10 +75,13 @@
                 android:id="@+id/btnMenuChangePassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Change Password"
+                android:layout_marginBottom="8dp"
                 android:backgroundTint="@color/orange"
+                android:text="Change Password"
                 android:textColor="@android:color/black"
-                android:layout_marginBottom="8dp"/>
+                app:icon="@drawable/profile_password"
+                app:iconGravity="textStart"
+                app:iconTint="#424242" />
 
             <Button
                 android:id="@+id/btnMenuChangeLanguage"
@@ -86,9 +89,35 @@
                 android:layout_height="wrap_content"
                 android:text="Change Language"
                 android:backgroundTint="@color/orange"
-                android:textColor="@android:color/black"/>
+                android:textColor="@android:color/black"
+                app:icon="@drawable/profile_language"
+                app:iconGravity="textStart"
+                app:iconTint="#424242" />
+
+            <Button
+                android:id="@+id/btnMenuSelectTranslator"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Translator: Google Translate"
+                android:backgroundTint="@color/orange"
+                android:textColor="@android:color/black"
+                app:icon="@drawable/profile_translator"
+                app:iconGravity="textStart"
+                app:iconTint="#424242" />
+            <Button
+                android:id="@+id/btnMenuSetApiKey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Set API Key"
+                android:backgroundTint="@color/orange"
+                android:textColor="@android:color/black"
+                app:icon="@drawable/profile_apikey"
+                android:visibility="gone"
+                app:iconGravity="textStart"
+                app:iconTint="#424242" />
 
         </LinearLayout>
+
 
     </androidx.cardview.widget.CardView>
 
@@ -103,6 +132,22 @@
         <include
             android:id="@+id/includeLanguageSelection"
             layout="@layout/fragment_profile_sub_changelanguage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_below="@id/imageViewUserPicture" />
+
+        <include
+            android:id="@+id/includeTranslatorSelection"
+            layout="@layout/fragment_profile_sub_changetranslator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_below="@id/imageViewUserPicture" />
+
+        <include
+            android:id="@+id/includeSetApiKey"
+            layout="@layout/fragment_profile_sub_changeapi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
@@ -155,6 +200,7 @@
 
 
 
+
     <Button
         android:id="@+id/btnLogout"
         android:layout_width="match_parent"
@@ -162,6 +208,9 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         style="@style/AppTheme.Button"
+        app:icon="@drawable/profile_logout"
+        app:iconGravity="textStart"
+        app:iconTint="#DADADA"
         android:text="Logout"/>
     </RelativeLayout>
 

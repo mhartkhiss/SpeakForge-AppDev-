@@ -4,16 +4,22 @@
     <!-- Button pressed state -->
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <solid android:color="#4CAF50" /> <!-- Background color when pressed -->
-            <corners android:radius="8dp" /> <!-- Rounded corners -->
+            <gradient
+                android:startColor="#03A9F4"
+                android:endColor="#03A9F4"
+                android:angle="45" />
+            <corners android:radius="8dp" />
         </shape>
     </item>
 
     <!-- Button default state -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#2196F3" /> <!-- Default background color -->
-            <corners android:radius="8dp" /> <!-- Rounded corners -->
+            <gradient
+                android:startColor="#FF9800"
+                android:endColor="#2196F3"
+                android:angle="45" />
+            <corners android:radius="8dp" />
         </shape>
     </item>
 

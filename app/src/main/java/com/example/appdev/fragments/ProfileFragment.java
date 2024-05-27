@@ -20,10 +20,12 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.appdev.helpers.FirebaseHelper;
+import com.example.appdev.models.User;
 import com.example.appdev.subcontrollers.ChangePassControl;
 import com.example.appdev.LoginActivity;
 import com.example.appdev.R;
-import com.example.appdev.tasks.FetchUserField;
+import com.example.appdev.helpers.FetchUserField;
 import com.example.appdev.Variables;
 import com.example.appdev.subcontrollers.ChangeProfilePicControl;
 import com.example.appdev.subcontrollers.ChangeLanguageControl;
@@ -39,10 +41,12 @@ public class ProfileFragment extends Fragment {
 
     private TextView textViewUsername, textViewEmail;
     private ImageView imageViewUserPicture;
-    private CardView layoutChangeUsername, layoutProfile, layoutLanguageSelection, layoutChangePass;
-    private Button btnSaveChanges, btnChangeLanguage, btnChangePassword, btnChangePassword2;
+    private CardView layoutChangeUsername, layoutProfile, layoutLanguageSelection, layoutChangePass, layoutChangeTranslator,
+            layoutApiKey;
+    private Button btnSaveChanges, btnChangeLanguage, btnChangePassword, btnChangePassword2, btnChangeTranslator, btnSetApiKey,
+            btnGoogle, btnOpenAi, btnBack, btnBack2, btnSaveApiKey;
     private Button[] btnLanguages = new Button[3];
-    private EditText editTextUsername, editTextOldPassword, editTextNewPassword, editTextConfirmPassword;
+    private EditText editTextUsername, editTextOldPassword, editTextNewPassword, editTextConfirmPassword, editTextApiKey;
     private ChangeProfilePicControl changeProfilePicControl;
     private ChangeLanguageControl changeLanguageControl;
 
@@ -73,13 +77,16 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         view.findViewById(R.id.btnLogout).setOnClickListener(v -> logout());
-        FetchUserField.fetchUserField("language", new FetchUserField.UserFieldListener() {
+        FirebaseHelper.getCurrentUser(new FirebaseHelper.UserCallback() {
             @Override
-            public void onFieldReceived(String fieldValue) {
-                btnChangeLanguage.setText("Language: "+fieldValue);
+            public void onUserReceived(User user) {
+                btnChangeLanguage.setText("Language: "+user.getLanguage());
+                editTextApiKey.setText(user.getApiKey());
             }
+
             @Override
-            public void onError(DatabaseError databaseError) {
+            public void onError(String errorMessage) {
+                Log.e(TAG, "Error getting user: " + errorMessage);
             }
         });
 
@@ -87,6 +94,7 @@ public class ProfileFragment extends Fragment {
 
         setUserDetails();
         setListeners();
+        translatorMenu();
 
 
     }
@@ -99,10 +107,19 @@ public class ProfileFragment extends Fragment {
         layoutProfile = view.findViewById(R.id.cardViewProfile);
         layoutLanguageSelection = view.findViewById(R.id.includeLanguageSelection);
         layoutChangePass = view.findViewById(R.id.includeChangePassword);
+        layoutChangeTranslator = view.findViewById(R.id.includeTranslatorSelection);
+        layoutApiKey = view.findViewById(R.id.includeSetApiKey);
         btnSaveChanges = view.findViewById(R.id.btnSaveChanges);
         btnChangeLanguage = view.findViewById(R.id.btnMenuChangeLanguage);
         btnChangePassword = view.findViewById(R.id.btnMenuChangePassword);
         btnChangePassword2 = view.findViewById(R.id.btnChangePassword2);
+        btnChangeTranslator = view.findViewById(R.id.btnMenuSelectTranslator);
+        btnGoogle = view.findViewById(R.id.btnGoogle);
+        btnOpenAi = view.findViewById(R.id.btnOpenAi);
+        btnSetApiKey = view.findViewById(R.id.btnMenuSetApiKey);
+        btnBack = view.findViewById(R.id.btnBack);
+        btnBack2 = view.findViewById(R.id.btnBack2);
+        btnSaveApiKey = view.findViewById(R.id.btnSaveApiKey);
         btnLanguages[0] = view.findViewById(R.id.btnBisaya);
         btnLanguages[1] = view.findViewById(R.id.btnTagalog);
         btnLanguages[2] = view.findViewById(R.id.btnEnglish);
@@ -110,7 +127,37 @@ public class ProfileFragment extends Fragment {
         editTextOldPassword = view.findViewById(R.id.editTextOldPassword);
         editTextNewPassword = view.findViewById(R.id.editTextNewPassword);
         editTextConfirmPassword = view.findViewById(R.id.editTextConfirmPassword);
+        editTextApiKey = view.findViewById(R.id.editTextApiKey);
         changeLanguageControl = new ChangeLanguageControl(this);
+
+    }
+
+
+
+    private void translatorMenu() {
+
+        FirebaseHelper.getCurrentUser(new FirebaseHelper.UserCallback() {
+            @Override
+            public void onUserReceived(User user) {
+                if(user.getTranslator().equals("openai")){
+                    btnChangeTranslator.setText("Translator: OpenAI");
+                    if(user.getAccountType().equals("free")){
+                        btnSetApiKey.setVisibility(View.VISIBLE);
+                    }
+                    else{
+                        btnSetApiKey.setVisibility(View.GONE);
+                    }
+                }
+                else{
+                    btnChangeTranslator.setText("Translator: Google Translate");
+                    btnSetApiKey.setVisibility(View.GONE);
+                }
+            }
+            @Override
+            public void onError(String errorMessage) {
+                Log.e(TAG, "Error getting user: " + errorMessage);
+            }
+        });
     }
 
     private void setListeners(){
@@ -134,11 +181,51 @@ public class ProfileFragment extends Fragment {
         btnChangePassword.setOnClickListener(v -> toggleCardViews(layoutChangePass, layoutProfile));
         btnChangePassword2.setOnClickListener(new ChangePassControl(getContext(), editTextOldPassword, editTextNewPassword,
                 editTextConfirmPassword, layoutChangePass, layoutProfile));
-
+        btnBack.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutChangePass));
 
         //CHANGE USERNAME LISTENERS
         textViewUsername.setOnClickListener(v -> toggleCardViews(layoutChangeUsername, layoutProfile));
         btnSaveChanges.setOnClickListener(v -> updateUsername());
+
+        //CHANGE TRANSLATOR LISTENERS
+        btnChangeTranslator.setOnClickListener(v -> toggleCardViews(layoutChangeTranslator, layoutProfile));
+        btnGoogle.setOnClickListener(v -> {
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+            userRef.child("translator").setValue("google");
+            btnChangeTranslator.setText("Translator: Google Translate");
+            translatorMenu();
+            toggleCardViews(layoutProfile, layoutChangeTranslator);
+        });
+        btnOpenAi.setOnClickListener(v -> {
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+            userRef.child("translator").setValue("openai");
+            btnChangeTranslator.setText("Translator: OpenAI");
+            translatorMenu();
+            toggleCardViews(layoutProfile, layoutChangeTranslator);
+        });
+
+        //SET API KEY LISTENERS
+        btnSetApiKey.setOnClickListener(v -> {
+                toggleCardViews(layoutApiKey, layoutProfile);
+
+        });
+        btnBack2.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutApiKey));
+        btnSaveApiKey.setOnClickListener(v -> {
+
+
+            EditText editTextApiKey = requireView().findViewById(R.id.editTextApiKey);
+            String apiKey = editTextApiKey.getText().toString().trim();
+
+            if (!apiKey.isEmpty()) {
+                DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                userRef.child("apiKey").setValue(apiKey);
+                Toast.makeText(getActivity(), "API Key updated successfully", Toast.LENGTH_SHORT).show();
+                toggleCardViews(layoutProfile, layoutApiKey);
+            } else {
+                Toast.makeText(getActivity(), "Please enter an API Key", Toast.LENGTH_SHORT).show();
+            }
+
+        });
 
     }
     private void toggleCardViews(CardView cardViewToShow, CardView cardViewToHide) {
@@ -152,6 +239,7 @@ public class ProfileFragment extends Fragment {
             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
             if (currentUser != null) {
                 DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
+
                 userRef.child("username").setValue(newUsername)
                         .addOnSuccessListener(aVoid -> {
                             textViewUsername.setText(newUsername);
@@ -191,7 +279,6 @@ public class ProfileFragment extends Fragment {
                         }
                     }
                 }
-
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
                 }

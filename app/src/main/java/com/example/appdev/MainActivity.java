@@ -12,26 +12,20 @@ import androidx.viewpager.widget.ViewPager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.appdev.adapter.TabAdapter;
+import com.example.appdev.adapters.TabAdapter;
 import com.example.appdev.fragments.ChatFragment;
 import com.example.appdev.fragments.ProfileFragment;
 import com.example.appdev.fragments.BasicTranslationFragment;
-import com.example.appdev.models.User;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
-
-    public static User loggedInUser = new User();
-
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
 
         ViewPager viewPager = findViewById(R.id.viewPager);
         TabLayout tabLayout = findViewById(R.id.tabLayout);

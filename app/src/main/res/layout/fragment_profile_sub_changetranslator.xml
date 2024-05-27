@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardViewTranslator"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp"
+    app:cardUseCompatPadding="true"
+    android:layout_below="@id/imageViewUserPicture"
+    app:cardBackgroundColor="@color/lightGrey">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/textViewSelectTranslator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select Translator"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="8dp"
+                android:drawablePadding="8dp"/>
+
+            <Button
+                android:id="@+id/btnGoogle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Google Translate"
+                android:backgroundTint="#3DB8EF"
+                android:textColor="@android:color/black"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/btnOpenAi"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Open AI"
+                android:backgroundTint="#3DB8EF"
+                android:textColor="@android:color/black"/>
+
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>

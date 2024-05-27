@@ -25,13 +25,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.android.volley.VolleyError;
 import com.example.appdev.R;
-import com.example.appdev.tasks.Translation;
-import com.example.appdev.Variables;
+import com.example.appdev.helpers.FetchUserField;
+import com.example.appdev.translators.Translation_GoogleTranslate;
+import com.example.appdev.translators.Translation_OpenAI;
 import com.example.appdev.models.Languages;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseError;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -45,6 +49,7 @@ public class BasicTranslationFragment extends Fragment {
     private TextInputLayout textInputLayout;
     private Button btnStartSpeech, btnTranslate;
     private View rootView;
+    private String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
     @Nullable
     @Override
@@ -121,24 +126,7 @@ public class BasicTranslationFragment extends Fragment {
                     imm.hideSoftInputFromWindow(textInput.getWindowToken(), 0);
                 }
                 String targetLanguage = BasicTranslationFragment.this.outputLanguageSelection.getSelectedItem().toString();
-
-                Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {
-                    @Override
-                    public void onTranslationComplete(String translatedMessage) {
-                        if (!TextUtils.isEmpty(translatedMessage)) {
-                            String[] lines = translatedMessage.split("\n");
-                            if (lines.length > 0) {
-                                String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
-                                textViewResult.setText(firstLine);
-                                textViewResult.setTextColor(getResources().getColor(R.color.black));
-                                textViewResult.setTextSize(38);
-                            }
-                            textInput.setText("");
-                            textInput.clearFocus();
-                        }
-                    }
-                });
-                translationTask.execute(textInput.getText().toString());
+                translateAndDisplay(textInput.getText().toString(), targetLanguage);
             }
         });
 
@@ -172,21 +160,8 @@ public class BasicTranslationFragment extends Fragment {
         textInput.setOnKeyListener((v, keyCode, event) -> {
             if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
                 String targetLanguage = this.outputLanguageSelection.getSelectedItem().toString();
-                Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {
-                    @Override
-                    public void onTranslationComplete(String translatedMessage) {
-                        if (!TextUtils.isEmpty(translatedMessage)) {
-                            String[] lines = translatedMessage.split("\n");
-                            if (lines.length > 0) {
-                                String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
-                                textViewResult.setText(firstLine);
-                                textViewResult.setTextColor(getResources().getColor(R.color.black));
-                                textViewResult.setTextSize(38);
-                            }
-                        }
-                    }
-                });
-                translationTask.execute(textInput.getText().toString());
+                translateAndDisplay(textInput.getText().toString(), targetLanguage);
+
                 return true;
             }
 
@@ -214,11 +189,57 @@ public class BasicTranslationFragment extends Fragment {
 
     }
 
+    private void translateAndDisplay(String text, String targetLanguage){
 
+        FetchUserField.fetchUserField("translator", new FetchUserField.UserFieldListener() {
+            @Override
+            public void onFieldReceived(String fieldValue) {
+                if(fieldValue.equals("openai")){
+                    Translation_OpenAI translationOpenAITask = new Translation_OpenAI(targetLanguage, new Translation_OpenAI.TranslationListener() {
+                        // OpenAI
+                        @Override
+                        public void onTranslationComplete(String translatedMessage) {
+                            if (!TextUtils.isEmpty(translatedMessage)) {
+                                String[] lines = translatedMessage.split("\n");
+                                if (lines.length > 0) {
+                                    String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
+                                    textViewResult.setText(firstLine);
+                                    textViewResult.setTextColor(getResources().getColor(R.color.black));
+                                    textViewResult.setTextSize(38);
+                                }
+                            }
+                        }
+                    });
+                    translationOpenAITask.execute(text);
+                } else {
+                    // Google Translate
+                    Translation_GoogleTranslate translationGoogleTask = new Translation_GoogleTranslate(requireContext());
+                    translationGoogleTask.translateText(text, targetLanguage, new Translation_GoogleTranslate.TranslateListener() {
+                        @Override
+                        public void onSuccess(String translatedText) {
+                            if (!TextUtils.isEmpty(translatedText)) {
+                                textViewResult.setText(translatedText);
+                                textViewResult.setTextColor(getResources().getColor(R.color.black));
+                                textViewResult.setTextSize(38);
+                            }
+                        }
+
+                        @Override
+                        public void onError(VolleyError error) {
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onError(DatabaseError databaseError) {
+            }
+        });
+
+    }
 
     private void startSpeechRecognition() {
 
-        Variables.userRef.child("targetLanguage").setValue(outputLanguageSelection.getSelectedItem().toString());
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
@@ -235,26 +256,9 @@ public class BasicTranslationFragment extends Fragment {
             ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             if (results != null && !results.isEmpty()) {
                 String spokenText = results.get(0);
-
-                String textToTranslate = spokenText;
                 String targetLanguage = this.outputLanguageSelection.getSelectedItem().toString();
+                translateAndDisplay(spokenText, targetLanguage);
 
-
-                Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {
-                    @Override
-                    public void onTranslationComplete(String translatedMessage) {
-                        if (!TextUtils.isEmpty(translatedMessage)) {
-                            String[] lines = translatedMessage.split("\n");
-                            if (lines.length > 0) {
-                                String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
-                                textViewResult.setText(firstLine);
-                                textViewResult.setTextColor(getResources().getColor(R.color.black));
-                                textViewResult.setTextSize(38);
-                            }
-                        }
-                    }
-                });
-                translationTask.execute(textToTranslate);
             }
         }
     }

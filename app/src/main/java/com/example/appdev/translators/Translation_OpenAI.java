@@ -1,4 +1,4 @@
-package com.example.appdev.tasks;
+package com.example.appdev.translators;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -16,18 +16,16 @@ import java.net.URL;
 import java.util.Arrays;
 
 //TRANSLATION API OPENAI
-public class Translation extends AsyncTask<String, Void, String> {
-
+public class Translation_OpenAI extends AsyncTask<String, Void, String> {
     private static final String[] API_KEYS = {
-            "",
-            ""
+            "sk-proj-1Q98HkJIqmvGjUIuQgkvT3BlbkFJxQS4lZVIbXBLHDtX24uo"
     };
     private static int currentKeyIndex = 0;
 
     private String targetLanguage;
     private TranslationListener listener;
 
-    public Translation(String targetLanguage, TranslationListener listener) {
+    public Translation_OpenAI(String targetLanguage, TranslationListener listener) {
         this.targetLanguage = targetLanguage;
         this.listener = listener;
     }
@@ -36,6 +34,23 @@ public class Translation extends AsyncTask<String, Void, String> {
     protected String doInBackground(String... strings) {
         String inputText = strings[0];
         String translatedText = "";
+        /*FirebaseHelper.getCurrentUser(new FirebaseHelper.UserCallback() {
+            @Override
+            public void onUserReceived(User user) {
+                if(user.getAccountType().equals("free")){
+                    if(!user.getApiKey().equals("")){
+                        API_KEYS[0] = user.getApiKey();
+                    }
+                }
+                else {
+                    API_KEYS[0] = "sk-proj-1Q98HkJIqmvGjUIuQgkvT3BlbkFJxQS4lZVIbXBLHDtX24uo";
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+            }
+        });*/
 
         for (int attempt = 0; attempt < API_KEYS.length; attempt++) {
             try {
@@ -82,11 +97,12 @@ public class Translation extends AsyncTask<String, Void, String> {
                     break;
                 } else {
                     Log.e("TranslationTask", "Error: " + responseCode);
+                    translatedText = "Error1: " + responseCode+" Please check your API key";
                 }
 
                 connection.disconnect();
             } catch (IOException | JSONException e) {
-                Log.e("TranslationTask", "Error: " + e.getMessage());
+                Log.e("TranslationTask", "Error2: " + e.getMessage());
                 currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
             }
         }

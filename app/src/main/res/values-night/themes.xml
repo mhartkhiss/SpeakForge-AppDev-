@@ -29,6 +29,7 @@
 
     <style name="AppTheme.Button" parent="Widget.MaterialComponents.Button">
         <item name="android:textColor">#FFFFFF</item> <!-- Set text color to black -->
+        <item name="android:background">@drawable/button_background</item> <!-- Set button background color -->
         <item name="backgroundTint">#3C3C3C</item> <!-- Set button background color -->
     </style>
     <style name="CustomOutlinedBox" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">

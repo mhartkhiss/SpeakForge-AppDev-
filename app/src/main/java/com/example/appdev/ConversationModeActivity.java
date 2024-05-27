@@ -16,10 +16,12 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
-import com.example.appdev.adapter.ChatAdapter;
-import com.example.appdev.tasks.FetchUserField;
-import com.example.appdev.tasks.Translation;
+import com.example.appdev.adapters.ChatAdapter;
+import com.example.appdev.helpers.FetchUserField;
+import com.example.appdev.translators.Translation_GoogleTranslate;
+import com.example.appdev.translators.Translation_OpenAI;
 import com.example.appdev.models.Message;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -80,7 +82,7 @@ public class ConversationModeActivity extends AppCompatActivity {
 
 
         // Set click listener for send button
-        buttonSend.setOnClickListener(v -> sendMessage());
+        buttonSend.setOnClickListener(v -> initializeMessage());
 
         ImageButton buttonMic = findViewById(R.id.buttonMic);
         chatBox.addTextChangedListener(new TextWatcher() {
@@ -150,15 +152,15 @@ public class ConversationModeActivity extends AppCompatActivity {
         // Concatenate sender and recipient IDs to create the room ID
         return ids[0] + "_" + ids[1];
     }
-    private void sendMessage() {
+    private void initializeMessage() {
         // Get the sender and target languages
         FetchUserField.fetchUserField("language", new FetchUserField.UserFieldListener() {
             @Override
             public void onFieldReceived(String senderLanguage) {
                 String targetLanguage = recipientLanguage;
 
-                // Send the message directly
-                sendDirectMessage(senderLanguage, targetLanguage);
+                // Send message
+                sendMessage(senderLanguage, targetLanguage);
             }
 
             @Override
@@ -168,7 +170,7 @@ public class ConversationModeActivity extends AppCompatActivity {
         });
     }
 
-    private void sendDirectMessage(String senderLanguage, String targetLanguage) {
+    private void sendMessage(String senderLanguage, String targetLanguage) {
         String messageTextOG = chatBox.getText().toString().trim();
         String roomId = ConversationModeActivity.this.roomId;
 
@@ -224,7 +226,7 @@ public class ConversationModeActivity extends AppCompatActivity {
     }
 
     private void translateTextAndSendMessage(String senderLanguage, String targetLanguage, String messageTextOG, String messageId) {
-        Translation translationTask = new Translation(targetLanguage, new Translation.TranslationListener() {
+        /*Translation_OpenAI translationOpenAITask = new Translation_OpenAI(targetLanguage, new Translation_OpenAI.TranslationListener() {
             @Override
             public void onTranslationComplete(String translatedMessage) {
                 if (!TextUtils.isEmpty(translatedMessage)) {
@@ -233,7 +235,48 @@ public class ConversationModeActivity extends AppCompatActivity {
                 }
             }
         });
-        translationTask.execute(messageTextOG);
+        translationOpenAITask.execute(messageTextOG);*/
+
+        FetchUserField.fetchUserField("translator", new FetchUserField.UserFieldListener() {
+            @Override
+            public void onFieldReceived(String fieldValue) {
+                if(fieldValue.equals("openai")){
+                    Translation_OpenAI translationOpenAITask = new Translation_OpenAI(targetLanguage, new Translation_OpenAI.TranslationListener() {
+                        // OpenAI
+                        @Override
+                        public void onTranslationComplete(String translatedMessage) {
+                            if (!TextUtils.isEmpty(translatedMessage)) {
+                                //updateMessageWithTranslation(messageId, translatedMessage);
+                                storeTranslatedText(translatedMessage, messageId);
+                            }
+                        }
+                    });
+                    translationOpenAITask.execute(messageTextOG);
+                } else {
+                    // Google Translate
+                    Translation_GoogleTranslate translationGoogleTask = new Translation_GoogleTranslate(ConversationModeActivity.this);
+                    translationGoogleTask.translateText(messageTextOG, targetLanguage, new Translation_GoogleTranslate.TranslateListener() {
+                        @Override
+                        public void onSuccess(String translatedText) {
+                            if (!TextUtils.isEmpty(translatedText)) {
+                                messagesRef.child(roomId).child(messageId).child("message").setValue(
+                                        removeQuotationMarks(translatedText));
+                            }
+                        }
+
+                        @Override
+                        public void onError(VolleyError error) {
+                            // Handle error
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onError(DatabaseError databaseError) {
+                // Handle error
+            }
+        });
     }
 
 
@@ -255,7 +298,6 @@ public class ConversationModeActivity extends AppCompatActivity {
         // Split the translated text by line breaks
         String[] lines = translatedMessage.split("\n");
 
-        // Check if there are at least 5 lines
         if (lines.length >= 3) {
             // Store each line in a separate variable
             String messageVar1 = lines[0];
@@ -277,7 +319,7 @@ public class ConversationModeActivity extends AppCompatActivity {
 
             updateMessageWithTranslation(messageId, messageVar1);
         } else {
-            Log.e("ConversationModeActivity", "Translated text does not have at least 5 lines");
+            Log.e("ConversationModeActivity", "Translated text does not have at least 3 lines");
         }
     }
 

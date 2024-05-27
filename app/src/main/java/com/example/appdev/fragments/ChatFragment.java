@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.appdev.R;
-import com.example.appdev.adapter.UserAdapter;
+import com.example.appdev.adapters.UserAdapter;
 import com.example.appdev.Variables;
 import com.example.appdev.models.User;
 import com.google.firebase.auth.FirebaseAuth;

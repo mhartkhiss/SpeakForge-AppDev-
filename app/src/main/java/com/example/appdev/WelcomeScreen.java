@@ -19,6 +19,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class WelcomeScreen extends AppCompatActivity {
@@ -50,7 +52,8 @@ public class WelcomeScreen extends AppCompatActivity {
                     if (!Variables.guestUser.equals(user.getEmail())) {
                     Toast.makeText(WelcomeScreen.this, "Welcome back " + user.getEmail(), Toast.LENGTH_SHORT).show();
                     }
-                    Variables.userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                    userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             if (dataSnapshot.exists()) {
@@ -59,6 +62,12 @@ public class WelcomeScreen extends AppCompatActivity {
                                     startActivity(new Intent(WelcomeScreen.this, MainActivity.class));
                                 } else {
                                     startActivity(new Intent(WelcomeScreen.this, LanguageSetupActivity.class));
+                                }
+                                if (!dataSnapshot.hasChild("apiKey")) {
+                                    userRef.child("apiKey").setValue("");
+                                }
+                                if (!dataSnapshot.hasChild("translator")) {
+                                    userRef.child("translator").setValue("google");
                                 }
                             }
                             finish();

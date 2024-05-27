@@ -1,10 +1,14 @@
-package com.example.appdev.tasks;
+package com.example.appdev.helpers;
 
 import androidx.annotation.NonNull;
 
 import com.example.appdev.Variables;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class FetchUserField {
@@ -15,8 +19,12 @@ public class FetchUserField {
     }
 
     public static void fetchUserField(String field, UserFieldListener listener) {
-        if (Variables.currentUser != null) {
-            Variables.userRef.child(field).addListenerForSingleValueEvent(new ValueEventListener() {
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
+
+        if (currentUser != null) {
+            userRef.child(field).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     String fieldValue = dataSnapshot.getValue(String.class);
