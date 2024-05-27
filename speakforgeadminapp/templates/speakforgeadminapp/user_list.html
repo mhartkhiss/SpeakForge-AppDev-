@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Users</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <div class="container">
+        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 40px;">
+            <img src="{% static 'images/speakforgelogoadmin.png' %}" alt="SpeakForge Logo" class="logo">
+        </div>
+        <div class="row" style="margin-bottom: 20px;">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-primary" style="width: 30%;" data-toggle="modal" data-target="#createUserModal">
+                    Create new user
+                </button>
+                <a href="{% url 'logout' %}" class="btn btn-primary" style="width: 30%;" id="logoutbtn">
+                    Logout
+                </a>
+                
+            </div>
+            <div class="col-md-6" style="flex-grow: 1;">
+                <input type="text" id="search-box" placeholder="Search users..." style="padding: 10px; width: 100%; border: none; border-radius: 4px; background-color: #2C2F33; color: #ffffff;">
+            </div>
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Created Date</th>
+                    <th>Email</th>
+                    <th>Nickname</th>
+                    <th>Account</th>
+                    <th>Language</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="user-row" data-user-id="{{ user.id }}" data-user-email="{{ user.email }}" data-user-account="{{ user.accountType }}">
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.createdAt }}</td> 
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.accountType }}</td>
+                    <td>{{ user.language }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Context menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" id="changeUserType">Set as Premium User</div>
+        <div class="context-menu-item" id="resetPassword">Send Reset Password link</div>
+        <div class="context-menu-item" id="deleteUser">Delete User</div>
+    </div>
+
+    <!-- Modal CreateUser -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" role="dialog" aria-labelledby="createUserModalLabel" aria-hidden="true" data-backdrop="static" style="z-index: 1050;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createUserModalLabel">Create New User</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: red;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="createUserForm">
+                        <div class="form-group">
+                            <label for="inputEmail">Email address</label>
+                            <input type="email" class="form-control" id="inputEmail" aria-describedby="emailHelp" placeholder="Enter email">
+                        </div>
+                        <div class="form-group">
+                            <label for="inputPassword">Password</label>
+                            <input type="password" class="form-control" id="inputPassword" placeholder="Password">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer center-button">
+                    <button type="button" class="btn btn-primary" id="createUserBtn" >Create User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset email Modal -->
+    <div id="loadingModal" class="modal">
+        <div class="modal-content">
+            <div class="loader"></div>
+            <p>Sending password reset link...</p>
+        </div>
+    </div>
+
+    <!-- Delete user Modal -->
+    <div id="deleteUserModal" class="modal">
+        <div class="modal-content">
+            <div class="loader"></div>
+            <p>Deleting user...</p>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#search-box').on('keyup', function() {
+                var value = $(this).val().toLowerCase();
+                $('.user-row').filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            // Get CSRF token from meta tag
+            function getCsrfToken() {
+                return $('meta[name="csrf-token"]').attr('content');
+            }
+            
+            $('#createUserBtn').on('click', function() {
+                var email = $('#inputEmail').val();
+                var password = $('#inputPassword').val();
+
+                // Perform validation here if needed
+
+                // Perform AJAX request to create user
+                $.ajax({
+                    type: 'POST',
+                    url: '/create-user/',
+                    data: {
+                        'email': email,
+                        'password': password
+                    },
+                    headers: {
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    success: function(response) {
+                        console.log(response);
+                        // Close the modal
+                        $('#createUserModal').modal('hide');
+                        // Refresh the page or perform any other actions as needed
+                        location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                        // Handle errors here if needed
+                    }
+                });
+            });
+
+            // Show context menu when a user row is clicked
+            $('.user-row').on('contextmenu', function(e) {
+                e.preventDefault();
+                var contextMenu = $('#contextMenu');
+                var userId = $(this).data('user-id');
+                var userEmail = $(this).data('user-email');
+                var userAccountType = $(this).data('user-account');
+
+                // Update context menu text based on account type
+                var changeUserTypeText = userAccountType === 'premium' ? 'Set as Free User' : 'Set as Premium User';
+                $('#changeUserType').text(changeUserTypeText);
+
+                contextMenu.css({
+                    display: 'block',
+                    top: e.pageY + 'px',
+                    left: e.pageX + 'px'
+                });
+                contextMenu.data('user-id', userId);
+                contextMenu.data('user-email', userEmail);
+                contextMenu.data('user-account', userAccountType);
+            });
+
+            // Hide context menu when clicked outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.context-menu').length) {
+                    $('#contextMenu').hide();
+                }
+            });
+
+            // Handle change user type action
+            $('#changeUserType').on('click', function() {
+                var userId = $('#contextMenu').data('user-id');
+                var currentAccountType = $('#contextMenu').data('user-account');
+                var newAccountType = currentAccountType === 'premium' ? 'free' : 'premium';
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/set-user-account-type/',
+                    data: {
+                        'user_id': userId,
+                        'account_type': newAccountType
+                    },
+                    headers: {
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    success: function(response) {
+                        console.log(response);
+                        location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                    }
+                });
+                $('#contextMenu').hide();
+            });
+
+            // Handle delete user action
+            $('#deleteUser').on('click', function() {
+                var userId = $('#contextMenu').data('user-id');
+                $('#deleteUserModal').css('display', 'flex');
+                $.ajax({
+                    type: 'POST',
+                    url: '/delete-user/',
+                    data: {'user_id': userId},
+                    headers: {
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    success: function(response) {
+                        console.log(response);
+                        location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                    }
+                });
+                $('#contextMenu').hide();
+            });
+
+            // Handle reset password action
+            $('#resetPassword').on('click', function() {
+                var userEmail = $('#contextMenu').data('user-email');
+                // Show the loading modal
+                $('#loadingModal').css('display', 'flex');
+                $.ajax({
+                    type: 'POST',
+                    url: '/reset-password/',
+                    data: {'email': userEmail},
+                    headers: {
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    success: function(response) {
+                        console.log(response);
+                        $('#loadingModal').hide();
+                        setTimeout(function() {
+                            alert('Password reset link has been sent to ' + userEmail);
+                        }, 100);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                    },
+                    complete: function() {
+                        // Hide the loading modal
+                        $('#loadingModal').hide();
+                    }
+                
+                });
+                $('#contextMenu').hide();
+            });
+        });
+    </script>
+</body>
+</html>
