@@ -28,6 +28,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:foregroundTint="#673AB7"
+            android:fontFamily="@font/poppins"
             android:hint="Email" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -43,6 +44,7 @@
             android:layout_height="wrap_content"
             android:foregroundTint="#673AB7"
             android:hint="Password"
+            android:fontFamily="@font/poppins"
             android:inputType="textPassword" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -58,6 +60,7 @@
             android:layout_height="wrap_content"
             android:foregroundTint="#673AB7"
             android:hint="Confirm Password"
+            android:fontFamily="@font/poppins"
             android:inputType="textPassword" />
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -66,7 +69,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:backgroundTint="#673AB7"
+        android:fontFamily="@font/poppins_semibold"
+        android:backgroundTint="#0E7FDA"
         android:text="SIGN UP"
         android:textColor="#FFFFFF" />
 
@@ -75,7 +79,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
+        android:fontFamily="@font/poppins_medium"
         android:text="@string/already_have_an_account_login_here"
-        android:textColor="#673AB7" />
+        android:textColor="#818181" />
 
 </LinearLayout>

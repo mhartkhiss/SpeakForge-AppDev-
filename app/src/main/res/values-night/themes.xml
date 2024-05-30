@@ -29,8 +29,12 @@
 
     <style name="AppTheme.Button" parent="Widget.MaterialComponents.Button">
         <item name="android:textColor">#FFFFFF</item> <!-- Set text color to black -->
-        <item name="android:background">@drawable/button_background</item> <!-- Set button background color -->
+        <item name="android:background">@drawable/background</item> <!-- Set button background color -->
         <item name="backgroundTint">#3C3C3C</item> <!-- Set button background color -->
+    </style>
+    <style name="AppTheme.Button2" parent="Widget.AppCompat.ActionBar">
+        <item name="android:textColor">#272727</item>-- Set button background color -->
+        <item name="backgroundTint">#A5A5A5</item> <!-- Set button background color -->
     </style>
     <style name="CustomOutlinedBox" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="boxStrokeColor">@android:color/black</item>

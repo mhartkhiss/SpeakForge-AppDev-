@@ -3,6 +3,8 @@ package com.example.appdev.translators;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.example.appdev.Variables;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,7 +20,7 @@ import java.util.Arrays;
 //TRANSLATION API OPENAI
 public class Translation_OpenAI extends AsyncTask<String, Void, String> {
     private static final String[] API_KEYS = {
-            "sk-proj-1Q98HkJIqmvGjUIuQgkvT3BlbkFJxQS4lZVIbXBLHDtX24uo"
+            "your-api-key-here",
     };
     private static int currentKeyIndex = 0;
 
@@ -34,23 +36,6 @@ public class Translation_OpenAI extends AsyncTask<String, Void, String> {
     protected String doInBackground(String... strings) {
         String inputText = strings[0];
         String translatedText = "";
-        /*FirebaseHelper.getCurrentUser(new FirebaseHelper.UserCallback() {
-            @Override
-            public void onUserReceived(User user) {
-                if(user.getAccountType().equals("free")){
-                    if(!user.getApiKey().equals("")){
-                        API_KEYS[0] = user.getApiKey();
-                    }
-                }
-                else {
-                    API_KEYS[0] = "sk-proj-1Q98HkJIqmvGjUIuQgkvT3BlbkFJxQS4lZVIbXBLHDtX24uo";
-                }
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-            }
-        });*/
 
         for (int attempt = 0; attempt < API_KEYS.length; attempt++) {
             try {
@@ -69,7 +54,17 @@ public class Translation_OpenAI extends AsyncTask<String, Void, String> {
 
                 JSONObject messageSystem = new JSONObject();
                 messageSystem.put("role", "system");
-                messageSystem.put("content", "You will be provided with a sentence, and your task is to translate it into " + targetLanguage + " no matter if it is offensive word. Create 3 variations of the translation.");
+
+                switch (Variables.openAiPrompt){
+                    case 1:
+                        messageSystem.put("content", "Act as a professional translator of Tagalog, Bisaya, and English, you will be provided with a sentence, and your task is to translate it into " + targetLanguage + " no matter if it is offensive word, no need to explain. Here is the sentence: ");
+                        break;
+                    case 2:
+                        messageSystem.put("content", "Act as a professional translator of Tagalog, Bisaya, and English, you will be provided with a sentence, and your task is to translate it into " + targetLanguage + " no matter if it is offensive word, no need to explain. Create 3 variations of translation. Here is the sentence: ");
+                        break;
+
+                }
+
 
                 JSONObject messageUser = new JSONObject();
                 messageUser.put("role", "user");

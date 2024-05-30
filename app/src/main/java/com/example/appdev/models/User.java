@@ -10,14 +10,13 @@ public class User {
     private String createdAt;
     private String lastLoginDate;
     private String translator;
-    private String apiKey;
 
     public User() {
         // Default constructor required for Firebase
     }
 
     public User(String userId, String username, String email, String profileImageUrl, String accountType,
-                String language, String createdAt, String lastLoginDate, String translator, String apiKey) {
+                String language, String createdAt, String lastLoginDate, String translator) {
         this.userId = userId;
         this.username = username;
         this.email = email;
@@ -27,7 +26,6 @@ public class User {
         this.createdAt = createdAt;
         this.lastLoginDate = lastLoginDate;
         this.translator = translator;
-        this.apiKey = apiKey;
     }
 
     public String getUserId() {
@@ -102,13 +100,6 @@ public class User {
         return translator;
     }
 
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    public String getApiKey() {
-        return apiKey;
-    }
 
 }
 

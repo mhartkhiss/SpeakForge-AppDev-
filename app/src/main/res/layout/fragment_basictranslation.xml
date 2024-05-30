@@ -1,7 +1,6 @@
 <RelativeLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -14,6 +13,7 @@
         android:layout_marginStart="40dp"
         android:layout_marginTop="40dp"
         android:layout_marginEnd="40dp"
+        android:fontFamily="@font/poppins_medium"
         android:background="@drawable/spinner_background"
         android:entries="@array/languages"
         android:padding="8dp"
@@ -36,10 +36,10 @@
             android:layout_width="match_parent"
             android:layout_height="450dp"
             android:gravity="center"
+            android:fontFamily="@font/poppins"
             android:text="Start typing in the textbox or press the button to start speaking"
             android:textColor="#B8B8B8"
-            android:textSize="29sp"
-            android:textStyle="italic"
+            android:textSize="28sp"
             android:visibility="visible"
             tools:visibility="visible" />
 
@@ -64,6 +64,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:foregroundTint="#673AB7"
+            android:fontFamily="@font/poppins"
             android:singleLine="true"
             android:textColor="@color/black"
             android:textColorHint="@color/black" />
@@ -71,29 +72,29 @@
 
     <Button
         android:id="@+id/startSpeakingButton"
-        style="@style/AppTheme.Button"
+        android:backgroundTint="#2196F3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
+        android:fontFamily="@font/poppins_medium"
         android:layout_alignParentBottom="true"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="48dp"
-        android:background="@drawable/button_background"
         android:text="@string/start_speaking"
         app:icon="@drawable/ic_voice" />
     <Button
         android:id="@+id/translateButton"
-        style="@style/AppTheme.Button"
+        android:backgroundTint="#EA9D2B"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_medium"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="48dp"
         android:visibility="gone"
-        android:background="@drawable/button_background"
         android:text="@string/translate_button"
         app:icon="@drawable/ic_translate" />
 

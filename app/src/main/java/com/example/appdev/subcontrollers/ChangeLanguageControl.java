@@ -23,26 +23,15 @@ public class ChangeLanguageControl {
         this.profileFragment = fragment;
     }
 
-    public void updateUserLanguage(String selectedLanguage, Button btnChangeLanguage) {
+    public void updateUserLanguage(String selectedLanguage) {
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
 
         if ( currentUser != null) {
             userRef.child("language").setValue(selectedLanguage)
-                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            btnChangeLanguage.setText("Language: " + selectedLanguage);
-                            Toast.makeText(profileFragment.getActivity(), "Language updated successfully", Toast.LENGTH_SHORT).show();
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(profileFragment.getActivity(), "Failed to update language", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    .addOnSuccessListener(aVoid -> Toast.makeText(profileFragment.getActivity(), "Language updated successfully", Toast.LENGTH_SHORT).show())
+                    .addOnFailureListener(e -> Toast.makeText(profileFragment.getActivity(), "Failed to update language", Toast.LENGTH_SHORT).show());
         }
         profileFragment.getLayoutLanguageSelection().setVisibility(View.GONE);
         profileFragment.getLayoutProfile().setVisibility(View.VISIBLE);

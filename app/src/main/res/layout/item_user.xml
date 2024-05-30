@@ -40,7 +40,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="18sp"
                 android:textColor="@android:color/black"
-                android:textStyle="bold"/>
+                android:fontFamily="@font/poppins_semibold"/>
 
             <TextView
                 android:id="@+id/textViewEmail"

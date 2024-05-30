@@ -59,9 +59,6 @@ public class LoginActivity extends AppCompatActivity {
                 userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        if (!dataSnapshot.hasChild("apiKey")) {
-                            userRef.child("apiKey").setValue("");
-                        }
                         if (!dataSnapshot.hasChild("translator")) {
                             userRef.child("translator").setValue("google");
                         }

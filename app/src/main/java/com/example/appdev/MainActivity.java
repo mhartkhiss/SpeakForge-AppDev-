@@ -1,14 +1,17 @@
 package com.example.appdev;
 
+import static android.content.ContentValues.TAG;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.viewpager.widget.ViewPager;
 
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,16 +19,57 @@ import com.example.appdev.adapters.TabAdapter;
 import com.example.appdev.fragments.ChatFragment;
 import com.example.appdev.fragments.ProfileFragment;
 import com.example.appdev.fragments.BasicTranslationFragment;
+import com.example.appdev.models.User;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class MainActivity extends AppCompatActivity {
+
+
+
+    private void userDataListener(){
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
+            userRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        User user = dataSnapshot.getValue(User.class);
+                        if (user != null) {
+                            Variables.userUID = user.getUserId();
+                            Variables.userEmail = user.getEmail();
+                            Variables.userDisplayName = user.getUsername();
+                            Variables.userAccountType = user.getAccountType();
+                            Variables.userLanguage = user.getLanguage();
+                            Variables.userTranslator = user.getTranslator();
+
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.e(TAG, "Error getting user: " + databaseError.getMessage());
+                }
+            });
+        }
+    }
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        userDataListener();
 
         ViewPager viewPager = findViewById(R.id.viewPager);
         TabLayout tabLayout = findViewById(R.id.tabLayout);
@@ -49,36 +93,25 @@ public class MainActivity extends AppCompatActivity {
                 int position = tab.getPosition();
                 String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
 
-                // Check if the selected tab is the profile or chat tab and user's email is "a@gmail.com"
                 if ((position == 0 || position == 2) && userEmail.equals(Variables.guestUser)) {
 
-                    // Display a dialog with message and options to login or cancel
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                     builder.setTitle("Login Required")
                             .setMessage("You need to login to use this feature. Do you want to login now?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Sign out the current user and proceed to LoginActivity
-                                    mAuth.signOut();
-                                    startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                                    finish(); // Finish the current activity to prevent returning to it
-                                }
+                            .setPositiveButton("Yes", (dialog, which) -> {
+                                // Sign out the current user and proceed to LoginActivity
+                                mAuth.signOut();
+                                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                                finish(); // Finish the current activity to prevent returning to it
                             })
-                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Dismiss the dialog if user chooses not to login
-                                    dialog.dismiss();
-                                    tabLayout.getTabAt(1).select(); // Select the voice tab
-                                }
+                            .setNegativeButton("No", (dialog, which) -> {
+                                // Dismiss the dialog if user chooses not to login
+                                dialog.dismiss();
+                                tabLayout.getTabAt(1).select(); // Select the voice tab
                             })
-                            .setOnCancelListener(new DialogInterface.OnCancelListener() {
-                                @Override
-                                public void onCancel(DialogInterface dialog) {
-                                    // Redirect the user to the voice tab when the dialog is canceled
-                                    tabLayout.getTabAt(1).select(); // Select the voice tab
-                                }
+                            .setOnCancelListener(dialog -> {
+                                // Redirect the user to the voice tab when the dialog is canceled
+                                tabLayout.getTabAt(1).select(); // Select the voice tab
                             })
                             .create()
                             .show();
@@ -87,12 +120,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
-                // Unused method
+                // Unused method but must be implemented
             }
 
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
-                // Unused method
+                // Unused method but must be implemented
             }
         });
 
@@ -104,7 +137,6 @@ public class MainActivity extends AppCompatActivity {
                 tab.setCustomView(R.layout.custom_tab_item);
                 TextView tabText = tab.getCustomView().findViewById(R.id.tabText);
                 ImageView tabIcon = tab.getCustomView().findViewById(R.id.tabIcon);
-                // Set your tab title and icon here
                 tabText.setText(adapter.getPageTitle(i));
                 switch (i) {
                     case 0:

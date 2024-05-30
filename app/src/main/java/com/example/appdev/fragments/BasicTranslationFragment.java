@@ -27,7 +27,7 @@ import androidx.fragment.app.Fragment;
 
 import com.android.volley.VolleyError;
 import com.example.appdev.R;
-import com.example.appdev.helpers.FetchUserField;
+import com.example.appdev.Variables;
 import com.example.appdev.translators.Translation_GoogleTranslate;
 import com.example.appdev.translators.Translation_OpenAI;
 import com.example.appdev.models.Languages;
@@ -35,7 +35,6 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseError;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -49,7 +48,6 @@ public class BasicTranslationFragment extends Fragment {
     private TextInputLayout textInputLayout;
     private Button btnStartSpeech, btnTranslate;
     private View rootView;
-    private String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
     @Nullable
     @Override
@@ -191,52 +189,43 @@ public class BasicTranslationFragment extends Fragment {
 
     private void translateAndDisplay(String text, String targetLanguage){
 
-        FetchUserField.fetchUserField("translator", new FetchUserField.UserFieldListener() {
-            @Override
-            public void onFieldReceived(String fieldValue) {
-                if(fieldValue.equals("openai")){
-                    Translation_OpenAI translationOpenAITask = new Translation_OpenAI(targetLanguage, new Translation_OpenAI.TranslationListener() {
-                        // OpenAI
-                        @Override
-                        public void onTranslationComplete(String translatedMessage) {
-                            if (!TextUtils.isEmpty(translatedMessage)) {
-                                String[] lines = translatedMessage.split("\n");
-                                if (lines.length > 0) {
-                                    String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
-                                    textViewResult.setText(firstLine);
-                                    textViewResult.setTextColor(getResources().getColor(R.color.black));
-                                    textViewResult.setTextSize(38);
-                                }
-                            }
-                        }
-                    });
-                    translationOpenAITask.execute(text);
-                } else {
-                    // Google Translate
-                    Translation_GoogleTranslate translationGoogleTask = new Translation_GoogleTranslate(requireContext());
-                    translationGoogleTask.translateText(text, targetLanguage, new Translation_GoogleTranslate.TranslateListener() {
-                        @Override
-                        public void onSuccess(String translatedText) {
-                            if (!TextUtils.isEmpty(translatedText)) {
-                                textViewResult.setText(translatedText);
-                                textViewResult.setTextColor(getResources().getColor(R.color.black));
-                                textViewResult.setTextSize(38);
-                            }
-                        }
-
-                        @Override
-                        public void onError(VolleyError error) {
-                        }
-                    });
+        if(Variables.userTranslator.equals("openai")){
+            // OpenAI
+            Variables.openAiPrompt = 1;
+            Translation_OpenAI translationOpenAITask = new Translation_OpenAI(targetLanguage, translatedMessage -> {
+                if (!TextUtils.isEmpty(translatedMessage)) {
+                    String[] lines = translatedMessage.split("\n");
+                    if (lines.length > 0) {
+                        String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
+                        textViewResult.setText(firstLine);
+                        textViewResult.setTextColor(getResources().getColor(R.color.black));
+                        textViewResult.setTextSize(38);
+                    }
                 }
-            }
+            });
+            translationOpenAITask.execute(text);
+        }
+        else{
+            // Google Translate
+            Translation_GoogleTranslate translationGoogleTask = new Translation_GoogleTranslate(requireContext());
+            translationGoogleTask.translateText(text, targetLanguage, new Translation_GoogleTranslate.TranslateListener() {
+                @Override
+                public void onSuccess(String translatedText) {
+                    if (!TextUtils.isEmpty(translatedText)) {
+                        textViewResult.setText(translatedText);
+                        textViewResult.setTextColor(getResources().getColor(R.color.black));
+                        textViewResult.setTextSize(38);
+                    }
+                }
 
-            @Override
-            public void onError(DatabaseError databaseError) {
-            }
-        });
+                @Override
+                public void onError(VolleyError error) {
+                }
+            });
+        }
 
     }
+
 
     private void startSpeechRecognition() {
 

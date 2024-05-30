@@ -2,6 +2,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    android:background="@drawable/background"
     android:layout_height="match_parent">
 
     <ImageView
@@ -25,6 +26,7 @@
         android:layout_marginBottom="20dp"
         android:clickable="true"
         android:focusable="true"
+        android:layout_centerHorizontal="true"
         android:onClick="selectImage"
         android:src="@drawable/default_userpic"
         app:civ_border_color="#3A3A3A"
@@ -37,10 +39,11 @@
         android:layout_height="wrap_content"
         android:id="@+id/cardViewProfile"
         app:cardCornerRadius="8dp"
+        android:layout_centerHorizontal="true"
         app:cardElevation="4dp"
         app:cardUseCompatPadding="true"
         android:layout_below="@id/imageViewUserPicture"
-        app:cardBackgroundColor="@color/lightGrey">
+        app:cardBackgroundColor="#61DFDFDF">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -48,11 +51,13 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+
             <TextView
                 android:id="@+id/textViewUsername"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Username"
+                android:fontFamily="@font/poppins_semibold"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@color/black"
@@ -66,10 +71,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="email@example.com"
-                android:textColor="@color/black"
-                android:textSize="16sp"
+                android:fontFamily="@font/poppins"
+                android:textColor="#636363"
+                android:textSize="14sp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="16dp"/>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:dividerColor="#2C000000"
+                app:dividerThickness="5dp"
+                android:layout_marginBottom="10dp"/>
 
             <Button
                 android:id="@+id/btnMenuChangePassword"
@@ -78,6 +91,7 @@
                 android:layout_marginBottom="8dp"
                 android:backgroundTint="@color/orange"
                 android:text="Change Password"
+                android:fontFamily="@font/poppins_medium"
                 android:textColor="@android:color/black"
                 app:icon="@drawable/profile_password"
                 app:iconGravity="textStart"
@@ -87,8 +101,10 @@
                 android:id="@+id/btnMenuChangeLanguage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
                 android:text="Change Language"
                 android:backgroundTint="@color/orange"
+                android:fontFamily="@font/poppins_medium"
                 android:textColor="@android:color/black"
                 app:icon="@drawable/profile_language"
                 app:iconGravity="textStart"
@@ -99,24 +115,39 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Translator: Google Translate"
+                android:layout_marginBottom="8dp"
                 android:backgroundTint="@color/orange"
+                android:fontFamily="@font/poppins_medium"
                 android:textColor="@android:color/black"
-                app:icon="@drawable/profile_translator"
-                app:iconGravity="textStart"
-                app:iconTint="#424242" />
-            <Button
-                android:id="@+id/btnMenuSetApiKey"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Set API Key"
-                android:backgroundTint="@color/orange"
-                android:textColor="@android:color/black"
-                app:icon="@drawable/profile_apikey"
-                android:visibility="gone"
+                app:icon="@drawable/ic_translate"
                 app:iconGravity="textStart"
                 app:iconTint="#424242" />
 
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:dividerColor="#2C000000"
+                app:dividerThickness="5dp"
+                android:layout_marginBottom="15dp"/>
+
+            <Button
+                android:id="@+id/btnLogout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:textColor="@color/black"
+                android:fontFamily="@font/poppins_medium"
+                style="@style/AppTheme.Button"
+                android:backgroundTint="@color/orange"
+                app:icon="@drawable/profile_logout"
+                app:iconGravity="textStart"
+                app:iconTint="@color/black"
+                android:text="Logout"/>
+
+
         </LinearLayout>
+
 
 
     </androidx.cardview.widget.CardView>
@@ -140,14 +171,6 @@
         <include
             android:id="@+id/includeTranslatorSelection"
             layout="@layout/fragment_profile_sub_changetranslator"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_below="@id/imageViewUserPicture" />
-
-        <include
-            android:id="@+id/includeSetApiKey"
-            layout="@layout/fragment_profile_sub_changeapi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
@@ -183,7 +206,7 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/lightGrey"
                     android:textColor="@color/black"
-                    android:hint="Username"
+                    android:hint="Display Name"
                     android:text="username" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -191,27 +214,26 @@
                 android:id="@+id/btnSaveChanges"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/orange"
+                android:backgroundTint="#3DB8EF"
                 android:textColor="@color/black"
-                android:text="Update Username" />
+                android:text="Save Changes" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-
-
-
-
     <Button
-        android:id="@+id/btnLogout"
+        android:id="@+id/btnUpgrade"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
+        android:backgroundTint="#00BCD4"
+        android:fontFamily="@font/poppins_medium"
         style="@style/AppTheme.Button"
-        app:icon="@drawable/profile_logout"
+        app:icon="@drawable/premium1"
         app:iconGravity="textStart"
-        app:iconTint="#DADADA"
-        android:text="Logout"/>
+        android:textColor="@color/ic_launcher_background"
+        app:iconTint="#776B08"
+        android:text="Upgrade to Premium"/>
     </RelativeLayout>
 
 </RelativeLayout>

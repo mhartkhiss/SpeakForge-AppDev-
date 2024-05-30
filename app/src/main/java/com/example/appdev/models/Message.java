@@ -39,6 +39,10 @@ public class Message {
         return messageOG;
     }
 
+    public void setMessageOG(String messageOG) {
+        this.messageOG = messageOG;
+    }
+
     public void setMessage(String message) {
         this.message = message;
     }

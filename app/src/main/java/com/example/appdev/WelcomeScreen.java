@@ -63,9 +63,6 @@ public class WelcomeScreen extends AppCompatActivity {
                                 } else {
                                     startActivity(new Intent(WelcomeScreen.this, LanguageSetupActivity.class));
                                 }
-                                if (!dataSnapshot.hasChild("apiKey")) {
-                                    userRef.child("apiKey").setValue("");
-                                }
                                 if (!dataSnapshot.hasChild("translator")) {
                                     userRef.child("translator").setValue("google");
                                 }

@@ -21,6 +21,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Select Translator"
+                android:fontFamily="@font/poppins_medium"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@color/black"
@@ -34,6 +35,7 @@
                 android:layout_height="wrap_content"
                 android:text="Google Translate"
                 android:backgroundTint="#3DB8EF"
+                android:fontFamily="@font/poppins_medium"
                 android:textColor="@android:color/black"
                 android:layout_marginBottom="8dp"/>
 
@@ -43,6 +45,8 @@
                 android:layout_height="wrap_content"
                 android:text="Open AI"
                 android:backgroundTint="#3DB8EF"
+                android:fontFamily="@font/poppins_medium"
+
                 android:textColor="@android:color/black"/>
 
 

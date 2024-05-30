@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.appdev.ConversationModeActivity;
 import com.example.appdev.R;
+import com.example.appdev.Variables;
 import com.example.appdev.models.User;
 
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
 
         private TextView textViewUsername;
         private TextView textViewEmail;
-        private ImageView imageViewUserPicture; // Add ImageView for user picture
+        private ImageView imageViewUserPicture;
         private User currentUser;
 
         public UserViewHolder(@NonNull View itemView) {
@@ -91,7 +92,6 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             Intent intent = new Intent(context, ConversationModeActivity.class);
             intent.putExtra("userId", currentUser.getUserId()); // Pass the user's ID to the ConversationModeActivity
             intent.putExtra("username", currentUser.getUsername()); // Pass the username to the ConversationModeActivity
-            intent.putExtra("email", currentUser.getEmail()); // Pass the email to the ConversationModeActivity
             intent.putExtra("profileImageUrl", currentUser.getProfileImageUrl()); // Pass the profile
             intent.putExtra("recipientLanguage", currentUser.getLanguage());
             context.startActivity(intent);

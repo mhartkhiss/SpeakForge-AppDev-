@@ -29,6 +29,7 @@
                 android:id="@+id/editTextOldPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="@font/poppins_medium"
                 android:backgroundTint="@color/lightGrey"
                 android:textColor="@color/black"
                 android:inputType="textPassword" />
@@ -48,6 +49,7 @@
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/lightGrey"
                 android:textColor="@color/black"
+                android:fontFamily="@font/poppins_medium"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -65,6 +67,7 @@
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/lightGrey"
                 android:textColor="@color/black"
+                android:fontFamily="@font/poppins_medium"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -73,7 +76,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Change Password"
-            android:backgroundTint="@color/orange"
+            android:backgroundTint="#3DB8EF"
+            android:fontFamily="@font/poppins_medium"
             android:textColor="@color/black"
             android:layout_marginTop="8dp" />
         <Button
@@ -84,7 +88,7 @@
             android:layout_gravity="center"
             android:text="Back"
             android:backgroundTint="#AAAAAA"
-            app:icon="@drawable/profile_back"
+            android:fontFamily="@font/poppins_medium"
             app:iconGravity="textStart"
             app:iconTint="#424242"
             android:textColor="@android:color/black"/>

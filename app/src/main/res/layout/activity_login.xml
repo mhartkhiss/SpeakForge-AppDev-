@@ -29,6 +29,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:foregroundTint="#673AB7"
+            android:fontFamily="@font/poppins"
             android:textColor="@color/black"
             android:hint="Email" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -44,6 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:foregroundTint="#673AB7"
+            android:fontFamily="@font/poppins"
             android:hint="Password"
             android:textColor="@color/black"
             android:inputType="textPassword" />
@@ -54,14 +56,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:backgroundTint="#673AB7"
+        android:backgroundTint="#0E7FDA"
+        android:fontFamily="@font/poppins_semibold"
         android:text="LOGIN"
         android:textColor="#FFFFFF" />
     <Button
         android:id="@+id/btnSignUp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:backgroundTint="#673AB7"
+        android:backgroundTint="#0E7FDA"
+        android:fontFamily="@font/poppins_semibold"
         android:text="SIGN UP"
         android:textColor="#FFFFFF" />
 
@@ -69,9 +73,10 @@
         android:id="@+id/txtForgotPassword"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_semibold"
         android:layout_marginTop="10dp"
         android:text="Forgot Password?"
-        android:textColor="#673AB7"
+        android:textColor="#818181"
         android:clickable="true"
         android:focusable="true" />
 

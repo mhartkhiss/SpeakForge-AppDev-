@@ -3,6 +3,7 @@ package com.example.appdev.fragments;
 import static android.content.ContentValues.TAG;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,12 +21,11 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
-import com.example.appdev.helpers.FirebaseHelper;
+import com.example.appdev.UpgradeAccountActivity;
 import com.example.appdev.models.User;
 import com.example.appdev.subcontrollers.ChangePassControl;
 import com.example.appdev.LoginActivity;
 import com.example.appdev.R;
-import com.example.appdev.helpers.FetchUserField;
 import com.example.appdev.Variables;
 import com.example.appdev.subcontrollers.ChangeProfilePicControl;
 import com.example.appdev.subcontrollers.ChangeLanguageControl;
@@ -41,14 +41,14 @@ public class ProfileFragment extends Fragment {
 
     private TextView textViewUsername, textViewEmail;
     private ImageView imageViewUserPicture;
-    private CardView layoutChangeUsername, layoutProfile, layoutLanguageSelection, layoutChangePass, layoutChangeTranslator,
-            layoutApiKey;
-    private Button btnSaveChanges, btnChangeLanguage, btnChangePassword, btnChangePassword2, btnChangeTranslator, btnSetApiKey,
-            btnGoogle, btnOpenAi, btnBack, btnBack2, btnSaveApiKey;
+    private CardView layoutChangeUsername, layoutProfile, layoutLanguageSelection, layoutChangePass, layoutChangeTranslator;
+    private Button btnLogout, btnSaveChanges, btnChangeLanguage, btnChangePassword, btnChangePassword2, btnChangeTranslator,
+            btnGoogle, btnOpenAi, btnBack, btnUpgrade;
     private Button[] btnLanguages = new Button[3];
-    private EditText editTextUsername, editTextOldPassword, editTextNewPassword, editTextConfirmPassword, editTextApiKey;
+    private EditText editTextUsername, editTextOldPassword, editTextNewPassword, editTextConfirmPassword;
     private ChangeProfilePicControl changeProfilePicControl;
     private ChangeLanguageControl changeLanguageControl;
+    private String accountType;
 
     public CardView getLayoutLanguageSelection() {
 
@@ -63,7 +63,6 @@ public class ProfileFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
-
         initializeViews(view);
         if (Variables.guestUser.equals(FirebaseAuth.getInstance().getCurrentUser().getEmail())) {
             view.setVisibility(View.GONE);
@@ -75,26 +74,9 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        view.findViewById(R.id.btnLogout).setOnClickListener(v -> logout());
-        FirebaseHelper.getCurrentUser(new FirebaseHelper.UserCallback() {
-            @Override
-            public void onUserReceived(User user) {
-                btnChangeLanguage.setText("Language: "+user.getLanguage());
-                editTextApiKey.setText(user.getApiKey());
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-                Log.e(TAG, "Error getting user: " + errorMessage);
-            }
-        });
-
         changeProfilePicControl = new ChangeProfilePicControl(this);
-
-        setUserDetails();
+        userDataListener();
         setListeners();
-        translatorMenu();
 
 
     }
@@ -108,7 +90,7 @@ public class ProfileFragment extends Fragment {
         layoutLanguageSelection = view.findViewById(R.id.includeLanguageSelection);
         layoutChangePass = view.findViewById(R.id.includeChangePassword);
         layoutChangeTranslator = view.findViewById(R.id.includeTranslatorSelection);
-        layoutApiKey = view.findViewById(R.id.includeSetApiKey);
+        btnLogout = view.findViewById(R.id.btnLogout);
         btnSaveChanges = view.findViewById(R.id.btnSaveChanges);
         btnChangeLanguage = view.findViewById(R.id.btnMenuChangeLanguage);
         btnChangePassword = view.findViewById(R.id.btnMenuChangePassword);
@@ -116,10 +98,8 @@ public class ProfileFragment extends Fragment {
         btnChangeTranslator = view.findViewById(R.id.btnMenuSelectTranslator);
         btnGoogle = view.findViewById(R.id.btnGoogle);
         btnOpenAi = view.findViewById(R.id.btnOpenAi);
-        btnSetApiKey = view.findViewById(R.id.btnMenuSetApiKey);
         btnBack = view.findViewById(R.id.btnBack);
-        btnBack2 = view.findViewById(R.id.btnBack2);
-        btnSaveApiKey = view.findViewById(R.id.btnSaveApiKey);
+        btnUpgrade = view.findViewById(R.id.btnUpgrade);
         btnLanguages[0] = view.findViewById(R.id.btnBisaya);
         btnLanguages[1] = view.findViewById(R.id.btnTagalog);
         btnLanguages[2] = view.findViewById(R.id.btnEnglish);
@@ -127,40 +107,64 @@ public class ProfileFragment extends Fragment {
         editTextOldPassword = view.findViewById(R.id.editTextOldPassword);
         editTextNewPassword = view.findViewById(R.id.editTextNewPassword);
         editTextConfirmPassword = view.findViewById(R.id.editTextConfirmPassword);
-        editTextApiKey = view.findViewById(R.id.editTextApiKey);
         changeLanguageControl = new ChangeLanguageControl(this);
 
     }
 
 
+    //This method automatically updates the values of the user's profile UI when the user data changes in the database
+    private void userDataListener(){
 
-    private void translatorMenu() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
+            userRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        User user = dataSnapshot.getValue(User.class);
+                        if (user != null) {
+                            btnChangeLanguage.setText("Language: " + user.getLanguage());
+                            textViewUsername.setText(user.getUsername());
+                            editTextUsername.setText(user.getUsername());
+                            textViewEmail.setText(user.getEmail());
+                            accountType = user.getAccountType();
+                            if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().equals("none")) {
+                                Glide.with(requireContext()).load(user.getProfileImageUrl()).into(imageViewUserPicture);
+                            } else {
+                                imageViewUserPicture.setImageResource(R.drawable.default_userpic);
+                            }
+                            if (accountType.equals("free")) {
+                                btnChangeTranslator.setText("Translator: Google Translate");
+                                btnUpgrade.setVisibility(View.VISIBLE);
+                                userRef.child("translator").setValue("google");
+                            }
+                            else if (user.getTranslator().equals("openai")) {
+                                btnChangeTranslator.setText("Translator: OpenAI");
+                            } else {
+                                btnChangeTranslator.setText("Translator: Google Translate");
+                            }
+                            if(accountType.equals("premium")){
+                                btnUpgrade.setVisibility(View.GONE);
+                            }
 
-        FirebaseHelper.getCurrentUser(new FirebaseHelper.UserCallback() {
-            @Override
-            public void onUserReceived(User user) {
-                if(user.getTranslator().equals("openai")){
-                    btnChangeTranslator.setText("Translator: OpenAI");
-                    if(user.getAccountType().equals("free")){
-                        btnSetApiKey.setVisibility(View.VISIBLE);
-                    }
-                    else{
-                        btnSetApiKey.setVisibility(View.GONE);
+                        }
                     }
                 }
-                else{
-                    btnChangeTranslator.setText("Translator: Google Translate");
-                    btnSetApiKey.setVisibility(View.GONE);
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.e(TAG, "Error getting user: " + databaseError.getMessage());
                 }
-            }
-            @Override
-            public void onError(String errorMessage) {
-                Log.e(TAG, "Error getting user: " + errorMessage);
-            }
-        });
+            });
+        }
     }
 
+    // method to set listeners for the buttons and other elements in the profile fragment
     private void setListeners(){
+
+        //LOGOUT LISTENER
+        btnLogout.setOnClickListener(v -> logout());
 
         //CHANGE PROFILE PIC LISTENER
         imageViewUserPicture.setOnClickListener(v ->
@@ -174,7 +178,7 @@ public class ProfileFragment extends Fragment {
         );
         //LANGUAGE BUTTONS LISTENERS
         for (Button btnLanguage : btnLanguages) {
-            btnLanguage.setOnClickListener(v -> changeLanguageControl.updateUserLanguage(btnLanguage.getText().toString(), btnChangeLanguage));
+            btnLanguage.setOnClickListener(v -> changeLanguageControl.updateUserLanguage(btnLanguage.getText().toString()));
         }
 
         //CHANGE PASSWORD LISTENERS
@@ -188,42 +192,29 @@ public class ProfileFragment extends Fragment {
         btnSaveChanges.setOnClickListener(v -> updateUsername());
 
         //CHANGE TRANSLATOR LISTENERS
-        btnChangeTranslator.setOnClickListener(v -> toggleCardViews(layoutChangeTranslator, layoutProfile));
+        btnChangeTranslator.setOnClickListener(v -> {
+            if(accountType.equals("free")){
+                startActivity(new Intent(getActivity(), UpgradeAccountActivity.class));
+                return;
+            }
+            toggleCardViews(layoutChangeTranslator, layoutProfile);
+        });
         btnGoogle.setOnClickListener(v -> {
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
             userRef.child("translator").setValue("google");
-            btnChangeTranslator.setText("Translator: Google Translate");
-            translatorMenu();
             toggleCardViews(layoutProfile, layoutChangeTranslator);
         });
         btnOpenAi.setOnClickListener(v -> {
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
             userRef.child("translator").setValue("openai");
-            btnChangeTranslator.setText("Translator: OpenAI");
-            translatorMenu();
             toggleCardViews(layoutProfile, layoutChangeTranslator);
+
+
         });
 
-        //SET API KEY LISTENERS
-        btnSetApiKey.setOnClickListener(v -> {
-                toggleCardViews(layoutApiKey, layoutProfile);
-
-        });
-        btnBack2.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutApiKey));
-        btnSaveApiKey.setOnClickListener(v -> {
-
-
-            EditText editTextApiKey = requireView().findViewById(R.id.editTextApiKey);
-            String apiKey = editTextApiKey.getText().toString().trim();
-
-            if (!apiKey.isEmpty()) {
-                DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
-                userRef.child("apiKey").setValue(apiKey);
-                Toast.makeText(getActivity(), "API Key updated successfully", Toast.LENGTH_SHORT).show();
-                toggleCardViews(layoutProfile, layoutApiKey);
-            } else {
-                Toast.makeText(getActivity(), "Please enter an API Key", Toast.LENGTH_SHORT).show();
-            }
+        //UPGRADE ACCOUNT LISTENER
+        btnUpgrade.setOnClickListener(v -> {
+            startActivity(new Intent(getActivity(), UpgradeAccountActivity.class));
 
         });
 
@@ -235,55 +226,13 @@ public class ProfileFragment extends Fragment {
 
     private void updateUsername() {
         String newUsername = editTextUsername.getText().toString().trim();
-        if (!newUsername.isEmpty()) {
-            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (currentUser != null) {
-                DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
-
-                userRef.child("username").setValue(newUsername)
-                        .addOnSuccessListener(aVoid -> {
-                            textViewUsername.setText(newUsername);
-                            Toast.makeText(getActivity(), "Username updated successfully", Toast.LENGTH_SHORT).show();
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(getActivity(), "Failed to update username", Toast.LENGTH_SHORT).show();
-                            Log.e(TAG, "Failed to update username: " + e.getMessage());
-                        });
-            }
-        } else {
-            Toast.makeText(getActivity(), "Please enter a username", Toast.LENGTH_SHORT).show();
-        }
-
-        toggleCardViews(layoutProfile, layoutChangeUsername);
-    }
-
-    private void setUserDetails() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            textViewEmail.setText(currentUser.getEmail());
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
-            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.exists()) {
-                        String username = dataSnapshot.child("username").getValue(String.class);
-                        String profileImageUrl = dataSnapshot.child("profileImageUrl").getValue(String.class);
-                        if (username != null && !username.isEmpty()) {
-                            textViewUsername.setText(username);
-                            editTextUsername.setText(username);
-                        }
-                        if (profileImageUrl != null && !profileImageUrl.equals("none")) {
-                            Glide.with(requireContext()).load(profileImageUrl).into(imageViewUserPicture);
-                        } else {
-                            imageViewUserPicture.setImageResource(R.drawable.default_userpic);
-                        }
-                    }
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                }
-            });
-        }
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        userRef.child("username").setValue(newUsername)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getActivity(), "Username updated successfully", Toast.LENGTH_SHORT).show();
+                    toggleCardViews(layoutProfile, layoutChangeUsername);
+                })
+                .addOnFailureListener(e -> Toast.makeText(getActivity(), "Failed to update username", Toast.LENGTH_SHORT).show());
     }
 
     private void logout() {
