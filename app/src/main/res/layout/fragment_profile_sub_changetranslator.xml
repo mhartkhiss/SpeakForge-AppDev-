@@ -1,54 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/cardViewTranslator"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardCornerRadius="8dp"
+    android:layout_marginTop="16dp"
+    app:cardCornerRadius="15dp"
     app:cardElevation="4dp"
-    app:cardUseCompatPadding="true"
-    android:layout_below="@id/imageViewUserPicture"
-    app:cardBackgroundColor="@color/lightGrey">
+    app:cardUseCompatPadding="true">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_back"
+                android:tint="#212121" />
 
             <TextView
-                android:id="@+id/textViewSelectTranslator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
                 android:text="Select Translator"
-                android:fontFamily="@font/poppins_medium"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="8dp"
-                android:drawablePadding="8dp"/>
-
-            <Button
-                android:id="@+id/btnGoogle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Google Translate"
-                android:backgroundTint="#3DB8EF"
-                android:fontFamily="@font/poppins_medium"
-                android:textColor="@android:color/black"
-                android:layout_marginBottom="8dp"/>
-
-            <Button
-                android:id="@+id/btnOpenAi"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Open AI"
-                android:backgroundTint="#3DB8EF"
-                android:fontFamily="@font/poppins_medium"
-
-                android:textColor="@android:color/black"/>
-
-
+                android:textSize="20sp"
+                android:textColor="#212121"
+                android:fontFamily="@font/poppins_semibold" />
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+
+        <!-- Translator Options -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoogle"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:layout_marginBottom="16dp"
+            android:text="Google Translate"
+            android:textColor="#212121"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:textAlignment="textStart"
+            app:icon="@drawable/ic_translate"
+            app:iconGravity="start"
+            app:iconSize="24dp"
+            app:iconTint="#4285F4"
+            app:iconPadding="32dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            app:strokeColor="#E0E0E0"
+            app:cornerRadius="12dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOpenAi"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:text="OpenAI Translator"
+            android:textColor="#212121"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:textAlignment="textStart"
+            app:icon="@drawable/ic_translate"
+            app:iconGravity="start"
+            app:iconSize="24dp"
+            app:iconTint="#00A67E"
+            app:iconPadding="32dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            app:strokeColor="#E0E0E0"
+            app:cornerRadius="12dp"/>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

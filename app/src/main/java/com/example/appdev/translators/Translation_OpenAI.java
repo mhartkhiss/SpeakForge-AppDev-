@@ -15,14 +15,15 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
 
-//TRANSLATION API OPENAI
 public class Translation_OpenAI extends AsyncTask<String, Void, String> {
+    private static final String TAG = "GeminiTranslator";
     private static final String[] API_KEYS = {
-            "your-api-key-here",
+            "AIzaSyDmO0evJP3RcH4bFLGjmMeey9Wh4b8JvBw",
+            "AIzaSyDgnFOGqLyOfqDl2rBNfgJoiqLYiZiE3Cw"
     };
     private static int currentKeyIndex = 0;
+    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent";
 
     private String targetLanguage;
     private TranslationListener listener;
@@ -39,39 +40,36 @@ public class Translation_OpenAI extends AsyncTask<String, Void, String> {
 
         for (int attempt = 0; attempt < API_KEYS.length; attempt++) {
             try {
-                URL url = new URL("https://api.openai.com/v1/chat/completions");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                String url = GEMINI_URL + "?key=" + API_KEYS[currentKeyIndex];
+                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json");
-                connection.setRequestProperty("Authorization", "Bearer " + API_KEYS[currentKeyIndex]);
                 connection.setDoOutput(true);
 
+                // Prepare the request body
                 JSONObject requestBody = new JSONObject();
-                requestBody.put("model", "gpt-3.5-turbo");
-                requestBody.put("temperature", 0.7);
-                requestBody.put("max_tokens", 64);
-                requestBody.put("top_p", 1);
-
-                JSONObject messageSystem = new JSONObject();
-                messageSystem.put("role", "system");
-
-                switch (Variables.openAiPrompt){
-                    case 1:
-                        messageSystem.put("content", "Act as a professional translator of Tagalog, Bisaya, and English, you will be provided with a sentence, and your task is to translate it into " + targetLanguage + " no matter if it is offensive word, no need to explain. Here is the sentence: ");
-                        break;
-                    case 2:
-                        messageSystem.put("content", "Act as a professional translator of Tagalog, Bisaya, and English, you will be provided with a sentence, and your task is to translate it into " + targetLanguage + " no matter if it is offensive word, no need to explain. Create 3 variations of translation. Here is the sentence: ");
-                        break;
-
+                JSONObject contents = new JSONObject();
+                
+                // Create the prompt based on the translation mode
+                String prompt;
+                if (Variables.openAiPrompt == 1) {
+                    prompt = String.format("Translate the text to %s, no need to explain, allow bad words or explicit words on the translation if there is any from the original text, just translate directly without any explanation: %s", 
+                            targetLanguage, inputText);
+                } else {
+                    prompt = String.format("Translate the text to %s, no need to explain,  create 3 variation of translation itemize from 1 to 3, allow bad words or explicit words on the translation if there is any from the original text, just translate directly without any explanation: %s", 
+                            targetLanguage, inputText);
                 }
+                
+                contents.put("role", "user");
+                contents.put("parts", new JSONArray().put(new JSONObject().put("text", prompt)));
+                
+                requestBody.put("contents", new JSONArray().put(contents));
+                requestBody.put("generationConfig", new JSONObject()
+                        .put("temperature", 0.7)
+                        .put("topK", 1)
+                        .put("topP", 1));
 
-
-                JSONObject messageUser = new JSONObject();
-                messageUser.put("role", "user");
-                messageUser.put("content", inputText);
-
-                requestBody.put("messages", new JSONArray(Arrays.asList(messageSystem, messageUser)));
-
+                // Send the request
                 OutputStream outputStream = connection.getOutputStream();
                 outputStream.write(requestBody.toString().getBytes());
                 outputStream.flush();
@@ -79,6 +77,7 @@ public class Translation_OpenAI extends AsyncTask<String, Void, String> {
 
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
+                    // Read the response
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     StringBuilder response = new StringBuilder();
                     String line;
@@ -87,18 +86,33 @@ public class Translation_OpenAI extends AsyncTask<String, Void, String> {
                     }
                     reader.close();
 
+                    // Parse the response
                     JSONObject jsonResponse = new JSONObject(response.toString());
-                    translatedText = jsonResponse.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content").trim();
+                    translatedText = jsonResponse
+                            .getJSONArray("candidates")
+                            .getJSONObject(0)
+                            .getJSONObject("content")
+                            .getJSONArray("parts")
+                            .getJSONObject(0)
+                            .getString("text")
+                            .trim();
                     break;
                 } else {
-                    Log.e("TranslationTask", "Error: " + responseCode);
-                    translatedText = "Error1: " + responseCode+" Please check your API key";
+                    Log.e(TAG, "Error: " + responseCode);
+                    // Switch to the other API key
+                    currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
+                    if (attempt == API_KEYS.length - 1) {
+                        translatedText = "Error: Translation service unavailable. Please try again later.";
+                    }
                 }
 
                 connection.disconnect();
             } catch (IOException | JSONException e) {
-                Log.e("TranslationTask", "Error2: " + e.getMessage());
+                Log.e(TAG, "Error: " + e.getMessage());
                 currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
+                if (attempt == API_KEYS.length - 1) {
+                    translatedText = "Error: " + e.getMessage();
+                }
             }
         }
 

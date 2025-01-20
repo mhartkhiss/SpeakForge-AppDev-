@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,6 +37,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.example.appdev.utils.CustomNotification;
 
 public class ProfileFragment extends Fragment {
 
@@ -43,7 +45,8 @@ public class ProfileFragment extends Fragment {
     private ImageView imageViewUserPicture;
     private CardView layoutChangeUsername, layoutProfile, layoutLanguageSelection, layoutChangePass, layoutChangeTranslator;
     private Button btnLogout, btnSaveChanges, btnChangeLanguage, btnChangePassword, btnChangePassword2, btnChangeTranslator,
-            btnGoogle, btnOpenAi, btnBack, btnUpgrade;
+            btnGoogle, btnOpenAi, btnUpgrade;
+    private ImageButton btnBack;
     private Button[] btnLanguages = new Button[3];
     private EditText editTextUsername, editTextOldPassword, editTextNewPassword, editTextConfirmPassword;
     private ChangeProfilePicControl changeProfilePicControl;
@@ -65,7 +68,9 @@ public class ProfileFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
         initializeViews(view);
         if (Variables.guestUser.equals(FirebaseAuth.getInstance().getCurrentUser().getEmail())) {
-            view.setVisibility(View.GONE);
+            view.findViewById(R.id.cardViewProfile).setVisibility(View.GONE);
+            view.findViewById(R.id.imageViewUserPicture).setVisibility(View.GONE);
+            view.findViewById(R.id.headerBackground).setVisibility(View.GONE);
         }
 
         return view;
@@ -173,19 +178,31 @@ public class ProfileFragment extends Fragment {
 
 
         //CHANGE LANGUAGE LISTENERS
-        btnChangeLanguage.setOnClickListener(v ->
-                toggleCardViews(layoutLanguageSelection, layoutProfile)
-        );
+        btnChangeLanguage.setOnClickListener(v -> toggleCardViews(layoutLanguageSelection, layoutProfile));
         //LANGUAGE BUTTONS LISTENERS
         for (Button btnLanguage : btnLanguages) {
-            btnLanguage.setOnClickListener(v -> changeLanguageControl.updateUserLanguage(btnLanguage.getText().toString()));
+            btnLanguage.setOnClickListener(v -> {
+                changeLanguageControl.updateUserLanguage(btnLanguage.getText().toString());
+                toggleCardViews(layoutProfile, layoutLanguageSelection);  // Return to profile after selection
+            });
         }
+        // Add back button listener for language selection
+        View languageBackBtn = layoutLanguageSelection.findViewById(R.id.btnBack);
+        languageBackBtn.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutLanguageSelection));
 
         //CHANGE PASSWORD LISTENERS
         btnChangePassword.setOnClickListener(v -> toggleCardViews(layoutChangePass, layoutProfile));
-        btnChangePassword2.setOnClickListener(new ChangePassControl(getContext(), editTextOldPassword, editTextNewPassword,
-                editTextConfirmPassword, layoutChangePass, layoutProfile));
-        btnBack.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutChangePass));
+        btnChangePassword2.setOnClickListener(new ChangePassControl(getContext(), 
+            editTextOldPassword, 
+            editTextNewPassword,
+            editTextConfirmPassword, 
+            layoutChangePass, 
+            layoutProfile,
+            this));
+        
+        // Add back button listener for change password
+        View changePassView = layoutChangePass.findViewById(R.id.btnBack);
+        changePassView.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutChangePass));
 
         //CHANGE USERNAME LISTENERS
         textViewUsername.setOnClickListener(v -> toggleCardViews(layoutChangeUsername, layoutProfile));
@@ -200,17 +217,20 @@ public class ProfileFragment extends Fragment {
             toggleCardViews(layoutChangeTranslator, layoutProfile);
         });
         btnGoogle.setOnClickListener(v -> {
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
+                    .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
             userRef.child("translator").setValue("google");
             toggleCardViews(layoutProfile, layoutChangeTranslator);
         });
         btnOpenAi.setOnClickListener(v -> {
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
+                    .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
             userRef.child("translator").setValue("openai");
             toggleCardViews(layoutProfile, layoutChangeTranslator);
-
-
         });
+        // Add back button listener for translator selection
+        View translatorView = layoutChangeTranslator.findViewById(R.id.btnBack);
+        translatorView.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutChangeTranslator));
 
         //UPGRADE ACCOUNT LISTENER
         btnUpgrade.setOnClickListener(v -> {
@@ -219,20 +239,42 @@ public class ProfileFragment extends Fragment {
         });
 
     }
-    private void toggleCardViews(CardView cardViewToShow, CardView cardViewToHide) {
-        cardViewToShow.setVisibility(View.VISIBLE);
-        cardViewToHide.setVisibility(View.GONE);
+    public void toggleCardViews(CardView cardViewToShow, CardView cardViewToHide) {
+        cardViewToHide.animate()
+                .alpha(0f)
+                .setDuration(150)
+                .withEndAction(() -> {
+                    cardViewToHide.setVisibility(View.GONE);
+                    cardViewToShow.setAlpha(0f);
+                    cardViewToShow.setVisibility(View.VISIBLE);
+                    cardViewToShow.animate()
+                            .alpha(1f)
+                            .setDuration(200)
+                            .start();
+                }).start();
     }
 
     private void updateUsername() {
         String newUsername = editTextUsername.getText().toString().trim();
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        if (newUsername.isEmpty()) {
+            editTextUsername.setError("Username cannot be empty");
+            return;
+        }
+
+        btnSaveChanges.setEnabled(false);
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
+                .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
         userRef.child("username").setValue(newUsername)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(getActivity(), "Username updated successfully", Toast.LENGTH_SHORT).show();
+                    CustomNotification.showNotification(requireActivity(), 
+                        "Username updated successfully", true);
                     toggleCardViews(layoutProfile, layoutChangeUsername);
                 })
-                .addOnFailureListener(e -> Toast.makeText(getActivity(), "Failed to update username", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    CustomNotification.showNotification(requireActivity(), 
+                        "Failed to update username", false);
+                    btnSaveChanges.setEnabled(true);
+                });
     }
 
     private void logout() {

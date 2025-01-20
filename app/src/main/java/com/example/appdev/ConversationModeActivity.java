@@ -244,7 +244,10 @@ public class ConversationModeActivity extends AppCompatActivity {
 
     private String removeQuotationMarks(String text) {
         if (text.startsWith("\"") && text.endsWith("\"")) {
-            return text.substring(1, text.length() - 1);
+            text = text.substring(1, text.length() - 1);
+        }
+        if (text.startsWith("&quot;") && text.endsWith("&quot;")) {
+            text = text.substring(6, text.length() - 6);
         }
         return text;
     }

@@ -4,12 +4,13 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 
 import com.example.appdev.R;
+import com.example.appdev.utils.CustomNotification;
+import com.example.appdev.fragments.ProfileFragment;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.AuthCredential;
@@ -22,15 +23,18 @@ public class ChangePassControl implements View.OnClickListener {
     private Context context;
     private EditText editTextOldPassword, editTextNewPassword, editTextConfirmPassword;
     private CardView cardViewChangePassword, cardViewProfile;
+    private ProfileFragment profileFragment;
 
     public ChangePassControl(Context context, EditText editTextOldPassword, EditText editTextNewPassword,
-                             EditText editTextConfirmPassword, CardView cardViewChangePassword, CardView cardViewProfile) {
+                           EditText editTextConfirmPassword, CardView cardViewChangePassword, CardView cardViewProfile, 
+                           ProfileFragment profileFragment) {
         this.context = context;
         this.editTextOldPassword = editTextOldPassword;
         this.editTextNewPassword = editTextNewPassword;
         this.editTextConfirmPassword = editTextConfirmPassword;
         this.cardViewChangePassword = cardViewChangePassword;
         this.cardViewProfile = cardViewProfile;
+        this.profileFragment = profileFragment;
     }
 
     @Override
@@ -46,12 +50,13 @@ public class ChangePassControl implements View.OnClickListener {
         String confirmPassword = editTextConfirmPassword.getText().toString().trim();
 
         if (TextUtils.isEmpty(oldPassword) || TextUtils.isEmpty(newPassword) || TextUtils.isEmpty(confirmPassword)) {
-            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+            CustomNotification.showNotification((android.app.Activity) context, "Please fill in all fields", false);
             return;
         }
 
         if (!newPassword.equals(confirmPassword)) {
-            Toast.makeText(context, "New password and confirm password do not match", Toast.LENGTH_SHORT).show();
+            CustomNotification.showNotification((android.app.Activity) context, 
+                "New password and confirm password do not match", false);
             return;
         }
 
@@ -59,39 +64,26 @@ public class ChangePassControl implements View.OnClickListener {
     }
 
     private void changePassword(String oldPassword, String newPassword) {
-
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         AuthCredential credential = EmailAuthProvider.getCredential(currentUser.getEmail(), oldPassword);
         currentUser.reauthenticate(credential)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        currentUser.updatePassword(newPassword)
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                        Toast.makeText(context, "Password changed successfully", Toast.LENGTH_SHORT).show();
-                                        editTextOldPassword.setText("");
-                                        editTextNewPassword.setText("");
-                                        editTextConfirmPassword.setText("");
-                                        cardViewChangePassword.setVisibility(View.GONE);
-                                        cardViewProfile.setVisibility(View.VISIBLE);
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Toast.makeText(context, "Failed to change password: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                    }
+                .addOnSuccessListener(aVoid -> {
+                    currentUser.updatePassword(newPassword)
+                            .addOnSuccessListener(aVoid1 -> {
+                                CustomNotification.showNotification((android.app.Activity) context, 
+                                    "Password changed successfully", true);
+                                editTextOldPassword.setText("");
+                                editTextNewPassword.setText("");
+                                editTextConfirmPassword.setText("");
+                                profileFragment.toggleCardViews(cardViewProfile, cardViewChangePassword);
+                            })
+                            .addOnFailureListener(e -> 
+                                CustomNotification.showNotification((android.app.Activity) context, 
+                                    "Failed to change password: " + e.getMessage(), false));
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(context, "Failed to reauthenticate: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+                .addOnFailureListener(e -> 
+                    CustomNotification.showNotification((android.app.Activity) context, 
+                        "Failed to reauthenticate: " + e.getMessage(), false));
     }
 }
 

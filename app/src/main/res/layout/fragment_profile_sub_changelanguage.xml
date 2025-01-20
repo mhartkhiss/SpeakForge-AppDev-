@@ -1,61 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/cardViewLanguage"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardCornerRadius="8dp"
+    android:layout_marginTop="16dp"
+    app:cardCornerRadius="15dp"
     app:cardElevation="4dp"
-    app:cardUseCompatPadding="true"
-    android:layout_below="@id/imageViewUserPicture"
-    app:cardBackgroundColor="@color/lightGrey">
+    app:cardUseCompatPadding="true">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_back"
+                android:tint="#212121" />
 
             <TextView
-                android:id="@+id/textViewSelectLanguage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
                 android:text="Select Language"
-                android:fontFamily="@font/poppins_medium"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="8dp"
-                android:drawablePadding="8dp"/>
-
-            <Button
-                android:id="@+id/btnEnglish"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="English"
-                android:fontFamily="@font/poppins_medium"
-                android:backgroundTint="#3DB8EF"
-                android:textColor="@android:color/black"
-                android:layout_marginBottom="8dp"/>
-
-            <Button
-                android:id="@+id/btnTagalog"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Tagalog"
-                android:backgroundTint="#3DB8EF"
-                android:fontFamily="@font/poppins_medium"
-                android:layout_marginBottom="8dp"
-                android:textColor="@android:color/black"/>
-            <Button
-                android:id="@+id/btnBisaya"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Bisaya"
-                android:fontFamily="@font/poppins_medium"
-                android:backgroundTint="#3DB8EF"
-                android:textColor="@android:color/black"/>
-
+                android:textSize="20sp"
+                android:textColor="#212121"
+                android:fontFamily="@font/poppins_semibold" />
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+
+        <!-- Language Options -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEnglish"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="8dp"
+            android:text="English"
+            android:textColor="#212121"
+            android:textAlignment="viewStart"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            app:strokeColor="#E0E0E0"
+            app:cornerRadius="12dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTagalog"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginBottom="8dp"
+            android:text="Tagalog"
+            android:textColor="#212121"
+            android:textAlignment="viewStart"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            app:strokeColor="#E0E0E0"
+            app:cornerRadius="12dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBisaya"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Bisaya"
+            android:textColor="#212121"
+            android:textAlignment="viewStart"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            app:strokeColor="#E0E0E0"
+            app:cornerRadius="12dp"/>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

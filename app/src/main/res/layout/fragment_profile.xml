@@ -1,239 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:background="@drawable/background"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F5F7FA">
 
-    <ImageView
-        android:id="@+id/imageProfileBackground"
+    <!-- Header Background with curved bottom -->
+    <View
+        android:id="@+id/headerBackground"
         android:layout_width="match_parent"
-        android:layout_height="95dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="65dp"
-        app:srcCompat="@drawable/button_background2" />
+        android:layout_height="240dp"
+        android:background="@drawable/profile_header_background" />
 
-    <RelativeLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp">
+        android:fillViewport="true"
+        android:overScrollMode="never">
 
-    <!-- User Picture -->
-    <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/imageViewUserPicture"
-        android:layout_width="160dp"
-        android:layout_height="160dp"
-        android:layout_marginBottom="20dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:layout_centerHorizontal="true"
-        android:onClick="selectImage"
-        android:src="@drawable/default_userpic"
-        app:civ_border_color="#3A3A3A"
-        android:contentDescription="Update Profile Picture"
-        app:civ_border_width="2dp" />
-
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/cardViewProfile"
-        app:cardCornerRadius="8dp"
-        android:layout_centerHorizontal="true"
-        app:cardElevation="4dp"
-        app:cardUseCompatPadding="true"
-        android:layout_below="@id/imageViewUserPicture"
-        app:cardBackgroundColor="#61DFDFDF">
-
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingHorizontal="20dp">
 
-
+            <!-- Profile Text -->
             <TextView
-                android:id="@+id/textViewUsername"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Username"
-                android:fontFamily="@font/poppins_semibold"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="8dp"
-                android:drawableEnd="@drawable/ic_edit"
-                android:drawablePadding="8dp"/>
-
-            <TextView
-                android:id="@+id/textViewEmail"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="email@example.com"
-                android:fontFamily="@font/poppins"
-                android:textColor="#636363"
-                android:textSize="14sp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"/>
-
-            <com.google.android.material.divider.MaterialDivider
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:dividerColor="#2C000000"
-                app:dividerThickness="5dp"
-                android:layout_marginBottom="10dp"/>
-
-            <Button
-                android:id="@+id/btnMenuChangePassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/orange"
-                android:text="Change Password"
-                android:fontFamily="@font/poppins_medium"
-                android:textColor="@android:color/black"
-                app:icon="@drawable/profile_password"
-                app:iconGravity="textStart"
-                app:iconTint="#424242" />
-
-            <Button
-                android:id="@+id/btnMenuChangeLanguage"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:text="Change Language"
-                android:backgroundTint="@color/orange"
-                android:fontFamily="@font/poppins_medium"
-                android:textColor="@android:color/black"
-                app:icon="@drawable/profile_language"
-                app:iconGravity="textStart"
-                app:iconTint="#424242" />
-
-            <Button
-                android:id="@+id/btnMenuSelectTranslator"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Translator: Google Translate"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/orange"
-                android:fontFamily="@font/poppins_medium"
-                android:textColor="@android:color/black"
-                app:icon="@drawable/ic_translate"
-                app:iconGravity="textStart"
-                app:iconTint="#424242" />
-
-            <com.google.android.material.divider.MaterialDivider
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:dividerColor="#2C000000"
-                app:dividerThickness="5dp"
-                android:layout_marginBottom="15dp"/>
-
-            <Button
-                android:id="@+id/btnLogout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
+                android:layout_marginTop="40dp"
                 android:layout_centerHorizontal="true"
-                android:textColor="@color/black"
-                android:fontFamily="@font/poppins_medium"
-                style="@style/AppTheme.Button"
-                android:backgroundTint="@color/orange"
-                app:icon="@drawable/profile_logout"
-                app:iconGravity="textStart"
-                app:iconTint="@color/black"
-                android:text="Logout"/>
+                android:text="My Profile"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:fontFamily="@font/poppins_semibold" />
 
+            <!-- Profile Picture with larger size and elevation -->
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/imageViewUserPicture"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="90dp"
+                android:src="@drawable/default_userpic"
+                android:elevation="4dp"
+                app:civ_border_color="#FFFFFF"
+                app:civ_border_width="4dp" />
 
-        </LinearLayout>
-
-
-
-    </androidx.cardview.widget.CardView>
-
-        <include
-            android:id="@+id/includeChangePassword"
-            layout="@layout/fragment_profile_sub_changepass"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_below="@id/imageViewUserPicture" />
-
-        <include
-            android:id="@+id/includeLanguageSelection"
-            layout="@layout/fragment_profile_sub_changelanguage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_below="@id/imageViewUserPicture" />
-
-        <include
-            android:id="@+id/includeTranslatorSelection"
-            layout="@layout/fragment_profile_sub_changetranslator"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_below="@id/imageViewUserPicture" />
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardViewChangeUsername"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp"
-        app:cardUseCompatPadding="true"
-        android:layout_below="@id/imageViewUserPicture"
-        android:visibility="gone"
-        app:cardBackgroundColor="@color/lightGrey">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/textInputLayoutUsername"
+            <!-- Main Card with improved styling -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardViewProfile"
                 android:layout_width="match_parent"
-                android:textColorHint="#555454"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_below="@id/imageViewUserPicture"
+                android:layout_marginTop="-30dp"
+                android:layout_marginHorizontal="4dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp"
+                app:cardUseCompatPadding="true">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editTextUsername"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="@color/lightGrey"
-                    android:textColor="@color/black"
-                    android:hint="Display Name"
-                    android:text="username" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:orientation="vertical"
+                    android:padding="24dp">
 
-            <Button
-                android:id="@+id/btnSaveChanges"
+                    <!-- Name with larger text -->
+                    <TextView
+                        android:id="@+id/textViewUsername"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAlignment="center"
+                        android:textSize="24sp"
+                        android:textColor="#212121"
+                        android:layout_marginTop="16dp"
+                        android:fontFamily="@font/poppins_semibold"/>
+
+                    <!-- Email with improved styling -->
+                    <TextView
+                        android:id="@+id/textViewEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAlignment="center"
+                        android:textSize="14sp"
+                        android:textColor="#757575"
+                        android:fontFamily="@font/poppins"
+                        android:layout_marginBottom="24dp"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginBottom="24dp"
+                        android:background="#E0E0E0" />
+
+                    <!-- Profile Options with improved button styling -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <!-- Change Password Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnMenuChangePassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:layout_marginBottom="12dp"
+                            android:backgroundTint="#F8F9FA"
+                            android:text="Change Password"
+                            android:textColor="#212121"
+                            android:fontFamily="@font/poppins_medium"
+                            android:textAlignment="textStart"
+                            android:paddingStart="20dp"
+                            android:paddingEnd="20dp"
+                            app:icon="@drawable/profile_password"
+                            app:iconGravity="start"
+                            app:iconPadding="24dp"
+                            app:iconSize="24dp"
+                            app:iconTint="#424242"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            app:cornerRadius="12dp"/>
+
+                        <!-- Change Language Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnMenuChangeLanguage"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:layout_marginBottom="12dp"
+                            android:backgroundTint="#F8F9FA"
+                            android:text="Change Language"
+                            android:textColor="#212121"
+                            android:fontFamily="@font/poppins_medium"
+                            android:textAlignment="textStart"
+                            android:paddingStart="20dp"
+                            android:paddingEnd="20dp"
+                            app:icon="@drawable/profile_language"
+                            app:iconGravity="start"
+                            app:iconPadding="24dp"
+                            app:iconSize="24dp"
+                            app:iconTint="#424242"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            app:cornerRadius="12dp"/>
+
+                        <!-- Translator Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnMenuSelectTranslator"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:layout_marginBottom="12dp"
+                            android:backgroundTint="#F8F9FA"
+                            android:text="Translator: Google Translate"
+                            android:textColor="#212121"
+                            android:fontFamily="@font/poppins_medium"
+                            android:textAlignment="textStart"
+                            android:paddingStart="20dp"
+                            android:paddingEnd="20dp"
+                            app:icon="@drawable/ic_translate"
+                            app:iconGravity="start"
+                            app:iconPadding="24dp"
+                            app:iconSize="24dp"
+                            app:iconTint="#424242"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            app:cornerRadius="12dp"/>
+
+                        <!-- Logout Button with improved styling -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnLogout"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:text="Logout"
+                            android:textColor="#FF5252"
+                            android:fontFamily="@font/poppins_medium"
+                            android:textAlignment="textStart"
+                            android:paddingStart="20dp"
+                            android:paddingEnd="20dp"
+                            app:icon="@drawable/profile_logout"
+                            app:iconGravity="start"
+                            app:iconPadding="24dp"
+                            app:iconSize="24dp"
+                            app:iconTint="#FF5252"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            app:cornerRadius="12dp"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="8dp"
+                        android:background="#E0E0E0" />
+
+                    <!-- Upgrade Button with gradient background -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnUpgrade"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="8dp"
+                        android:text="Upgrade to Premium"
+                        android:textColor="#FFFFFF"
+                        android:fontFamily="@font/poppins_medium"
+                        app:icon="@drawable/premium1"
+                        app:iconGravity="textStart"
+                        app:iconTint="#FFD700"
+                        app:iconPadding="24dp"
+                        app:cornerRadius="12dp"
+                        android:backgroundTint="#2196F3"/>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Change Username Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardViewChangeUsername"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:backgroundTint="#3DB8EF"
-                android:textColor="@color/black"
-                android:text="Save Changes" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+                android:layout_below="@id/imageViewUserPicture"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="4dp"
+                app:cardUseCompatPadding="true"
+                app:cardBackgroundColor="#FFFFFF">
 
-    <Button
-        android:id="@+id/btnUpgrade"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:backgroundTint="#00BCD4"
-        android:fontFamily="@font/poppins_medium"
-        style="@style/AppTheme.Button"
-        app:icon="@drawable/premium1"
-        app:iconGravity="textStart"
-        android:textColor="@color/ic_launcher_background"
-        app:iconTint="#776B08"
-        android:text="Upgrade to Premium"/>
-    </RelativeLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Change Username"
+                        android:textSize="20sp"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/poppins_semibold"
+                        android:layout_marginBottom="16dp"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/textInputLayoutUsername"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="24dp"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editTextUsername"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Display Name"
+                            android:textColor="@color/black"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSaveChanges"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Save Changes"
+                        android:textColor="#FFFFFF"
+                        android:padding="12dp"
+                        app:cornerRadius="12dp"
+                        android:backgroundTint="#2196F3"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Include other layouts -->
+            <include
+                android:id="@+id/includeChangePassword"
+                layout="@layout/fragment_profile_sub_changepass"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/imageViewUserPicture"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/includeLanguageSelection"
+                layout="@layout/fragment_profile_sub_changelanguage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/imageViewUserPicture"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/includeTranslatorSelection"
+                layout="@layout/fragment_profile_sub_changetranslator"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/imageViewUserPicture"
+                android:visibility="gone" />
+
+        </RelativeLayout>
+    </ScrollView>
 </RelativeLayout>
