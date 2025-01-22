@@ -219,14 +219,30 @@ public class ProfileFragment extends Fragment {
         btnGoogle.setOnClickListener(v -> {
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
                     .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
-            userRef.child("translator").setValue("google");
-            toggleCardViews(layoutProfile, layoutChangeTranslator);
+            userRef.child("translator").setValue("google")
+                    .addOnSuccessListener(aVoid -> {
+                        CustomNotification.showNotification(requireActivity(), 
+                            "Switched to Google Translate", true);
+                        toggleCardViews(layoutProfile, layoutChangeTranslator);
+                    })
+                    .addOnFailureListener(e -> {
+                        CustomNotification.showNotification(requireActivity(), 
+                            "Failed to change translator", false);
+                    });
         });
         btnOpenAi.setOnClickListener(v -> {
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
                     .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
-            userRef.child("translator").setValue("openai");
-            toggleCardViews(layoutProfile, layoutChangeTranslator);
+            userRef.child("translator").setValue("openai")
+                    .addOnSuccessListener(aVoid -> {
+                        CustomNotification.showNotification(requireActivity(), 
+                            "Switched to OpenAI Translator", true);
+                        toggleCardViews(layoutProfile, layoutChangeTranslator);
+                    })
+                    .addOnFailureListener(e -> {
+                        CustomNotification.showNotification(requireActivity(), 
+                            "Failed to change translator", false);
+                    });
         });
         // Add back button listener for translator selection
         View translatorView = layoutChangeTranslator.findViewById(R.id.btnBack);
