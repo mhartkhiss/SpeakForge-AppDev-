@@ -1,36 +1,50 @@
- <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/parentLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="6dp"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?android:attr/selectableItemBackground"
-    app:cardBackgroundColor="#CACACA"
-    android:padding="16dp">
+    app:cardBackgroundColor="#FFFFFF"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#E0E0E0"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp"
-        android:paddingLeft="2dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="12dp">
 
-        <!-- User Picture -->
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/imageViewUserPicture"
-            android:layout_width="62dp"
-            android:layout_height="62dp"
-            android:src="@drawable/default_userpic"
-            android:layout_gravity="center_vertical"
-            app:civ_border_color="@color/purple_500"
-            android:layout_marginEnd="16dp"/>
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/imageViewUserPicture"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/default_userpic"
+                app:civ_border_color="#E3F2FD"
+                app:civ_border_width="2dp" />
+
+            <View
+                android:id="@+id/onlineIndicator"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_gravity="end|bottom"
+                android:background="@drawable/online_indicator_background"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="16dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -38,16 +52,32 @@
                 android:id="@+id/textViewUsername"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:textColor="@android:color/black"
-                android:fontFamily="@font/poppins_semibold"/>
+                android:ellipsize="end"
+                android:fontFamily="@font/poppins_semibold"
+                android:maxLines="1"
+                android:textColor="#212121"
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/textViewEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/black"
-                android:textSize="16sp"/>
+                android:ellipsize="end"
+                android:fontFamily="@font/poppins"
+                android:maxLines="1"
+                android:textColor="#757575"
+                android:textSize="14sp" />
+
         </LinearLayout>
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_chat_arrow"
+            app:tint="#BDBDBD" />
+
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+
+</com.google.android.material.card.MaterialCardView>

@@ -1,9 +1,11 @@
 package com.example.appdev.fragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,6 +17,7 @@ import com.example.appdev.R;
 import com.example.appdev.adapters.UserAdapter;
 import com.example.appdev.Variables;
 import com.example.appdev.models.User;
+import com.example.appdev.utils.CustomNotification;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -23,13 +26,21 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import android.util.Pair;
 
 public class ChatFragment extends Fragment {
 
     private RecyclerView recyclerViewUsers;
     private UserAdapter userAdapter;
     private List<User> userList;
+    private TextView emptyStateText;
 
     @Nullable
     @Override
@@ -57,14 +68,15 @@ public class ChatFragment extends Fragment {
         // Initialize views
         recyclerViewUsers = view.findViewById(R.id.recyclerViewUsers);
         androidx.appcompat.widget.SearchView searchViewUsers = view.findViewById(R.id.searchViewUsers);
+        emptyStateText = view.findViewById(R.id.emptyStateText);
 
         // Initialize RecyclerView
-
         recyclerViewUsers.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerViewUsers.setAdapter(userAdapter);
-        searchViewUsers.setIconifiedByDefault(false);
+        
+        // Customize SearchView
         searchViewUsers.setQueryHint("Search users...");
-
+        
         // Add listener to SearchView
         searchViewUsers.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
             @Override
@@ -74,48 +86,218 @@ public class ChatFragment extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                // Create a new list to hold the filtered users
-                List<User> filteredList = new ArrayList<>();
-
-                // Iterate over the userList and add any users whose email or username contains the search query to the filteredList
-                for (User user : userList) {
-                    if (user.getEmail().toLowerCase().contains(newText.toLowerCase()) || user.getUsername().toLowerCase().contains(newText.toLowerCase())) {
-                        filteredList.add(user);
-                    }
+                if (newText.trim().isEmpty()) {
+                    // If search is empty, show only users with message history
+                    getUsersFromFirebase();
+                } else {
+                    // Search in database
+                    searchUsers(newText.toLowerCase());
                 }
-
-                // Update the RecyclerView with the filtered list
-                userAdapter.updateList(filteredList);
-
                 return false;
             }
         });
-        // Retrieve list of users from Firebase Authentication
+
+        // Get users from Firebase
         getUsersFromFirebase();
     }
 
+    private static class UserWithTimestamp {
+        User user;
+        long lastMessageTime;
+
+        UserWithTimestamp(User user, long lastMessageTime) {
+            this.user = user;
+            this.lastMessageTime = lastMessageTime;
+        }
+    }
 
     private void getUsersFromFirebase() {
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages");
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
-        usersRef.addValueEventListener(new ValueEventListener() {
+
+        messagesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                userList.clear();
-                String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    // Convert each user data snapshot to a User object
-                    User user = snapshot.getValue(User.class);
-                    if (user != null && user.getUserId() != null && !user.getUserId().equals(currentUserId) && user.getEmail() != null && !Variables.guestUser.equals(user.getEmail())) {
-                        userList.add(user);
+                Map<String, Pair<String, Long>> userLastMessageInfo = new HashMap<>();
+                
+                // Loop through all chat rooms
+                for (DataSnapshot chatSnapshot : dataSnapshot.getChildren()) {
+                    String roomId = chatSnapshot.getKey();
+                    if (roomId != null) {
+                        String[] userIds = roomId.split("_");
+                        if (userIds.length == 2) {
+                            String otherUserId = userIds[0].equals(currentUserId) ? userIds[1] : 
+                                (userIds[1].equals(currentUserId) ? userIds[0] : null);
+                            
+                            if (otherUserId != null) {
+                                // Find the latest message timestamp for this chat
+                                long latestTimestamp = 0;
+                                String lastMessage = "";
+                                String lastMessageOG = "";
+                                String lastMessageSenderId = "";
+                                for (DataSnapshot messageSnapshot : chatSnapshot.getChildren()) {
+                                    Long timestamp = messageSnapshot.child("timestamp").getValue(Long.class);
+                                    if (timestamp != null && timestamp > latestTimestamp) {
+                                        latestTimestamp = timestamp;
+                                        lastMessage = messageSnapshot.child("message").getValue(String.class);
+                                        lastMessageOG = messageSnapshot.child("messageOG").getValue(String.class);
+                                        lastMessageSenderId = messageSnapshot.child("senderId").getValue(String.class);
+                                    }
+                                }
+                                userLastMessageInfo.put(otherUserId, new Pair<>(
+                                    lastMessageSenderId + "|" + lastMessage + "|" + lastMessageOG, // Include messageOG
+                                    latestTimestamp
+                                ));
+                            }
+                        }
                     }
                 }
-                // Notify the adapter that the data set has changed
-                userAdapter.notifyDataSetChanged();
+
+                // Now get user details and sort by timestamp
+                usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        List<UserWithTimestamp> usersWithTimestamp = new ArrayList<>();
+                        
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            User user = snapshot.getValue(User.class);
+                            if (user != null && user.getUserId() != null && 
+                                userLastMessageInfo.containsKey(user.getUserId()) && 
+                                !user.getUserId().equals(currentUserId) && 
+                                user.getEmail() != null && 
+                                !Variables.guestUser.equals(user.getEmail())) {
+                                
+                                Pair<String, Long> messageInfo = userLastMessageInfo.get(user.getUserId());
+                                user.setLastMessage(messageInfo.first);
+                                user.setLastMessageTime(messageInfo.second);
+                                
+                                usersWithTimestamp.add(new UserWithTimestamp(
+                                    user, messageInfo.second
+                                ));
+                            }
+                        }
+
+                        // Sort by timestamp (newest first)
+                        Collections.sort(usersWithTimestamp, (u1, u2) -> 
+                            Long.compare(u2.lastMessageTime, u1.lastMessageTime));
+
+                        // Update userList
+                        userList.clear();
+                        for (UserWithTimestamp uwt : usersWithTimestamp) {
+                            userList.add(uwt.user);
+                        }
+
+                        // Update UI
+                        emptyStateText.setVisibility(userList.isEmpty() ? View.VISIBLE : View.GONE);
+                        recyclerViewUsers.setVisibility(userList.isEmpty() ? View.GONE : View.VISIBLE);
+                        
+                        if (userList.isEmpty()) {
+                            emptyStateText.setText("No conversations yet\nStart chatting with someone!");
+                        }
+                        
+                        userAdapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        CustomNotification.showNotification(requireActivity(), 
+                            "Failed to load users", false);
+                    }
+                });
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle error
+                CustomNotification.showNotification(requireActivity(), 
+                    "Failed to load chat rooms", false);
+            }
+        });
+    }
+
+    private void searchUsers(String searchText) {
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages");
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+
+        // First get users with message history
+        messagesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Set<String> userIdsWithMessages = new HashSet<>();
+                
+                for (DataSnapshot chatSnapshot : dataSnapshot.getChildren()) {
+                    String roomId = chatSnapshot.getKey();
+                    if (roomId != null) {
+                        String[] userIds = roomId.split("_");
+                        if (userIds.length == 2) {
+                            if (userIds[0].equals(currentUserId)) {
+                                userIdsWithMessages.add(userIds[1]);
+                            } else if (userIds[1].equals(currentUserId)) {
+                                userIdsWithMessages.add(userIds[0]);
+                            }
+                        }
+                    }
+                }
+
+                // Now search in users
+                usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        userList.clear();
+                        List<User> searchResults = new ArrayList<>();
+                        List<User> messageHistoryResults = new ArrayList<>();
+
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            User user = snapshot.getValue(User.class);
+                            if (user != null && user.getUserId() != null && 
+                                !user.getUserId().equals(currentUserId) && 
+                                user.getEmail() != null && 
+                                !Variables.guestUser.equals(user.getEmail())) {
+                                
+                                boolean matchesSearch = (user.getUsername() != null && 
+                                    user.getUsername().toLowerCase().contains(searchText)) ||
+                                    user.getEmail().toLowerCase().contains(searchText);
+                                
+                                if (matchesSearch) {
+                                    if (userIdsWithMessages.contains(user.getUserId())) {
+                                        // Users with message history appear first
+                                        messageHistoryResults.add(user);
+                                    } else {
+                                        // Users without message history appear last
+                                        searchResults.add(user);
+                                    }
+                                }
+                            }
+                        }
+
+                        // Combine results with message history users first
+                        userList.addAll(messageHistoryResults);
+                        userList.addAll(searchResults);
+
+                        // Update UI
+                        emptyStateText.setVisibility(userList.isEmpty() ? View.VISIBLE : View.GONE);
+                        recyclerViewUsers.setVisibility(userList.isEmpty() ? View.GONE : View.VISIBLE);
+                        
+                        if (userList.isEmpty()) {
+                            emptyStateText.setText("No users found");
+                        }
+                        
+                        userAdapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        CustomNotification.showNotification(requireActivity(), 
+                            "Failed to search users", false);
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                CustomNotification.showNotification(requireActivity(), 
+                    "Failed to load chat rooms", false);
             }
         });
     }

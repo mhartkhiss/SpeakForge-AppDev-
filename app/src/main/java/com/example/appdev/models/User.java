@@ -10,6 +10,8 @@ public class User {
     private String createdAt;
     private String lastLoginDate;
     private String translator;
+    private String lastMessage;
+    private long lastMessageTime;
 
     public User() {
         // Default constructor required for Firebase
@@ -100,6 +102,20 @@ public class User {
         return translator;
     }
 
+    public String getLastMessage() {
+        return lastMessage;
+    }
 
+    public void setLastMessage(String lastMessage) {
+        this.lastMessage = lastMessage;
+    }
+
+    public long getLastMessageTime() {
+        return lastMessageTime;
+    }
+
+    public void setLastMessageTime(long lastMessageTime) {
+        this.lastMessageTime = lastMessageTime;
+    }
 }
 

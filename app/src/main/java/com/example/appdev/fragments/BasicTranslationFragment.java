@@ -186,38 +186,49 @@ public class BasicTranslationFragment extends Fragment {
     }
 
     private void translateAnimation() {
-        progressBar.setVisibility(View.VISIBLE);
-        textViewResult.setText("Translating");
-        textViewResult.setTextColor(getResources().getColor(R.color.grey));
+        // Hide the progress bar since we don't want the spinner
+        progressBar.setVisibility(View.GONE);
         
-        // Stop any existing animation first
+        // Initial setup
+        textViewResult.setTextColor(getResources().getColor(R.color.grey));
+        textViewResult.setTextSize(24); // Slightly smaller text for animation
+        
+        // Stop any existing animation
         stopAnimation();
         
-        // Create a StringBuilder for the dots
-        StringBuilder dots = new StringBuilder();
+        // Create animation sequence
+        String[] animationFrames = new String[] {
+            "Translating",
+            "T r a n s l a t i n g",
+            "< T r a n s l a t i n g >",
+            "« T r a n s l a t i n g »",
+            "{ T r a n s l a t i n g }",
+            "[ T r a n s l a t i n g ]",
+            "< T r a n s l a t i n g >",
+        };
+        
         animationHandler = new Handler();
+        final int[] frameIndex = {0};
+        
         animationRunnable = new Runnable() {
-            private int dotCount = 0;
-
             @Override
             public void run() {
-                // Clear previous dots and add new ones
-                dots.setLength(0);
-                for (int i = 0; i < 3; i++) {
-                    dots.append(i < dotCount ? "." : " ");
-                }
-                
-                // Update text with current dots
                 if (textViewResult != null) {
-                    textViewResult.setText("Translating" + dots.toString());
-                }
-                
-                // Increment dot count or reset to 0 if we reached 3
-                dotCount = (dotCount + 1) % 4;
-                
-                // Schedule next animation frame
-                if (animationHandler != null) {
-                    animationHandler.postDelayed(this, 300);
+                    // Apply frame with fade effect
+                    textViewResult.setAlpha(0.7f);
+                    textViewResult.setText(animationFrames[frameIndex[0]]);
+                    textViewResult.animate()
+                        .alpha(1.0f)
+                        .setDuration(150)
+                        .start();
+                    
+                    // Move to next frame
+                    frameIndex[0] = (frameIndex[0] + 1) % animationFrames.length;
+                    
+                    // Schedule next frame
+                    if (animationHandler != null) {
+                        animationHandler.postDelayed(this, 200);
+                    }
                 }
             }
         };
@@ -252,6 +263,7 @@ public class BasicTranslationFragment extends Fragment {
                             textViewResult.setText(firstLine);
                             textViewResult.setTextColor(getResources().getColor(R.color.black));
                             textViewResult.setTextSize(38);
+                            textViewResult.setAlpha(1.0f); // Ensure full opacity
                         }
                     }
                     progressBar.setVisibility(View.GONE);
@@ -273,6 +285,7 @@ public class BasicTranslationFragment extends Fragment {
                             textViewResult.setText(translatedText);
                             textViewResult.setTextColor(getResources().getColor(R.color.black));
                             textViewResult.setTextSize(38);
+                            textViewResult.setAlpha(1.0f); // Ensure full opacity
                         }
                         progressBar.setVisibility(View.GONE);
                         saveToHistory(text, translatedText, targetLanguage);
@@ -287,6 +300,8 @@ public class BasicTranslationFragment extends Fragment {
                         stopAnimation(); // Stop animation on error
                         textViewResult.setText("Translation failed");
                         textViewResult.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                        textViewResult.setTextSize(38);
+                        textViewResult.setAlpha(1.0f); // Ensure full opacity
                         progressBar.setVisibility(View.GONE);
                     });
                 }
