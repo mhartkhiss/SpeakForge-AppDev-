@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.appdev.ConversationModeActivity;
+import com.example.appdev.ContactSettingsActivity;
 import com.example.appdev.R;
 import com.example.appdev.Variables;
 import com.example.appdev.models.User;
@@ -31,14 +32,20 @@ import java.util.List;
 
 public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
 
-    private List<User> userList;
-    private Context context;
-    private String currentUserId;
+    private final List<User> userList;
+    private final Context context;
+    private final String currentUserId;
+    private final OnMoreButtonClickListener moreButtonClickListener;
 
-    public UserAdapter(List<User> userList, Context context, String currentUserId) {
+    public interface OnMoreButtonClickListener {
+        void onMoreButtonClick(View view, User user);
+    }
+
+    public UserAdapter(List<User> userList, Context context, String currentUserId, OnMoreButtonClickListener listener) {
         this.userList = userList;
         this.context = context;
         this.currentUserId = currentUserId;
+        this.moreButtonClickListener = listener;
     }
 
     @NonNull
@@ -101,11 +108,9 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
             context.startActivity(intent);
         });
 
-        // Add long click listener
-        holder.itemView.setOnLongClickListener(v -> {
-            showPopupMenu(v, user);
-            return true;
-        });
+        // Set click listener for more button
+        holder.buttonMore.setOnClickListener(v -> 
+            moreButtonClickListener.onMoreButtonClick(v, user));
     }
 
     private void showPopupMenu(View view, User user) {
@@ -190,7 +195,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
     }
 
     public void updateList(List<User> newList) {
-        userList = new ArrayList<>();
+        userList.clear();
         userList.addAll(newList);
         notifyDataSetChanged();
     }
@@ -200,12 +205,14 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         private TextView textViewUsername;
         private TextView textViewEmail;
         private ImageView imageViewUserPicture;
+        public ImageView buttonMore;
 
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewUsername = itemView.findViewById(R.id.textViewUsername);
             textViewEmail = itemView.findViewById(R.id.textViewEmail);
             imageViewUserPicture = itemView.findViewById(R.id.imageViewUserPicture);
+            buttonMore = itemView.findViewById(R.id.buttonMore);
         }
     }
 }

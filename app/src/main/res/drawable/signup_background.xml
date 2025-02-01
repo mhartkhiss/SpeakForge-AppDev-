@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <solid android:color="#FFFFFF"/>
+        </shape>
+    </item>
+    <!-- Top left decorative circle -->
+    <item android:left="-80dp" android:top="-80dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFF3E0"/>
+            <size android:width="200dp" android:height="200dp"/>
+        </shape>
+    </item>
+    <!-- Middle right decorative circle -->
+    <item android:right="-120dp" android:top="200dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFB74D"/>
+            <size android:width="180dp" android:height="180dp"/>
+        </shape>
+    </item>
+    <!-- Bottom decorative wave -->
+    <item android:bottom="-300dp">
+        <shape>
+            <solid android:color="#FFF3E0"/>
+            <corners android:topLeftRadius="300dp" android:topRightRadius="300dp"/>
+        </shape>
+    </item>
+</layer-list> 

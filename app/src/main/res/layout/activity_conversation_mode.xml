@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#E0E0E0"
+    android:fitsSystemWindows="true"
     tools:context=".ConversationModeActivity">
 
   <include
@@ -21,28 +22,36 @@
 
 
   <!-- Chat messages RecyclerView -->
+
+  <!-- Input message container -->
+
+
   <androidx.recyclerview.widget.RecyclerView
       android:id="@+id/recyclerViewChat"
       android:layout_width="0dp"
       android:layout_height="0dp"
       android:background="@android:color/transparent"
-      app:layout_constraintStart_toStartOf="parent"
+      android:clipToPadding="false"
+      android:paddingBottom="16dp"
+      android:windowSoftInputMode="adjustResize"
+      app:layout_constraintBottom_toTopOf="@id/inputContainer"
       app:layout_constraintEnd_toEndOf="parent"
-      app:stackFromEnd="true"
+      app:layout_constraintHorizontal_bias="0.0"
+      app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toBottomOf="@id/includeUser"
-      app:layout_constraintBottom_toTopOf="@id/inputContainer"/>
-
-  <!-- Input message container -->
-
-
+      app:layout_constraintVertical_bias="0.9"
+      app:stackFromEnd="true" />
 
   <LinearLayout
       android:id="@+id/inputContainer"
       android:layout_width="0dp"
       android:layout_height="wrap_content"
       android:orientation="horizontal"
-      android:background="@color/white"
+      android:background="@color/transparent"
       android:elevation="8dp"
+      android:paddingTop="8dp"
+      android:paddingBottom="8dp"
+      android:layout_marginBottom="0dp"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintBottom_toBottomOf="parent">
@@ -53,9 +62,12 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
         android:hint="Type a message..."
         android:maxLines="5"
-        android:padding="8dp"
+        android:padding="12dp"
+        android:background="@drawable/chatbox_background"
         android:textColorHint="#3C3C3C"
         android:maxLength="50"
         android:textColor="@color/black" />
@@ -63,20 +75,26 @@
     <!-- Send button -->
     <ImageButton
         android:id="@+id/buttonSend"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:src="@drawable/ic_send"
         android:visibility="gone"
-        android:background="?attr/selectableItemBackground"
-        android:padding="8dp"/>
+        android:layout_marginEnd="8dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/circle_background"
+        android:padding="14dp"
+        android:tint="#03A9F4"/>
+
     <!-- Mic button -->
     <ImageButton
         android:id="@+id/buttonMic"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="8dp"
+        android:layout_gravity="bottom"
         android:src="@drawable/ic_voice"
-        android:background="?attr/selectableItemBackground"
-        android:padding="8dp"/>
+        android:background="@drawable/circle_background"
+        android:padding="14dp"/>
 
   </LinearLayout>
 

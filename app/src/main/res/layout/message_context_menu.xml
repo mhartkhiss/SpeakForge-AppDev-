@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/context_menu_background"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/menuItemRegenerate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/menu_item_background"
+        android:drawableStart="@drawable/ic_regenerate"
+        android:drawablePadding="12dp"
+        android:gravity="center_vertical"
+        android:minHeight="40dp"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
+        android:text="Regenerate Translation"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="8dp" />
+
+    <TextView
+        android:id="@+id/menuItemToggleOriginal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/menu_item_background"
+        android:drawableStart="@drawable/ic_translate"
+        android:drawablePadding="12dp"
+        android:gravity="center_vertical"
+        android:minHeight="40dp"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
+        android:text="Show Original Message"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="8dp" />
+
+    <TextView
+        android:id="@+id/menuItemRemoveTranslation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/menu_item_background"
+        android:drawableStart="@drawable/ic_remove_translation"
+        android:drawablePadding="12dp"
+        android:gravity="center_vertical"
+        android:minHeight="40dp"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
+        android:text="Remove Translation"
+        android:textColor="@color/black"
+        android:textSize="14sp" />
+
+</LinearLayout> 

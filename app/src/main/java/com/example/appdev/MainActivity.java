@@ -31,7 +31,53 @@ import com.google.firebase.database.ValueEventListener;
 
 public class MainActivity extends AppCompatActivity {
 
+    private void loadApiKeys() {
+        // Existing klusterai keys loading
+        DatabaseReference apiKeysRef = FirebaseDatabase.getInstance()
+                .getReference("apikeys")
+                .child("klusterai");
 
+        apiKeysRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Variables.klusterAiKeys.clear();
+                for (DataSnapshot keySnapshot : dataSnapshot.getChildren()) {
+                    String apiKey = keySnapshot.getValue(String.class);
+                    if (apiKey != null) {
+                        Variables.klusterAiKeys.add(apiKey);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e(TAG, "Failed to fetch Kluster API keys: " + databaseError.getMessage());
+            }
+        });
+
+        // Add DeepSeek keys loading
+        DatabaseReference deepseekKeysRef = FirebaseDatabase.getInstance()
+                .getReference("apikeys")
+                .child("deepseek");
+
+        deepseekKeysRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Variables.deepseekKeys.clear();
+                for (DataSnapshot keySnapshot : dataSnapshot.getChildren()) {
+                    String apiKey = keySnapshot.getValue(String.class);
+                    if (apiKey != null) {
+                        Variables.deepseekKeys.add(apiKey);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e(TAG, "Failed to fetch DeepSeek API keys: " + databaseError.getMessage());
+            }
+        });
+    }
 
     private void userDataListener(){
 
@@ -68,6 +114,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Load API keys at startup
+        loadApiKeys();
+
+        // Remove the flag check that was causing the crash
+        // Instead, just prevent going back
+        if (isTaskRoot() && getIntent().hasCategory(Intent.CATEGORY_LAUNCHER)) {
+            // App was started from launcher, clear any existing tasks
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
 
         userDataListener();
 
@@ -144,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
                         tabIcon.setImageResource(R.drawable.ic_profile);
                         break;
                     case 1:
-                        tabIcon.setImageResource(R.drawable.ic_translate);
+                        tabIcon.setImageResource(R.drawable.ic_translate_fragment);
                         break;
                     case 2:
                         tabIcon.setImageResource(R.drawable.ic_chat);
@@ -158,6 +218,12 @@ public class MainActivity extends AppCompatActivity {
         if (defaultTab != null) {
             defaultTab.select();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Prevent going back
+        moveTaskToBack(true);
     }
 
 }

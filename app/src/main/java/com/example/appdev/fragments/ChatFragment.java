@@ -3,6 +3,7 @@ package com.example.appdev.fragments;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 import android.util.Pair;
+import androidx.appcompat.widget.PopupMenu;
 
 public class ChatFragment extends Fragment {
 
@@ -59,7 +61,11 @@ public class ChatFragment extends Fragment {
 
         // Initialize userList and userAdapter
         userList = new ArrayList<>();
-        userAdapter = new UserAdapter(userList, requireContext(), FirebaseAuth.getInstance().getCurrentUser().getUid());
+        userAdapter = new UserAdapter(userList, requireContext(), FirebaseAuth.getInstance().getCurrentUser().getUid(), 
+            (view, user) -> {
+                // Show popup menu when three dots is clicked
+                showPopupMenu(view, user);
+            });
     }
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -300,5 +306,24 @@ public class ChatFragment extends Fragment {
                     "Failed to load chat rooms", false);
             }
         });
+    }
+
+    private void showPopupMenu(View view, User user) {
+        PopupMenu popup = new PopupMenu(requireContext(), view);
+        popup.getMenuInflater().inflate(R.menu.chat_user_context_menu, popup.getMenu());
+
+        popup.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.action_view_profile) {
+                // Handle view profile action
+                return true;
+            } else if (itemId == R.id.action_delete_chat) {
+                // Handle delete conversation action
+                return true;
+            }
+            return false;
+        });
+
+        popup.show();
     }
 }

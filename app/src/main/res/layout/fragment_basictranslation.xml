@@ -4,161 +4,294 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAFAFA"
+    android:background="@drawable/translation_background_gradient"
+    android:windowSoftInputMode="adjustResize"
     tools:context=".fragments.BasicTranslationFragment">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/resultCard"
+    <!-- Decorative Wave Pattern -->
+    <ImageView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_above="@id/inputContainer"
+        android:layout_height="80dp"
         android:layout_alignParentTop="true"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginVertical="16dp"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="2dp">
+        android:scaleType="fitXY"
+        android:src="@drawable/wave_pattern" />
 
-        <RelativeLayout
+    <!-- Main Content Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- App Title and History Button -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/result_background">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            android:gravity="center_vertical">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="#F5F7FA">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Powered by"
+                        android:textColor="#757575"
+                        android:textSize="12sp"
+                        android:fontFamily="@font/poppins" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:id="@+id/translatorIcon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/translator_icon_google" />
+
+                        <TextView
+                            android:id="@+id/currentTranslatorText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:text="Google Translate"
+                            android:textColor="#212121"
+                            android:textSize="16sp" />
+
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
             <ImageButton
                 android:id="@+id/btnHistory"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_alignParentEnd="true"
-                android:layout_margin="8dp"
+                android:layout_marginStart="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="12dp"
                 android:src="@drawable/ic_history"
                 app:tint="#757575" />
 
-            <TextView
-                android:id="@+id/txtTranslatedText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:fontFamily="@font/poppins"
-                android:gravity="center"
-                android:padding="16dp"
-                android:text="Translation will appear here"
-                android:textColor="#9E9E9E"
-                android:textSize="24sp" />
+        </LinearLayout>
 
-            <ProgressBar
-                android:id="@+id/translationProgress"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_centerInParent="true"
-                android:visibility="gone" />
-        </RelativeLayout>
-    </androidx.cardview.widget.CardView>
-
-    <LinearLayout
-        android:id="@+id/inputContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@id/buttonContainer"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="16dp"
-        android:orientation="vertical">
-
+        <!-- Language Selection Card -->
         <androidx.cardview.widget.CardView
-            android:id="@+id/languageCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="24dp"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="2dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
+                android:gravity="center"
                 android:orientation="horizontal"
-                android:padding="4dp">
+                android:padding="12dp">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#FFF3E0">
+
+                    <TextView
+                        android:id="@+id/currentLanguageLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:paddingHorizontal="16dp"
+                        android:fontFamily="@font/poppins"
+                        android:text="English"
+                        android:textColor="#FF5722"
+                        android:textSize="16sp" />
+
+                </androidx.cardview.widget.CardView>
 
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:layout_marginStart="12dp"
-                    android:src="@drawable/ic_translate"
+                    android:layout_marginHorizontal="12dp"
+                    android:src="@drawable/ic_arrow_translate"
                     app:tint="#757575" />
 
-                <Spinner
-                    android:id="@+id/languageSpinner"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:background="@null"
-                    android:fontFamily="@font/poppins"
-                    android:spinnerMode="dropdown" />
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="#E3F2FD">
+
+                    <Spinner
+                        android:id="@+id/languageSpinner"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginHorizontal="16dp"
+                        android:background="@null"
+                        android:fontFamily="@font/poppins"
+                        android:spinnerMode="dropdown" />
+
+                </androidx.cardview.widget.CardView>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/textInputLayout"
+        <!-- Input Card -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/input_background"
-            app:boxBackgroundMode="none"
-            app:hintEnabled="false"
-            app:endIconMode="clear_text"
-            app:endIconDrawable="@drawable/ic_clear"
-            app:endIconTint="#757575">
+            android:layout_height="0dp"
+            android:layout_weight="0.7"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/textInputEditText"
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="100dp"
-                android:background="@null"
-                android:fontFamily="@font/poppins"
-                android:gravity="top"
-                android:hint="Enter text to translate"
-                android:padding="16dp"
-                android:textColor="#212121"
-                android:textColorHint="#9E9E9E"
-                android:textSize="16sp" />
-        </com.google.android.material.textfield.TextInputLayout>
-    </LinearLayout>
+                android:layout_height="match_parent">
 
-    <LinearLayout
-        android:id="@+id/buttonContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="16dp"
-        android:orientation="vertical">
+                <!-- Wrapper for TextInputLayout -->
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="80dp"
+                    android:fillViewport="true">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/translateButton"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/textInputLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        app:boxBackgroundMode="none"
+                        app:hintEnabled="false"
+                        app:endIconMode="none">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/textInputEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@null"
+                            android:fontFamily="@font/poppins"
+                            android:gravity="top"
+                            android:hint="Enter text to translate"
+                            android:inputType="textMultiLine"
+                            android:padding="16dp"
+                            android:scrollbars="vertical"
+                            android:textColor="#212121"
+                            android:textColorHint="#9E9E9E"
+                            android:textSize="16sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </ScrollView>
+
+                <!-- Clear Button -->
+                <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                    android:id="@+id/clearButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_alignParentBottom="true"
+                    android:layout_toStartOf="@id/buttonContainer"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:text="Clear"
+                    android:textSize="14sp"
+                    android:textColor="#FFFFFF"
+                    android:fontFamily="@font/poppins"
+                    android:paddingHorizontal="16dp"
+                    app:cornerRadius="20dp"
+                    app:elevation="2dp"
+                    app:backgroundTint="#9E9E9E" />
+
+                <!-- Container for Mic and Translate buttons -->
+                <FrameLayout
+                    android:id="@+id/buttonContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <!-- Microphone Button -->
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/startSpeakingButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_mic"
+                        app:backgroundTint="#FF5722"
+                        app:tint="#FFFFFF" />
+
+                    <!-- Translate Button -->
+                    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                        android:id="@+id/translateButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="Translate"
+                        android:textSize="14sp"
+                        android:textColor="#FFFFFF"
+                        android:fontFamily="@font/poppins"
+                        android:paddingHorizontal="16dp"
+                        android:visibility="gone"
+                        app:cornerRadius="20dp"
+                        app:elevation="2dp"
+                        app:backgroundTint="#2196F3" />
+
+                </FrameLayout>
+
+            </RelativeLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Result Card -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/resultCard"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:backgroundTint="#FF5722"
-            android:fontFamily="@font/poppins"
-            android:text="Translate"
-            android:textAllCaps="false"
-            android:visibility="gone"
-            app:cornerRadius="28dp"
-            app:icon="@drawable/ic_translate"
-            app:iconGravity="textStart"
-            app:iconTint="#FFFFFF" />
+            android:layout_height="0dp"
+            android:layout_weight="1.3"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/startSpeakingButton"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:backgroundTint="#2196F3"
-            android:fontFamily="@font/poppins"
-            android:text="Start Speaking"
-            android:textAllCaps="false"
-            app:cornerRadius="28dp"
-            app:icon="@drawable/ic_mic"
-            app:iconGravity="textStart"
-            app:iconTint="#FFFFFF" />
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/txtTranslatedText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:fontFamily="@font/poppins"
+                    android:gravity="center"
+                    android:text="Translation will appear here"
+                    android:textColor="#9E9E9E"
+                    android:textSize="24sp" />
+
+                <ProgressBar
+                    android:id="@+id/translationProgress"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_centerInParent="true"
+                    android:visibility="gone" />
+
+            </RelativeLayout>
+        </androidx.cardview.widget.CardView>
+
     </LinearLayout>
-
 </RelativeLayout>

@@ -3,6 +3,7 @@ package com.example.appdev.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -35,7 +36,41 @@ public class TranslationHistoryAdapter extends RecyclerView.Adapter<TranslationH
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         TranslationHistory history = historyList.get(position);
+        
+        // Set languages with fallback values
+        String sourceLanguage = history.getSourceLanguage();
+        if (sourceLanguage == null || sourceLanguage.isEmpty()) {
+            sourceLanguage = "English"; // Default fallback
+        }
+        holder.sourceLanguage.setText(sourceLanguage);
         holder.targetLanguage.setText(history.getTargetLanguage());
+        
+        // Set translator info with fallback to Google Translate
+        String translator = history.getTranslator();
+        if (translator == null || translator.isEmpty()) {
+            translator = "google"; // Default fallback
+        }
+        
+        int translatorIcon;
+        String translatorName;
+        switch(translator) {
+            case "openai":
+                translatorIcon = R.drawable.translator_icon_openai;
+                translatorName = "OpenAI";
+                break;
+            case "deepseek":
+                translatorIcon = R.drawable.translator_icon_deepseek;
+                translatorName = "DeepSeek";
+                break;
+            default:
+                translatorIcon = R.drawable.translator_icon_google;
+                translatorName = "Google";
+                break;
+        }
+        holder.translatorIcon.setImageResource(translatorIcon);
+        holder.translatorName.setText(translatorName);
+        
+        // Set texts
         holder.originalText.setText(history.getOriginalText());
         holder.translatedText.setText(history.getTranslatedText());
         holder.dateTime.setText(dateFormat.format(new Date(history.getTimestamp())));
@@ -47,14 +82,18 @@ public class TranslationHistoryAdapter extends RecyclerView.Adapter<TranslationH
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView targetLanguage, originalText, translatedText, dateTime;
+        TextView sourceLanguage, targetLanguage, originalText, translatedText, dateTime, translatorName;
+        ImageView translatorIcon;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            sourceLanguage = itemView.findViewById(R.id.sourceLanguage);
             targetLanguage = itemView.findViewById(R.id.targetLanguage);
             originalText = itemView.findViewById(R.id.originalText);
             translatedText = itemView.findViewById(R.id.translatedText);
             dateTime = itemView.findViewById(R.id.dateTime);
+            translatorIcon = itemView.findViewById(R.id.translatorIcon);
+            translatorName = itemView.findViewById(R.id.translatorName);
         }
     }
 } 

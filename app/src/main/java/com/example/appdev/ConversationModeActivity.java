@@ -13,6 +13,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -24,6 +25,7 @@ import com.example.appdev.adapters.ChatAdapter;
 import com.example.appdev.translators.Translation_GoogleTranslate;
 import com.example.appdev.translators.Translation_OpenAI;
 import com.example.appdev.models.Message;
+import com.example.appdev.utils.CustomNotification;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -46,16 +48,51 @@ public class ConversationModeActivity extends AppCompatActivity {
     private DatabaseReference messagesRef;
     private String roomId, recipientLanguage;
     private static final int SPEECH_REQUEST_CODE = 1;
+    private DatabaseReference contactSettingsRef;
+    private boolean translateEnabled = false;
+    private int previousMessageCount = 0;
+    private String recipientTranslator = "google"; // default value
+    private String recipientId;
 
 
     //Establish Connection
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Add this line to adjust resize mode
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        
         setContentView(R.layout.activity_conversation_mode);
 
         // Retrieve recipient information from intent extras
-        String recipientId = getIntent().getStringExtra("userId");
+        String recipientName = getIntent().getStringExtra("username");
+        recipientLanguage = getIntent().getStringExtra("recipientLanguage");
+        String profileImageUrl = getIntent().getStringExtra("profileImageUrl");
+
+        // Store recipientId as class field
+        recipientId = getIntent().getStringExtra("userId");
+        
+        // Add listener for recipient's translator preference
+        DatabaseReference recipientTranslatorRef = FirebaseDatabase.getInstance()
+                .getReference()
+                .child("users")
+                .child(recipientId)
+                .child("translator");
+                
+        recipientTranslatorRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    recipientTranslator = dataSnapshot.getValue(String.class);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                recipientTranslator = "google"; // fallback to default
+            }
+        });
 
         // Generate a unique room ID for the conversation using the sender and recipient IDs
         String senderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -124,17 +161,12 @@ public class ConversationModeActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 recipientLanguage = dataSnapshot.getValue(String.class);
-                TextView textViewRecipientLanguage = findViewById(R.id.textViewRecipientLanguage);
-                textViewRecipientLanguage.setText(recipientLanguage);
             }
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
             }
         });
-        // Retrieve recipient information from intent extras
-        String recipientName = getIntent().getStringExtra("username");
-        recipientLanguage = getIntent().getStringExtra("recipientLanguage");
-        String profileImageUrl = getIntent().getStringExtra("profileImageUrl");
+
         de.hdodenhof.circleimageview.CircleImageView imageViewUserPicture = findViewById(R.id.imageViewUserPicture);
 
         if (profileImageUrl != null && !profileImageUrl.equals("none")) {
@@ -147,6 +179,62 @@ public class ConversationModeActivity extends AppCompatActivity {
 
         TextView textViewUsername = findViewById(R.id.textViewUsername);
         textViewUsername.setText(recipientName);
+
+        // Set click listener for more options button
+        ImageView buttonMore = findViewById(R.id.buttonMore);
+        buttonMore.setOnClickListener(v -> {
+            // Get recipient email from Firebase
+            DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(recipientId);
+            
+            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String recipientEmail = snapshot.child("email").getValue(String.class);
+                    
+                    // Launch ContactSettingsActivity with all user info
+                    Intent intent = new Intent(ConversationModeActivity.this, ContactSettingsActivity.class);
+                    intent.putExtra("username", recipientName);
+                    intent.putExtra("email", recipientEmail);
+                    intent.putExtra("language", recipientLanguage);
+                    intent.putExtra("profileImageUrl", profileImageUrl);
+                    intent.putExtra("userId", recipientId);
+                    startActivity(intent);
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    CustomNotification.showNotification(ConversationModeActivity.this, 
+                        "Failed to load user information", false);
+                }
+            });
+        });
+
+        // Initialize contact settings reference - check recipient's settings for the current user
+        contactSettingsRef = FirebaseDatabase.getInstance().getReference()
+                .child("users")
+                .child(recipientId)  // Changed from senderId to recipientId
+                .child("contactsettings")
+                .child(senderId)     // Changed from recipientId to senderId
+                .child("translateMessages");
+
+        // Listen for translation setting changes
+        contactSettingsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    translateEnabled = dataSnapshot.getValue(Boolean.class);
+                } else {
+                    translateEnabled = false; // Default to false if setting doesn't exist
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                translateEnabled = false;
+            }
+        });
     }
 
     private String generateRoomId(String senderId, String recipientId) {
@@ -175,12 +263,14 @@ public class ConversationModeActivity extends AppCompatActivity {
 
             // Create a HashMap to represent the message data
             HashMap<String, Object> messageData = new HashMap<>();
-            if(targetLanguage == null){
-                messageData.put("message", messageTextOG);;
-            }
-            else {
+            
+            // Set initial message value based on translation setting
+            if (targetLanguage == null || !translateEnabled) {
+                messageData.put("message", messageTextOG);
+            } else {
                 messageData.put("message", "......");
             }
+            
             messageData.put("messageOG", messageTextOG);
             messageData.put("timestamp", timestamp);
             messageData.put("senderId", senderId);
@@ -190,16 +280,18 @@ public class ConversationModeActivity extends AppCompatActivity {
             messagesRef.child(roomId).child(messageId).setValue(messageData)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            // Translate the message after it is sent
                             String messageTextOG2 = "\"" + messageTextOG + "\"";
-                            if(targetLanguage != null){
+                            // Only translate if translation is enabled and target language exists
+                            if (targetLanguage != null && translateEnabled) {
                                 translateMessage(targetLanguage, messageTextOG2, messageId);
-                            }
-                            else{
-                                messagesRef.child(roomId).child(messageId).child("message").setValue(messageTextOG);
+                            } else {
+                                // If translation is disabled, use original message
+                                messagesRef.child(roomId).child(messageId)
+                                    .child("message").setValue(messageTextOG);
                             }
                         } else {
-                            Log.e("ConversationModeActivity", "Failed to send message: " + task.getException());
+                            Log.e("ConversationModeActivity", 
+                                "Failed to send message: " + task.getException());
                         }
                     });
 
@@ -211,13 +303,11 @@ public class ConversationModeActivity extends AppCompatActivity {
     }
 
     private void translateMessage(String targetLanguage, String messageTextOG, String messageId) {
-
-        if(Variables.userTranslator.equals("openai")){
+        if(recipientTranslator.equals("openai")){
             // OpenAI
             Variables.openAiPrompt = 1;
             Translation_OpenAI translationOpenAITask = new Translation_OpenAI(targetLanguage, translatedMessage -> {
                 if (!TextUtils.isEmpty(translatedMessage)) {
-                    //storeTranslatedText(translatedMessage, messageId);
                     messagesRef.child(roomId).child(messageId).child("message").setValue(removeQuotationMarks(translatedMessage));
                 }
             });
@@ -266,18 +356,23 @@ public class ConversationModeActivity extends AppCompatActivity {
                         if (message != null) {
                             messages.add(message);
                         }
+
                     }
                     chatAdapter.setMessages(messages);
-                    recyclerViewChat.scrollToPosition(chatAdapter.getItemCount() - 1);
+                    
+                    // Only scroll if new messages are added
+                    int newSize = messages.size();
+                    if (newSize > previousMessageCount) {
+                        recyclerViewChat.scrollToPosition(chatAdapter.getItemCount() - 1);
+                    }
+                    previousMessageCount = newSize;
                 }
+                
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
-                    // Handle error
                     Log.e("ConversationModeActivity", "Error loading messages: " + databaseError.getMessage());
                 }
             });
-        } else {
-            Log.e("ConversationModeActivity", "Room ID is null");
         }
     }
 

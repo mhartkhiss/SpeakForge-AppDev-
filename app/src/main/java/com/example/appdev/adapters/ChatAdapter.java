@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.PopupWindow;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -26,6 +27,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder> {
 
@@ -40,7 +42,14 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     }
 
     public void setMessages(List<Message> messages) {
-        this.messages = messages;
+        if (messages == null) {
+            this.messages = new ArrayList<>();
+        } else {
+            // Filter out any null messages
+            this.messages = messages.stream()
+                .filter(message -> message != null && message.getSenderId() != null)
+                .collect(Collectors.toList());
+        }
         notifyDataSetChanged();
     }
 
@@ -64,7 +73,17 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         Message message = messages.get(position);
-        holder.bind(message);
+        
+        // Check if this message is part of consecutive messages from same sender
+        boolean showAvatar = true;
+        if (position < messages.size() - 1) {
+            Message nextMessage = messages.get(position + 1);
+            if (message.getSenderId().equals(nextMessage.getSenderId())) {
+                showAvatar = false;
+            }
+        }
+        
+        holder.bind(message, showAvatar);
     }
 
     @Override
@@ -74,8 +93,14 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
     @Override
     public int getItemViewType(int position) {
-        String senderId = messages.get(position).getSenderId();
-        return senderId.equals(FirebaseAuth.getInstance().getCurrentUser().getUid()) ? 0 : 1;
+        Message message = messages.get(position);
+        if (message == null || message.getSenderId() == null || 
+            FirebaseAuth.getInstance().getCurrentUser() == null) {
+            return 1; // Default to received message layout if any value is null
+        }
+        String senderId = message.getSenderId();
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        return senderId.equals(currentUserId) ? 0 : 1;
     }
 
     public static class ChatViewHolder extends RecyclerView.ViewHolder {
@@ -98,7 +123,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             usersRef = FirebaseDatabase.getInstance().getReference("users");
         }
 
-        public void bind(Message message) {
+        public void bind(Message message, boolean showAvatar) {
             FirebaseAuth auth = FirebaseAuth.getInstance();
             FirebaseUser currentUser = auth.getCurrentUser();
 
@@ -126,93 +151,142 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 loadProfileImage(message.getSenderId());
                 textViewMessage.setText(message.getMessage());
 
-                //View original message on long click
-                textViewMessage.setOnLongClickListener(v -> {
-                    // Check if the user is a free user
-                    if(Variables.userAccountType.equals("free")){
-                        textViewOriginalMessage.setVisibility(View.VISIBLE);
-                        textViewOriginalMessage.setText("You can view the original message by upgrading to a premium account.");
-                        textViewOriginalMessage.setTextColor(itemView.getResources().getColor(R.color.purple_200));
-                        return false;
-                    }
-                    // Hide all visible original messages
-                    for (TextView textView : visibleOriginalMessages) {
-                        textView.setVisibility(View.GONE);
-                    }
-                    visibleOriginalMessages.clear();
+                // Change background color based on translation status
+                androidx.cardview.widget.CardView cardView = 
+                    (androidx.cardview.widget.CardView) textViewMessage.getParent();
+                
+                if (message.getMessage() != null && 
+                    message.getMessageOG() != null && 
+                    message.getMessage().equals(message.getMessageOG())) {
+                    // Message is not translated - use light gray
+                    cardView.setCardBackgroundColor(itemView.getContext()
+                        .getResources().getColor(R.color.light_gray));
+                } else {
+                    // Message is translated - use original orange color
+                    cardView.setCardBackgroundColor(itemView.getContext()
+                        .getResources().getColor(R.color.message_received_bg));
+                }
 
-                    textViewOriginalMessage.setVisibility(View.VISIBLE);
-                    textViewOriginalMessage.setText(message.getMessageOG());
-                    textViewOriginalMessage.setTextColor(itemView.getResources().getColor(R.color.grey));
-                    visibleOriginalMessages.add(textViewOriginalMessage);
+                // Show/hide avatar based on consecutive messages
+                if (imageViewProfile != null) {
+                    imageViewProfile.setVisibility(showAvatar ? View.VISIBLE : View.INVISIBLE);
+                }
+
+                // View original message on single click
+                textViewMessage.setOnClickListener(v -> handleOriginalMessageClick(message));
+
+                // Replace the long click listener with the new context menu
+                textViewMessage.setOnLongClickListener(v -> {
+                    if (Variables.userAccountType.equals("free")) {
+                        Toast.makeText(itemView.getContext(), 
+                            "Premium features are not available in free version", 
+                            Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                    showContextMenu(v, message);
                     return true;
                 });
+            }
+        }
 
-                //Regenerate message translation on click
-                textViewMessage.setOnClickListener(v -> {
-                    // Check if the user is a free user
-                    if(Variables.userAccountType.equals("free")){
-                        Toast.makeText(itemView.getContext(), "You need to upgrade to regenerate translations", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    // Get the current message text
-                    String currentMessage = textViewMessage.getText().toString();
-                    String messageId = message.getMessageId();
-
-                    for (TextView textView : visibleOriginalMessages) {
-                        textView.setVisibility(View.GONE);
-                    }
-                    visibleOriginalMessages.clear();
-
-                    List<String> messageVariations = new ArrayList<>();
-                    if (message.getMessageVar1() == null && !textViewMessage.getText().toString().equals("......")) {
-                        String textMessage = message.getMessageOG();
-                        String textLanguage = Variables.userLanguage;
-                        textViewMessage.setText("......");
-                        RegenerateMessageTranslation regenerateMessageTranslation = new RegenerateMessageTranslation();
-                        regenerateMessageTranslation.setOnTranslationRegeneratedListener(newTranslation -> {
-                            textViewMessage.setText(newTranslation);
-                        });
-                        regenerateMessageTranslation.regenerate(textMessage, message.getMessageId(), textLanguage);
-                        return;
-                    }
-
-                    if (message.getMessageVar1() != null) {
-                        messageVariations.add(message.getMessageVar1().replace("\"", ""));
-                    }
-                    if (message.getMessageVar2() != null) {
-                        messageVariations.add(message.getMessageVar2().replace("\"", ""));
-                    }
-                    if (message.getMessageVar3() != null) {
-                        messageVariations.add(message.getMessageVar3().replace("\"", ""));
-                    }
-
-                    if (!messageVariations.isEmpty()) {
-                        int currentIndex = messageVariations.indexOf(currentMessage);
-
-                        String nextVariation;
-                        if (currentIndex == messageVariations.size() - 1) {
-                            // If the current message is the last variation in the list, select the first variation
-                            nextVariation = messageVariations.get(0);
-                        } else {
-                            // Otherwise, select the next variation in the list
-                            nextVariation = messageVariations.get(currentIndex + 1);
-                        }
-
-                        // Check if roomId and messageId are not null
-                        if (roomId != null && messageId != null) {
-                            // Update the message in the Firebase database
-                            nextVariation = nextVariation.replace("\"", "");
-                            messagesRef.child(roomId).child(messageId).child("message").setValue(nextVariation);
-                        } else {
-                            Log.e("ChatAdapter", "Room ID or Message ID is null");
-                        }
-                    }
-                });
+        private void handleOriginalMessageClick(Message message) {
+            // Don't do anything if message is same as original
+            if (message.getMessage() != null && 
+                message.getMessageOG() != null && 
+                message.getMessage().equals(message.getMessageOG())) {
+                return;
             }
 
+            // Check if the user is a free user
+            if(Variables.userAccountType.equals("free")){
+                textViewOriginalMessage.setVisibility(View.VISIBLE);
+                textViewOriginalMessage.setText("You can view the original message by upgrading to a premium account.");
+                textViewOriginalMessage.setTextColor(itemView.getResources().getColor(R.color.purple_200));
+                return;
+            }
+            
+            // If original message is already visible, hide it
+            if (textViewOriginalMessage.getVisibility() == View.VISIBLE) {
+                textViewOriginalMessage.setVisibility(View.GONE);
+                visibleOriginalMessages.remove(textViewOriginalMessage);
+                return;
+            }
+            
+            // Hide all other visible original messages
+            for (TextView textView : visibleOriginalMessages) {
+                textView.setVisibility(View.GONE);
+            }
+            visibleOriginalMessages.clear();
+
+            // Show this message's original text
+            textViewOriginalMessage.setVisibility(View.VISIBLE);
+            textViewOriginalMessage.setText(message.getMessageOG());
+            textViewOriginalMessage.setTextColor(itemView.getResources().getColor(R.color.grey));
+            visibleOriginalMessages.add(textViewOriginalMessage);
         }
+
+        private void handleMessageTranslationClick(Message message) {
+            // Check if the user is a free user
+            if(Variables.userAccountType.equals("free")){
+                Toast.makeText(itemView.getContext(), "You need to upgrade to regenerate translations", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Get the current message text
+            String currentMessage = textViewMessage.getText().toString();
+            String messageId = message.getMessageId();
+
+            for (TextView textView : visibleOriginalMessages) {
+                textView.setVisibility(View.GONE);
+            }
+            visibleOriginalMessages.clear();
+
+            List<String> messageVariations = new ArrayList<>();
+            if (message.getMessageVar1() == null && !textViewMessage.getText().toString().equals("......")) {
+                String textMessage = message.getMessageOG();
+                String textLanguage = Variables.userLanguage;
+                textViewMessage.setText("......");
+                RegenerateMessageTranslation regenerateMessageTranslation = new RegenerateMessageTranslation();
+                regenerateMessageTranslation.setOnTranslationRegeneratedListener(newTranslation -> {
+                    textViewMessage.setText(newTranslation);
+                });
+                regenerateMessageTranslation.regenerate(textMessage, message.getMessageId(), textLanguage);
+                return;
+            }
+
+            if (message.getMessageVar1() != null) {
+                messageVariations.add(message.getMessageVar1().replace("\"", ""));
+            }
+            if (message.getMessageVar2() != null) {
+                messageVariations.add(message.getMessageVar2().replace("\"", ""));
+            }
+            if (message.getMessageVar3() != null) {
+                messageVariations.add(message.getMessageVar3().replace("\"", ""));
+            }
+
+            if (!messageVariations.isEmpty()) {
+                int currentIndex = messageVariations.indexOf(currentMessage);
+
+                String nextVariation;
+                if (currentIndex == messageVariations.size() - 1) {
+                    // If the current message is the last variation in the list, select the first variation
+                    nextVariation = messageVariations.get(0);
+                } else {
+                    // Otherwise, select the next variation in the list
+                    nextVariation = messageVariations.get(currentIndex + 1);
+                }
+
+                // Check if roomId and messageId are not null
+                if (roomId != null && messageId != null) {
+                    // Update the message in the Firebase database
+                    nextVariation = nextVariation.replace("\"", "");
+                    messagesRef.child(roomId).child(messageId).child("message").setValue(nextVariation);
+                } else {
+                    Log.e("ChatAdapter", "Room ID or Message ID is null");
+                }
+            }
+        }
+
         private void loadProfileImage(String senderId) {
             usersRef.child(senderId).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
@@ -245,6 +319,72 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                     imageViewProfile.setImageResource(R.drawable.default_userpic);
                 }
             });
+        }
+
+        private void showContextMenu(View anchor, Message message) {
+            // Create and show the popup window
+            View popupView = LayoutInflater.from(anchor.getContext())
+                    .inflate(R.layout.message_context_menu, null);
+            
+            PopupWindow popupWindow = new PopupWindow(
+                    popupView,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    true
+            );
+
+            // Add elevation for shadow effect
+            popupWindow.setElevation(10);
+
+            // Set up click listeners for menu items
+            TextView regenerateItem = popupView.findViewById(R.id.menuItemRegenerate);
+            TextView toggleOriginalItem = popupView.findViewById(R.id.menuItemToggleOriginal);
+            TextView removeTranslationItem = popupView.findViewById(R.id.menuItemRemoveTranslation);
+
+            // Set the appropriate text for regenerate/translate button
+            boolean isUntranslated = message.getMessage() != null && 
+                message.getMessageOG() != null && 
+                message.getMessage().equals(message.getMessageOG());
+
+            if (isUntranslated) {
+                regenerateItem.setText("Translate");
+                // Hide the toggle original message and remove translation options for untranslated messages
+                toggleOriginalItem.setVisibility(View.GONE);
+                removeTranslationItem.setVisibility(View.GONE);
+            } else {
+                regenerateItem.setText("Regenerate Translation");
+                // Update toggle text based on current state
+                if (textViewOriginalMessage.getVisibility() == View.VISIBLE) {
+                    toggleOriginalItem.setText("Hide Original Message");
+                } else {
+                    toggleOriginalItem.setText("Show Original Message");
+                }
+                removeTranslationItem.setVisibility(View.VISIBLE);
+            }
+
+            regenerateItem.setOnClickListener(v -> {
+                handleMessageTranslationClick(message);
+                popupWindow.dismiss();
+            });
+
+            toggleOriginalItem.setOnClickListener(v -> {
+                handleOriginalMessageClick(message);
+                popupWindow.dismiss();
+            });
+
+            removeTranslationItem.setOnClickListener(v -> {
+                if (roomId != null && message.getMessageId() != null) {
+                    // Update the message in Firebase to the original message
+                    messagesRef.child(roomId)
+                            .child(message.getMessageId())
+                            .child("message")
+                            .setValue(message.getMessageOG());
+                }
+                popupWindow.dismiss();
+            });
+
+            // Show the popup window below the anchor view
+            popupWindow.showAsDropDown(anchor, 0, -anchor.getHeight());
         }
     }
 }

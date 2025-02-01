@@ -19,6 +19,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.example.appdev.utils.CustomDialog;
 
 public class ForgotPasswordActivity extends AppCompatActivity {
 
@@ -41,6 +42,7 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         TextView backToLogin = findViewById(R.id.txtBackToLogin);
         backToLogin.setOnClickListener(v -> {
             Intent intent = new Intent(ForgotPasswordActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
         });
@@ -51,7 +53,7 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         String emailAddress = emailEditText.getText().toString().trim();
 
         if (emailAddress.isEmpty()) {
-            Toast.makeText(ForgotPasswordActivity.this, "Please enter your email.", Toast.LENGTH_SHORT).show();
+            CustomDialog.showDialog(this, "Empty Email", "Please enter your email");
             return;
         }
 
@@ -67,14 +69,14 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                             sendResetEmail(emailAddress);
                         } else {
                             progressDialog.dismiss();
-                            Toast.makeText(ForgotPasswordActivity.this, "Email not found.", Toast.LENGTH_SHORT).show();
+                            CustomDialog.showDialog(ForgotPasswordActivity.this, "Email Not Found", "No account found with this email address");
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
                         progressDialog.dismiss();
-                        Toast.makeText(ForgotPasswordActivity.this, "Database error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                        CustomDialog.showDialog(ForgotPasswordActivity.this, "Database Error", databaseError.getMessage());
                     }
                 });
     }
@@ -85,11 +87,11 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     progressDialog.dismiss();
                     if (task.isSuccessful()) {
-                        Toast.makeText(ForgotPasswordActivity.this, "Email sent.", Toast.LENGTH_SHORT).show();
+                        CustomDialog.showDialog(this, "Email Sent", "Password reset instructions have been sent to your email");
                         emailSentLabel.setVisibility(View.VISIBLE);
                         startTimer();
                     } else {
-                        Toast.makeText(ForgotPasswordActivity.this, "Failed to send reset email!", Toast.LENGTH_SHORT).show();
+                        CustomDialog.showDialog(this, "Email Error", "Failed to send reset email. Please try again later");
                     }
                 });
     }

@@ -40,40 +40,11 @@
         </LinearLayout>
 
         <!-- Language Options -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnEnglish"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/languageRecyclerView"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginBottom="8dp"
-            android:text="English"
-            android:textColor="#212121"
-            android:textAlignment="viewStart"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            app:strokeColor="#E0E0E0"
-            app:cornerRadius="12dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnTagalog"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginBottom="8dp"
-            android:text="Tagalog"
-            android:textColor="#212121"
-            android:textAlignment="viewStart"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            app:strokeColor="#E0E0E0"
-            app:cornerRadius="12dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBisaya"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Bisaya"
-            android:textColor="#212121"
-            android:textAlignment="viewStart"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            app:strokeColor="#E0E0E0"
-            app:cornerRadius="12dp"/>
+            android:layout_height="wrap_content"
+            android:overScrollMode="never" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

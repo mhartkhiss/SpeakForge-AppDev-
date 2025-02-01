@@ -1,5 +1,7 @@
 package com.example.appdev;
 
+import java.util.ArrayList;
+import java.util.List;
 
 public class Variables {
     // Constant variables
@@ -19,7 +21,9 @@ public class Variables {
     public static String userTranslator = "";
     public static String roomId = "";
     public static int openAiPrompt = 1;
+    public static String pendingTranslation = "";
 
-
-
+    // API Keys
+    public static List<String> klusterAiKeys = new ArrayList<>();
+    public static List<String> deepseekKeys = new ArrayList<>();
 }

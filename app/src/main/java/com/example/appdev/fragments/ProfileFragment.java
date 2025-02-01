@@ -45,9 +45,8 @@ public class ProfileFragment extends Fragment {
     private ImageView imageViewUserPicture;
     private CardView layoutChangeUsername, layoutProfile, layoutLanguageSelection, layoutChangePass, layoutChangeTranslator;
     private Button btnLogout, btnSaveChanges, btnChangeLanguage, btnChangePassword, btnChangePassword2, btnChangeTranslator,
-            btnGoogle, btnOpenAi, btnUpgrade;
+            btnGoogle, btnOpenAi, btnDeepSeek, btnUpgrade;
     private ImageButton btnBack;
-    private Button[] btnLanguages = new Button[3];
     private EditText editTextUsername, editTextOldPassword, editTextNewPassword, editTextConfirmPassword;
     private ChangeProfilePicControl changeProfilePicControl;
     private ChangeLanguageControl changeLanguageControl;
@@ -103,11 +102,9 @@ public class ProfileFragment extends Fragment {
         btnChangeTranslator = view.findViewById(R.id.btnMenuSelectTranslator);
         btnGoogle = view.findViewById(R.id.btnGoogle);
         btnOpenAi = view.findViewById(R.id.btnOpenAi);
+        btnDeepSeek = view.findViewById(R.id.btnDeepSeek);
         btnBack = view.findViewById(R.id.btnBack);
         btnUpgrade = view.findViewById(R.id.btnUpgrade);
-        btnLanguages[0] = view.findViewById(R.id.btnBisaya);
-        btnLanguages[1] = view.findViewById(R.id.btnTagalog);
-        btnLanguages[2] = view.findViewById(R.id.btnEnglish);
         editTextUsername = view.findViewById(R.id.editTextUsername);
         editTextOldPassword = view.findViewById(R.id.editTextOldPassword);
         editTextNewPassword = view.findViewById(R.id.editTextNewPassword);
@@ -144,10 +141,18 @@ public class ProfileFragment extends Fragment {
                                 btnUpgrade.setVisibility(View.VISIBLE);
                                 userRef.child("translator").setValue("google");
                             }
-                            else if (user.getTranslator().equals("openai")) {
-                                btnChangeTranslator.setText("Translator: OpenAI");
-                            } else {
-                                btnChangeTranslator.setText("Translator: Google Translate");
+                            else {
+                                switch (user.getTranslator()) {
+                                    case "openai":
+                                        btnChangeTranslator.setText("Translator: OpenAI");
+                                        break;
+                                    case "deepseek":
+                                        btnChangeTranslator.setText("Translator: DeepSeek");
+                                        break;
+                                    default:
+                                        btnChangeTranslator.setText("Translator: Google Translate");
+                                        break;
+                                }
                             }
                             if(accountType.equals("premium")){
                                 btnUpgrade.setVisibility(View.GONE);
@@ -179,16 +184,6 @@ public class ProfileFragment extends Fragment {
 
         //CHANGE LANGUAGE LISTENERS
         btnChangeLanguage.setOnClickListener(v -> toggleCardViews(layoutLanguageSelection, layoutProfile));
-        //LANGUAGE BUTTONS LISTENERS
-        for (Button btnLanguage : btnLanguages) {
-            btnLanguage.setOnClickListener(v -> {
-                changeLanguageControl.updateUserLanguage(btnLanguage.getText().toString());
-                toggleCardViews(layoutProfile, layoutLanguageSelection);  // Return to profile after selection
-            });
-        }
-        // Add back button listener for language selection
-        View languageBackBtn = layoutLanguageSelection.findViewById(R.id.btnBack);
-        languageBackBtn.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutLanguageSelection));
 
         //CHANGE PASSWORD LISTENERS
         btnChangePassword.setOnClickListener(v -> toggleCardViews(layoutChangePass, layoutProfile));
@@ -216,34 +211,11 @@ public class ProfileFragment extends Fragment {
             }
             toggleCardViews(layoutChangeTranslator, layoutProfile);
         });
-        btnGoogle.setOnClickListener(v -> {
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
-                    .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
-            userRef.child("translator").setValue("google")
-                    .addOnSuccessListener(aVoid -> {
-                        CustomNotification.showNotification(requireActivity(), 
-                            "Switched to Google Translate", true);
-                        toggleCardViews(layoutProfile, layoutChangeTranslator);
-                    })
-                    .addOnFailureListener(e -> {
-                        CustomNotification.showNotification(requireActivity(), 
-                            "Failed to change translator", false);
-                    });
-        });
-        btnOpenAi.setOnClickListener(v -> {
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
-                    .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
-            userRef.child("translator").setValue("openai")
-                    .addOnSuccessListener(aVoid -> {
-                        CustomNotification.showNotification(requireActivity(), 
-                            "Switched to OpenAI Translator", true);
-                        toggleCardViews(layoutProfile, layoutChangeTranslator);
-                    })
-                    .addOnFailureListener(e -> {
-                        CustomNotification.showNotification(requireActivity(), 
-                            "Failed to change translator", false);
-                    });
-        });
+
+        btnGoogle.setOnClickListener(v -> updateTranslator("google", "Google Translate"));
+        btnOpenAi.setOnClickListener(v -> updateTranslator("openai", "OpenAI Translator"));
+        btnDeepSeek.setOnClickListener(v -> updateTranslator("deepseek", "DeepSeek Translator"));
+
         // Add back button listener for translator selection
         View translatorView = layoutChangeTranslator.findViewById(R.id.btnBack);
         translatorView.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutChangeTranslator));
@@ -253,6 +225,10 @@ public class ProfileFragment extends Fragment {
             startActivity(new Intent(getActivity(), UpgradeAccountActivity.class));
 
         });
+
+        // Add back button listener for language selection
+        View languageBackBtn = layoutLanguageSelection.findViewById(R.id.btnBack);
+        languageBackBtn.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutLanguageSelection));
 
     }
     public void toggleCardViews(CardView cardViewToShow, CardView cardViewToHide) {
@@ -307,5 +283,20 @@ public class ProfileFragment extends Fragment {
 
     public void updateUserProfilePicture(String imageUrl) {
         Glide.with(requireContext()).load(imageUrl).into(imageViewUserPicture);
+    }
+
+    private void updateTranslator(String translatorType, String displayName) {
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
+                .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        userRef.child("translator").setValue(translatorType)
+                .addOnSuccessListener(aVoid -> {
+                    CustomNotification.showNotification(requireActivity(), 
+                        "Switched to " + displayName, true);
+                    toggleCardViews(layoutProfile, layoutChangeTranslator);
+                })
+                .addOnFailureListener(e -> {
+                    CustomNotification.showNotification(requireActivity(), 
+                        "Failed to change translator", false);
+                });
     }
 }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.button.MaterialButton
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/btnLanguage"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:layout_marginBottom="8dp"
+    android:textColor="#212121"
+    android:textAlignment="viewStart"
+    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+    app:strokeColor="#E0E0E0"
+    app:cornerRadius="12dp"/> 

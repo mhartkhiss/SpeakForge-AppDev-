@@ -22,6 +22,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import com.example.appdev.utils.CustomDialog;
+
 public class SignUpActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Boolean isSignUpValid;
@@ -78,19 +80,21 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                                         .setValue(new User(userId, username, email, "none", "free", null, timestamp, timestamp, "google"))
                                         .addOnCompleteListener(databaseTask -> {
                                             if (databaseTask.isSuccessful()) {
-                                                Toast.makeText(this, "Sign up successful", Toast.LENGTH_SHORT).show();
-                                                FirebaseAuth.getInstance().signOut();
-                                                goToLoginActivity();
+                                                CustomDialog.showDialog(this, "Success", "Sign up successful", 
+                                                    (dialog, which) -> {
+                                                        FirebaseAuth.getInstance().signOut();
+                                                        goToLoginActivity();
+                                                    });
                                             } else {
-                                                Toast.makeText(this, "Failed to store user data in database", Toast.LENGTH_SHORT).show();
+                                                CustomDialog.showDialog(this, "Error", "Failed to store user data in database");
                                             }
                                         });
                             }
                         } else {
                             if (task.getException() instanceof FirebaseAuthUserCollisionException) {
-                                Toast.makeText(this, "Email address is already in use", Toast.LENGTH_SHORT).show();
+                                CustomDialog.showDialog(this, "Email Error", "Email address is already in use");
                             } else {
-                                Toast.makeText(this, "Sign up failed. Please try again later.", Toast.LENGTH_SHORT).show();
+                                CustomDialog.showDialog(this, "Sign Up Failed", "Please try again later");
                             }
                         }
                     });
@@ -99,17 +103,17 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
     private boolean validateSignUpFields(String email, String password, String confirmPassword) {
         if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            Toast.makeText(this, "Invalid email address", Toast.LENGTH_SHORT).show();
+            CustomDialog.showDialog(this, "Invalid Email", "Please enter a valid email address");
             return false;
         }
 
         if (TextUtils.isEmpty(password) || password.length() < 6) {
-            Toast.makeText(this, "Password must be at least 6 characters long", Toast.LENGTH_SHORT).show();
+            CustomDialog.showDialog(this, "Invalid Password", "Password must be at least 6 characters long");
             return false;
         }
 
         if (!password.equals(confirmPassword)) {
-            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+            CustomDialog.showDialog(this, "Password Mismatch", "Passwords do not match");
             return false;
         }
 
@@ -118,6 +122,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
     private void goToLoginActivity() {
         Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }

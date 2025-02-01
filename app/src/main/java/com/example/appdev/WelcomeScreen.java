@@ -12,6 +12,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.appdev.utils.CustomDialog;
+import com.example.appdev.utils.CustomNotification;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -50,7 +52,7 @@ public class WelcomeScreen extends AppCompatActivity {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     if (!Variables.guestUser.equals(user.getEmail())) {
-                    Toast.makeText(WelcomeScreen.this, "Welcome back " + user.getEmail(), Toast.LENGTH_SHORT).show();
+                        CustomNotification.showNotification(WelcomeScreen.this, "Welcome back " + user.getEmail(), true);
                     }
                     DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
                     userRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -59,7 +61,9 @@ public class WelcomeScreen extends AppCompatActivity {
                             if (dataSnapshot.exists()) {
                                 String language = dataSnapshot.child("language").getValue(String.class);
                                 if (language != null) {
-                                    startActivity(new Intent(WelcomeScreen.this, MainActivity.class));
+                                    Intent intent = new Intent(WelcomeScreen.this, MainActivity.class);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    startActivity(intent);
                                 } else {
                                     startActivity(new Intent(WelcomeScreen.this, LanguageSetupActivity.class));
                                 }
@@ -72,7 +76,7 @@ public class WelcomeScreen extends AppCompatActivity {
 
                         @Override
                         public void onCancelled(@NonNull DatabaseError databaseError) {
-                            Toast.makeText(WelcomeScreen.this, "Database error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                            CustomDialog.showDialog(WelcomeScreen.this, "Database Error", databaseError.getMessage());
                         }
                     });
                 } else {
@@ -102,13 +106,9 @@ public class WelcomeScreen extends AppCompatActivity {
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
                                     Log.d(TAG, "signInWithEmail:success");
-                                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                                    startActivity(new Intent(WelcomeScreen.this, MainActivity.class));
-                                    finish(); // Finish the WelcomeScreen activity
                                 } else {
                                     Log.w(TAG, "signInWithEmail:failure", task.getException());
-                                    Toast.makeText(WelcomeScreen.this, "Authentication failed.",
-                                            Toast.LENGTH_SHORT).show();
+                                    CustomDialog.showDialog(WelcomeScreen.this, "Authentication Failed", "Unable to sign in as guest");
                                 }
                                 progressDialog.dismiss();
                             }

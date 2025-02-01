@@ -2,6 +2,7 @@ package com.example.appdev;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AlertDialog;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -22,6 +23,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.android.material.button.MaterialButton;
+import com.example.appdev.utils.CustomDialog;
+import com.example.appdev.utils.CustomNotification;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -52,7 +56,7 @@ public class LoginActivity extends AppCompatActivity {
             if (user != null) {
                 progressDialog.dismiss();
                 if (!Variables.guestUser.equals(user.getEmail())) {
-                    Toast.makeText(LoginActivity.this, "Welcome " + user.getEmail(), Toast.LENGTH_SHORT).show();
+                    CustomNotification.showNotification(this, "Welcome " + user.getEmail(), true);
                 }
 
                 DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
@@ -62,11 +66,14 @@ public class LoginActivity extends AppCompatActivity {
                         if (!dataSnapshot.hasChild("translator")) {
                             userRef.child("translator").setValue("google");
                         }
+                        Intent intent;
                         if (dataSnapshot.exists() && dataSnapshot.hasChild("language")) {
-                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                            intent = new Intent(LoginActivity.this, MainActivity.class);
                         } else {
-                            startActivity(new Intent(LoginActivity.this, LanguageSetupActivity.class));
+                            intent = new Intent(LoginActivity.this, LanguageSetupActivity.class);
                         }
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
                         finish();
                     }
 
@@ -87,7 +94,7 @@ public class LoginActivity extends AppCompatActivity {
         txtForgotPassword.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
             startActivity(intent);
-            //overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            finish();
         });
 
         btnLogin.setOnClickListener(v -> {
@@ -99,10 +106,11 @@ public class LoginActivity extends AppCompatActivity {
         btnSignUp.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, SignUpActivity.class);
             startActivity(intent);
-            //overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            finish();
         });
 
     }
+
     private void loginUser() {
         EditText emailEditText = findViewById(R.id.email);
         EditText passwordEditText = findViewById(R.id.password);
@@ -112,13 +120,13 @@ public class LoginActivity extends AppCompatActivity {
 
         if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             progressDialog.dismiss();
-            Toast.makeText(this, "Invalid email address", Toast.LENGTH_SHORT).show();
+            CustomDialog.showDialog(this, "Invalid Email", "Please enter a valid email address");
             return;
         }
 
         if (TextUtils.isEmpty(password)) {
             progressDialog.dismiss();
-            Toast.makeText(this, "Password cannot be empty", Toast.LENGTH_SHORT).show();
+            CustomDialog.showDialog(this, "Empty Password", "Please enter your password");
             return;
         }
 
@@ -126,11 +134,9 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     if (!task.isSuccessful()) {
                         progressDialog.dismiss();
-                        Toast.makeText(this, "Authentication failed. Please check your credentials.", Toast.LENGTH_SHORT).show();
+                        CustomDialog.showDialog(this, "Authentication Failed", "Please check your email and password");
                     }
                 });
-
-
     }
 
     @Override

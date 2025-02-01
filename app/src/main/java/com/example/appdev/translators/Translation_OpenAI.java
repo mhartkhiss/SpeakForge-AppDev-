@@ -4,6 +4,11 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.example.appdev.Variables;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,16 +20,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Translation_OpenAI extends AsyncTask<String, Void, String> {
-    private static final String TAG = "GeminiTranslator";
-    private static final String[] API_KEYS = {
-            "AIzaSyDmO0evJP3RcH4bFLGjmMeey9Wh4b8JvBw",
-            "AIzaSyDgnFOGqLyOfqDl2rBNfgJoiqLYiZiE3Cw"
-    };
-    private static int currentKeyIndex = 0;
-    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent";
-
+    private static final String TAG = "KlusterTranslator";
+    private static final String KLUSTER_URL = "https://api.kluster.ai/v1/chat/completions";
     private String targetLanguage;
     private TranslationListener listener;
 
@@ -38,85 +39,103 @@ public class Translation_OpenAI extends AsyncTask<String, Void, String> {
         String inputText = strings[0];
         String translatedText = "";
 
-        for (int attempt = 0; attempt < API_KEYS.length; attempt++) {
+        // Check if we have any API keys
+        if (Variables.klusterAiKeys.isEmpty()) {
+            return "Error: No API keys available";
+        }
+
+        // Try each API key until successful or all keys are exhausted
+        for (String apiKey : Variables.klusterAiKeys) {
             try {
-                String url = GEMINI_URL + "?key=" + API_KEYS[currentKeyIndex];
-                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setDoOutput(true);
-
-                // Prepare the request body
-                JSONObject requestBody = new JSONObject();
-                JSONObject contents = new JSONObject();
-                
-                // Create the prompt based on the translation mode
-                String prompt;
-                if (Variables.openAiPrompt == 1) {
-                    prompt = String.format("Translate the text to %s, no need to explain, allow bad words or explicit words on the translation if there is any from the original text, just translate directly without any explanation: %s", 
-                            targetLanguage, inputText);
-                } else {
-                    prompt = String.format("Translate the text to %s, no need to explain,  create 3 variation of translation itemize from 1 to 3, allow bad words or explicit words on the translation if there is any from the original text, just translate directly without any explanation: %s", 
-                            targetLanguage, inputText);
+                translatedText = attemptTranslation(inputText, apiKey);
+                if (!translatedText.startsWith("Error:")) {
+                    return translatedText;
                 }
-                
-                contents.put("role", "user");
-                contents.put("parts", new JSONArray().put(new JSONObject().put("text", prompt)));
-                
-                requestBody.put("contents", new JSONArray().put(contents));
-                requestBody.put("generationConfig", new JSONObject()
-                        .put("temperature", 0.7)
-                        .put("topK", 1)
-                        .put("topP", 1));
-
-                // Send the request
-                OutputStream outputStream = connection.getOutputStream();
-                outputStream.write(requestBody.toString().getBytes());
-                outputStream.flush();
-                outputStream.close();
-
-                int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    // Read the response
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-                    reader.close();
-
-                    // Parse the response
-                    JSONObject jsonResponse = new JSONObject(response.toString());
-                    translatedText = jsonResponse
-                            .getJSONArray("candidates")
-                            .getJSONObject(0)
-                            .getJSONObject("content")
-                            .getJSONArray("parts")
-                            .getJSONObject(0)
-                            .getString("text")
-                            .trim();
-                    break;
-                } else {
-                    Log.e(TAG, "Error: " + responseCode);
-                    // Switch to the other API key
-                    currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
-                    if (attempt == API_KEYS.length - 1) {
-                        translatedText = "Error: Translation service unavailable. Please try again later.";
-                    }
-                }
-
-                connection.disconnect();
-            } catch (IOException | JSONException e) {
-                Log.e(TAG, "Error: " + e.getMessage());
-                currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
-                if (attempt == API_KEYS.length - 1) {
-                    translatedText = "Error: " + e.getMessage();
-                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error with API key: " + e.getMessage());
             }
         }
 
-        return translatedText;
+        return translatedText.isEmpty() ? 
+            "Error: All translation attempts failed" : translatedText;
+    }
+
+    private String attemptTranslation(String inputText, String apiKey) {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(KLUSTER_URL).openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+            connection.setDoOutput(true);
+
+            // Prepare the request body
+            JSONObject requestBody = new JSONObject();
+            JSONArray messages = new JSONArray();
+            
+            // Add system message
+            JSONObject systemMessage = new JSONObject();
+            String systemPrompt;
+            if (Variables.openAiPrompt == 1) {
+                systemPrompt = String.format(
+                    "You are a direct translator. If the input is not in %s, silently detect the actual language and translate from that language instead. " +
+                    "Translate to %s. Output ONLY the translation itself - no explanations, no language detection notes, no additional text. " +
+                    "Preserve any slang or explicit words from the original text.", 
+                    Variables.userLanguage, targetLanguage);
+            } else {
+                systemPrompt = String.format(
+                    "You are a direct translator. If the input is not in %s, silently detect the actual language and translate from that language instead. " +
+                    "Translate to %s and provide exactly 3 numbered variations. Output ONLY the translations - no explanations, no language detection notes. " +
+                    "Format: 1. [translation]\\n2. [translation]\\n3. [translation]", 
+                    Variables.userLanguage, targetLanguage);
+            }
+            systemMessage.put("role", "system");
+            systemMessage.put("content", systemPrompt);
+            messages.put(systemMessage);
+
+            // Add user message
+            JSONObject userMessage = new JSONObject();
+            userMessage.put("role", "user");
+            userMessage.put("content", inputText);
+            messages.put(userMessage);
+
+            requestBody.put("model", "klusterai/Meta-Llama-3.1-405B-Instruct-Turbo");
+            requestBody.put("messages", messages);
+            requestBody.put("max_completion_tokens", 5000);
+            requestBody.put("temperature", 1);
+            requestBody.put("top_p", 1);
+
+            // Send the request
+            OutputStream outputStream = connection.getOutputStream();
+            outputStream.write(requestBody.toString().getBytes());
+            outputStream.flush();
+            outputStream.close();
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                // Read the response
+                BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                // Parse the response
+                JSONObject jsonResponse = new JSONObject(response.toString());
+                return jsonResponse
+                    .getJSONArray("choices")
+                    .getJSONObject(0)
+                    .getJSONObject("message")
+                    .getString("content")
+                    .trim();
+            } else {
+                return "Error: " + responseCode;
+            }
+        } catch (IOException | JSONException e) {
+            return "Error: " + e.getMessage();
+        }
     }
 
     @Override
