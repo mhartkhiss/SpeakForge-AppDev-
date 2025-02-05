@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.button.MaterialButton
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:textColor="#212121"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:textAlignment="textStart"
+    app:iconGravity="start"
+    app:iconSize="32dp"
+    app:iconPadding="24dp"
+    app:iconTint="@null"
+    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+    app:strokeColor="#E0E0E0"
+    app:cornerRadius="12dp"/> 
