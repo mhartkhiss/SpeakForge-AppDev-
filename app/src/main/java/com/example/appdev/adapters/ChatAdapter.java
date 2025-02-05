@@ -1,5 +1,6 @@
 package com.example.appdev.adapters;
 
+import android.content.Context;
 import android.graphics.Typeface;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -35,6 +36,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     private DatabaseReference messagesRef;
     private String roomId;
     private List<TextView> visibleOriginalMessages;
+    private Context context;
 
     public ChatAdapter() {
         this.messages = new ArrayList<>();
@@ -53,10 +55,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         notifyDataSetChanged();
     }
 
-    public ChatAdapter(DatabaseReference messagesRef, String roomId) {
-        this.messages = new ArrayList<>();
+    public ChatAdapter(DatabaseReference messagesRef, String roomId, Context context) {
         this.messagesRef = messagesRef;
         this.roomId = roomId;
+        this.context = context;
+        messages = new ArrayList<>();
         this.visibleOriginalMessages = new ArrayList<>();
     }
 
@@ -67,7 +70,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         View view = LayoutInflater.from(parent.getContext()).inflate(
                 viewType == 0 ? R.layout.item_message_sent : R.layout.item_message_received,
                 parent, false);
-        return new ChatViewHolder(view, messagesRef, roomId, visibleOriginalMessages);
+        return new ChatViewHolder(view, messagesRef, roomId, visibleOriginalMessages, context);
     }
 
     @Override
@@ -111,14 +114,17 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         private List<TextView> visibleOriginalMessages;
         private de.hdodenhof.circleimageview.CircleImageView imageViewProfile;
         private DatabaseReference usersRef;
+        private Context context;
 
-        public ChatViewHolder(@NonNull View itemView, DatabaseReference messagesRef, String roomId, List<TextView> visibleOriginalMessages) {
+        public ChatViewHolder(@NonNull View itemView, DatabaseReference messagesRef, String roomId, 
+                List<TextView> visibleOriginalMessages, Context context) {
             super(itemView);
             textViewMessage = itemView.findViewById(R.id.textViewMessage);
             textViewOriginalMessage = itemView.findViewById(R.id.textViewOriginalMessage);
             this.messagesRef = messagesRef;
             this.roomId = roomId;
             this.visibleOriginalMessages = visibleOriginalMessages;
+            this.context = context;
             imageViewProfile = itemView.findViewById(R.id.imageViewProfile);
             usersRef = FirebaseDatabase.getInstance().getReference("users");
         }
@@ -246,7 +252,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 String textMessage = message.getMessageOG();
                 String textLanguage = Variables.userLanguage;
                 textViewMessage.setText("......");
-                RegenerateMessageTranslation regenerateMessageTranslation = new RegenerateMessageTranslation();
+                RegenerateMessageTranslation regenerateMessageTranslation = new RegenerateMessageTranslation(context);
                 regenerateMessageTranslation.setOnTranslationRegeneratedListener(newTranslation -> {
                     textViewMessage.setText(newTranslation);
                 });

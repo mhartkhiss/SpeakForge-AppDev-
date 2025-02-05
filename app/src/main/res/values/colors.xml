@@ -18,4 +18,5 @@
     <color name="error_red">#FF5252</color>
     <color name="grey_500">#9E9E9E</color>
     <color name="blue">#2196F3</color>
+    <color name="light_blue">#3DB8EF</color>
 </resources>

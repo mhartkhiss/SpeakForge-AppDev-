@@ -26,4 +26,6 @@ public class Variables {
     // API Keys
     public static List<String> klusterAiKeys = new ArrayList<>();
     public static List<String> deepseekKeys = new ArrayList<>();
+    public static List<String> geminiKeys = new ArrayList<>();
+    public static List<String> claudeKeys = new ArrayList<>();
 }

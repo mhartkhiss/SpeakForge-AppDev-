@@ -16,6 +16,7 @@ public class SpeechRecognitionHelper {
     private SpeechRecognitionDialog speechDialog;
     private final StringBuilder speechBuilder = new StringBuilder();
     private SpeechRecognitionCallback callback;
+    private boolean isUpsideDown = false;
 
     public interface SpeechRecognitionCallback {
         void onSpeechResult(String text);
@@ -25,8 +26,9 @@ public class SpeechRecognitionHelper {
         this.activity = activity;
     }
 
-    public void startSpeechRecognition(SpeechRecognitionCallback callback) {
+    public void startSpeechRecognition(SpeechRecognitionCallback callback, boolean isUpsideDown) {
         this.callback = callback;
+        this.isUpsideDown = isUpsideDown;
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
@@ -48,7 +50,7 @@ public class SpeechRecognitionHelper {
                     callback.onSpeechResult(text);
                 }
             }
-        });
+        }, isUpsideDown);
 
         try {
             if (speechRecognizer != null) {
@@ -146,6 +148,10 @@ public class SpeechRecognitionHelper {
         } catch (Exception e) {
             CustomNotification.showNotification(activity, "Speech recognition not available", false);
         }
+    }
+
+    public void startSpeechRecognition(SpeechRecognitionCallback callback) {
+        startSpeechRecognition(callback, false);
     }
 
     public void stopListening() {

@@ -100,68 +100,146 @@
                         android:orientation="vertical"
                         android:layout_marginBottom="16dp">
 
-                        <!-- Change Password Button -->
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnMenuChangePassword"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:layout_marginBottom="12dp"
-                            android:backgroundTint="#F8F9FA"
-                            android:text="Change Password"
-                            android:textColor="#212121"
-                            android:fontFamily="@font/poppins_medium"
-                            android:textAlignment="textStart"
-                            android:paddingStart="20dp"
-                            android:paddingEnd="20dp"
-                            app:icon="@drawable/profile_password"
-                            app:iconGravity="start"
-                            app:iconPadding="24dp"
-                            app:iconSize="24dp"
-                            app:iconTint="#424242"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            app:cornerRadius="12dp"/>
-
-                        <!-- Change Language Button -->
-                        <com.google.android.material.button.MaterialButton
+                        <!-- Change Language Section -->
+                        <LinearLayout
                             android:id="@+id/btnMenuChangeLanguage"
                             android:layout_width="match_parent"
-                            android:layout_height="56dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginBottom="12dp"
-                            android:backgroundTint="#F8F9FA"
-                            android:text="Change Language"
-                            android:textColor="#212121"
-                            android:fontFamily="@font/poppins_medium"
-                            android:textAlignment="textStart"
-                            android:paddingStart="20dp"
-                            android:paddingEnd="20dp"
-                            app:icon="@drawable/profile_language"
-                            app:iconGravity="start"
-                            app:iconPadding="24dp"
-                            app:iconSize="24dp"
-                            app:iconTint="#424242"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            app:cornerRadius="12dp"/>
+                            android:background="@drawable/ripple_background"
+                            android:orientation="horizontal"
+                            android:padding="12dp"
+                            android:clickable="true"
+                            android:focusable="true">
 
-                        <!-- Translator Button -->
-                        <com.google.android.material.button.MaterialButton
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/profile_language"
+                                android:tint="#424242"/>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:layout_marginStart="24dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Language"
+                                    android:textColor="#212121"
+                                    android:textSize="16sp"
+                                    android:fontFamily="@font/poppins_medium"/>
+
+                                <TextView
+                                    android:id="@+id/textViewLanguageValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="English"
+                                    android:textColor="#757575"
+                                    android:textSize="14sp"
+                                    android:fontFamily="@font/poppins"/>
+                            </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/ic_chevron_right"
+                                android:tint="#757575"/>
+                        </LinearLayout>
+
+                        <!-- Translator Section -->
+                        <LinearLayout
                             android:id="@+id/btnMenuSelectTranslator"
                             android:layout_width="match_parent"
-                            android:layout_height="56dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginBottom="12dp"
-                            android:backgroundTint="#F8F9FA"
-                            android:text="Translator: Google Translate"
-                            android:textColor="#212121"
-                            android:fontFamily="@font/poppins_medium"
-                            android:textAlignment="textStart"
-                            android:paddingStart="20dp"
-                            android:paddingEnd="20dp"
-                            app:icon="@drawable/ic_translate"
-                            app:iconGravity="start"
-                            app:iconPadding="24dp"
-                            app:iconSize="24dp"
-                            app:iconTint="#424242"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            app:cornerRadius="12dp"/>
+                            android:background="@drawable/ripple_background"
+                            android:orientation="horizontal"
+                            android:padding="12dp"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/ic_translate"
+                                android:tint="#424242"/>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:layout_marginStart="24dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Translator"
+                                    android:textColor="#212121"
+                                    android:textSize="16sp"
+                                    android:fontFamily="@font/poppins_medium"/>
+
+                                <TextView
+                                    android:id="@+id/textViewTranslatorValue"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Google Translate"
+                                    android:textColor="#757575"
+                                    android:textSize="14sp"
+                                    android:fontFamily="@font/poppins"/>
+                            </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/ic_chevron_right"
+                                android:tint="#757575"/>
+                        </LinearLayout>
+
+                        <!-- Change Password Section -->
+                        <LinearLayout
+                            android:id="@+id/btnMenuChangePassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            android:background="@drawable/ripple_background"
+                            android:orientation="horizontal"
+                            android:padding="12dp"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/profile_password"
+                                android:tint="#424242"/>
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="24dp"
+                                android:text="Password"
+                                android:textColor="#212121"
+                                android:textSize="16sp"
+                                android:fontFamily="@font/poppins_medium"/>
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/ic_chevron_right"
+                                android:tint="#757575"/>
+                        </LinearLayout>
 
                         <!-- Logout Button with improved styling -->
                         <com.google.android.material.button.MaterialButton
@@ -285,6 +363,14 @@
             <include
                 android:id="@+id/includeTranslatorSelection"
                 layout="@layout/fragment_profile_sub_changetranslator"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/imageViewUserPicture"
+                android:visibility="gone" />
+
+            <include
+                android:id="@+id/includeChangeUsername"
+                layout="@layout/fragment_profile_sub_changeusername"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/imageViewUserPicture"

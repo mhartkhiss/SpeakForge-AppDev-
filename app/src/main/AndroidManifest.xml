@@ -64,6 +64,10 @@
             android:name=".ContactSettingsActivity"
             android:theme="@style/Theme.AppDev"
             android:exported="false" />
+        <activity
+            android:name=".ConversationalActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
 
         <meta-data
             android:name="preloaded_fonts"

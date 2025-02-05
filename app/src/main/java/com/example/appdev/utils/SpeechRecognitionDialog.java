@@ -7,7 +7,10 @@ import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -26,15 +29,17 @@ public class SpeechRecognitionDialog extends Dialog {
     private ObjectAnimator scaleX2, scaleY2, alpha2;
     private boolean isListening = false;
     private boolean animationInitialized = false;
+    private boolean isUpsideDown = false;
 
     public interface SpeechRecognitionListener {
         void onCancelled();
         void onFinished(String text);
     }
 
-    public SpeechRecognitionDialog(@NonNull Context context, SpeechRecognitionListener listener) {
+    public SpeechRecognitionDialog(@NonNull Context context, SpeechRecognitionListener listener, boolean isUpsideDown) {
         super(context);
         this.listener = listener;
+        this.isUpsideDown = isUpsideDown;
     }
 
     @Override
@@ -48,6 +53,20 @@ public class SpeechRecognitionDialog extends Dialog {
         btnDone = findViewById(R.id.btnDone);
         pulseCircle1 = findViewById(R.id.pulseCircle1);
         pulseCircle2 = findViewById(R.id.pulseCircle2);
+
+        // If it's for User 2 (top), rotate the entire dialog window
+        if (isUpsideDown) {
+            Window window = getWindow();
+            if (window != null) {
+                View decorView = window.getDecorView();
+                decorView.setRotation(180);
+                
+                // Adjust window position to maintain center alignment after rotation
+                WindowManager.LayoutParams params = window.getAttributes();
+                params.gravity = Gravity.CENTER;
+                window.setAttributes(params);
+            }
+        }
 
         setupPulseAnimation();
 

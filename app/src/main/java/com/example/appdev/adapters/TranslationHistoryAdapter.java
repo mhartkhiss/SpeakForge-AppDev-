@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.appdev.R;
 import com.example.appdev.models.TranslationHistory;
+import com.example.appdev.translators.TranslatorType;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -45,30 +46,16 @@ public class TranslationHistoryAdapter extends RecyclerView.Adapter<TranslationH
         holder.sourceLanguage.setText(sourceLanguage);
         holder.targetLanguage.setText(history.getTargetLanguage());
         
-        // Set translator info with fallback to Google Translate
-        String translator = history.getTranslator();
-        if (translator == null || translator.isEmpty()) {
-            translator = "google"; // Default fallback
+        // Get translator type from history
+        String translatorId = history.getTranslator();
+        if (translatorId == null || translatorId.isEmpty()) {
+            translatorId = "google"; // Default fallback
         }
         
-        int translatorIcon;
-        String translatorName;
-        switch(translator) {
-            case "openai":
-                translatorIcon = R.drawable.translator_icon_openai;
-                translatorName = "OpenAI";
-                break;
-            case "deepseek":
-                translatorIcon = R.drawable.translator_icon_deepseek;
-                translatorName = "DeepSeek";
-                break;
-            default:
-                translatorIcon = R.drawable.translator_icon_google;
-                translatorName = "Google";
-                break;
-        }
-        holder.translatorIcon.setImageResource(translatorIcon);
-        holder.translatorName.setText(translatorName);
+        // Use TranslatorType to get translator info
+        TranslatorType translatorType = TranslatorType.fromId(translatorId);
+        holder.translatorIcon.setImageResource(translatorType.getIconResourceId());
+        holder.translatorName.setText(translatorType.getDisplayName());
         
         // Set texts
         holder.originalText.setText(history.getOriginalText());

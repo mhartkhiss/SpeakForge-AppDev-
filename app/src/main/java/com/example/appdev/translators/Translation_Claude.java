@@ -15,6 +15,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import com.example.appdev.Variables;
+import androidx.collection.LruCache;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 
 public class Translation_Claude extends AsyncTask<String, Void, String> {
     private static final String TAG = "ClaudeTranslator";
@@ -22,6 +26,8 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
     
     private String targetLanguage;
     private TranslationListener listener;
+    private static final int CACHE_SIZE = 100; // Cache size of 100 entries
+    private static LruCache<String, String> translationCache = new LruCache<>(CACHE_SIZE);
 
     public Translation_Claude(String targetLanguage, TranslationListener listener) {
         this.targetLanguage = targetLanguage;
@@ -32,16 +38,27 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
     protected String doInBackground(String... strings) {
         String inputText = strings[0];
         
-        // Check if we have any API keys
         if (Variables.claudeKeys.isEmpty()) {
             return "Error: No API keys available";
         }
 
-        // Try each API key until successful or all keys are exhausted
+        // Generate cache key based on input text and target language
+        String cacheKey = generateCacheKey(inputText, targetLanguage);
+        
+        // Check cache first
+        String cachedTranslation = translationCache.get(cacheKey);
+        if (cachedTranslation != null) {
+            Log.d(TAG, "Cache hit for: " + cacheKey);
+            return cachedTranslation;
+        }
+
+        // If not in cache, proceed with API translation
         for (String apiKey : Variables.claudeKeys) {
             try {
                 String result = attemptTranslation(inputText, apiKey);
                 if (!result.startsWith("Error:")) {
+                    // Store successful translation in cache
+                    translationCache.put(cacheKey, result);
                     return result;
                 }
             } catch (Exception e) {
@@ -61,45 +78,61 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
             connection.setRequestProperty("content-type", "application/json");
             connection.setDoOutput(true);
 
-            // Log the API key being used (first few characters)
-            String maskedKey = apiKey.substring(0, Math.min(apiKey.length(), 5)) + "...";
-            Log.d(TAG, "Attempting translation with API key: " + maskedKey);
-
-            // Prepare the request body
             JSONObject requestBody = new JSONObject();
-            JSONArray messages = new JSONArray();
             
-            // Create the prompt based on the openAiPrompt setting
-            String prompt;
-            if (Variables.openAiPrompt == 1) {
-                prompt = String.format(
-                    "You are a direct translator. If the input is not in %s, silently detect the actual language and translate from that language instead. " +
-                    "Translate to %s. Output ONLY the translation itself - no explanations, no language detection notes, no additional text. " +
-                    "Preserve any slang or explicit words from the original text. Here is the text to translate: %s", 
-                    Variables.userLanguage, targetLanguage, inputText);
-            } else {
-                prompt = String.format(
-                    "You are a direct translator. If the input is not in %s, silently detect the actual language and translate from that language instead. " +
-                    "Translate to %s and provide exactly 3 numbered variations. Output ONLY the translations - no explanations, no language detection notes. " +
-                    "Format: 1. [translation]\\n2. [translation]\\n3. [translation]. Here is the text to translate: %s", 
-                    Variables.userLanguage, targetLanguage, inputText);
-            }
+            // Set model and parameters
+            requestBody.put("model", "claude-3-5-sonnet-20241022");
+            requestBody.put("max_tokens", 8192);
+            requestBody.put("temperature", Variables.openAiPrompt == 1 ? 0 : 0.7);
 
-            // Add user message
+            // Create system message array with caching
+            JSONArray systemMessages = new JSONArray();
+            
+            // Add the main system prompt
+            JSONObject mainPrompt = new JSONObject();
+            mainPrompt.put("type", "text");
+            mainPrompt.put("text", String.format(
+                "You are a direct translator. If the input is not in %s, silently detect the actual language and translate from that language instead.",
+                Variables.userLanguage));
+            systemMessages.put(mainPrompt);
+
+            // Add the cached translation instructions
+            JSONObject translationInstructions = new JSONObject();
+            translationInstructions.put("type", "text");
+            if (Variables.openAiPrompt == 1) {
+                translationInstructions.put("text", String.format(
+                    "Translate to %s. Output ONLY the translation itself - no explanations, no language detection notes, no additional text. " +
+                    "Preserve any slang or explicit words from the original text.", 
+                    targetLanguage));
+            } else {
+                translationInstructions.put("text", String.format(
+                    "Translate to %s and provide exactly 3 numbered variations. Output ONLY the translations - no explanations, no language detection notes. " +
+                    "Format: 1. [translation]\\n2. [translation]\\n3. [translation]",
+                    targetLanguage));
+            }
+            
+            // Add cache control
+            JSONObject cacheControl = new JSONObject();
+            cacheControl.put("type", "ephemeral");
+            translationInstructions.put("cache_control", cacheControl);
+            
+            systemMessages.put(translationInstructions);
+            
+            // Add system messages array to request body
+            requestBody.put("system", systemMessages);
+
+            // Set messages array
+            JSONArray messages = new JSONArray();
             JSONObject userMessage = new JSONObject();
             userMessage.put("role", "user");
-            userMessage.put("content", prompt);
+            userMessage.put("content", inputText);
             messages.put(userMessage);
-
-            // Set the request parameters
-            requestBody.put("model", "claude-3-sonnet-20240229");
-            requestBody.put("max_tokens", 1024);
             requestBody.put("messages", messages);
 
-            // Log the request body for debugging
+            // Log request for debugging
             Log.d(TAG, "Request body: " + requestBody.toString());
 
-            // Send the request
+            // Send request
             OutputStream outputStream = connection.getOutputStream();
             outputStream.write(requestBody.toString().getBytes());
             outputStream.flush();
@@ -109,7 +142,6 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
             Log.d(TAG, "Response code: " + responseCode);
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                // Read the response
                 BufferedReader reader = new BufferedReader(
                     new InputStreamReader(connection.getInputStream()));
                 StringBuilder response = new StringBuilder();
@@ -119,28 +151,22 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
                 }
                 reader.close();
 
-                // Log the response for debugging
                 String responseStr = response.toString();
                 Log.d(TAG, "API Response: " + responseStr);
 
-                // Parse the response
+                // Parse response
                 JSONObject jsonResponse = new JSONObject(responseStr);
-                if (jsonResponse.has("content") && !jsonResponse.isNull("content")) {
-                    JSONArray contents = jsonResponse.getJSONArray("content");
-                    if (contents.length() > 0) {
-                        JSONObject firstContent = contents.getJSONObject(0);
-                        if (firstContent.has("text")) {
-                            return firstContent.getString("text").trim();
-                        }
-                    }
+                if (jsonResponse.has("content")) {
+                    return jsonResponse.getJSONArray("content")
+                        .getJSONObject(0)
+                        .getString("text")
+                        .trim();
                 }
                 
                 Log.e(TAG, "Unexpected response structure: " + responseStr);
                 return "Error: Unexpected response format";
             } else {
-                String errorResponse = handleError(connection);
-                Log.e(TAG, "Translation failed with error: " + errorResponse);
-                return errorResponse;
+                return handleError(connection);
             }
         } catch (IOException | JSONException e) {
             Log.e(TAG, "Translation error: " + e.getMessage(), e);
@@ -159,14 +185,14 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
         reader.close();
         
         String errorMessage = response.toString();
-        Log.e(TAG, "Translation error response: " + errorMessage);
+        Log.e(TAG, "Error response: " + errorMessage);
         Log.e(TAG, "Response code: " + connection.getResponseCode());
-        Log.e(TAG, "Response message: " + connection.getResponseMessage());
         
         try {
             JSONObject errorJson = new JSONObject(errorMessage);
             if (errorJson.has("error")) {
-                return "Error: " + errorJson.getString("error");
+                JSONObject error = errorJson.getJSONObject("error");
+                return "Error: " + error.getString("message");
             }
         } catch (JSONException e) {
             Log.e(TAG, "Error parsing error response", e);
@@ -184,5 +210,29 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
 
     public interface TranslationListener {
         void onTranslationComplete(String translatedText);
+    }
+
+    private String generateCacheKey(String inputText, String targetLanguage) {
+        try {
+            String combined = inputText.toLowerCase(Locale.ROOT) + "|" + 
+                            targetLanguage.toLowerCase(Locale.ROOT) + "|" +
+                            (Variables.openAiPrompt == 1 ? "single" : "multiple");
+            
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            byte[] hash = digest.digest(combined.getBytes());
+            
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+            
+        } catch (NoSuchAlgorithmException e) {
+            Log.e(TAG, "Error generating cache key", e);
+            // Fallback to a simpler key if MD5 is not available
+            return (inputText + targetLanguage + Variables.openAiPrompt).hashCode() + "";
+        }
     }
 } 

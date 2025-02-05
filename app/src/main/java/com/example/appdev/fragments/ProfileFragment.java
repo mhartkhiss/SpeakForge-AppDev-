@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -38,19 +39,27 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.example.appdev.utils.CustomNotification;
+import com.example.appdev.subcontrollers.ChangeUsernameControl;
+import com.google.android.material.button.MaterialButton;
+import androidx.core.content.ContextCompat;
+import com.example.appdev.translators.TranslatorType;
 
 public class ProfileFragment extends Fragment {
 
-    private TextView textViewUsername, textViewEmail;
+    private TextView textViewUsername, textViewEmail, textViewTranslatorValue, textViewLanguageValue;
     private ImageView imageViewUserPicture;
     private CardView layoutChangeUsername, layoutProfile, layoutLanguageSelection, layoutChangePass, layoutChangeTranslator;
-    private Button btnLogout, btnSaveChanges, btnChangeLanguage, btnChangePassword, btnChangePassword2, btnChangeTranslator,
-            btnGoogle, btnOpenAi, btnDeepSeek, btnUpgrade;
+    private Button btnLogout, btnSaveChanges, btnChangePassword2, btnChangeTranslator, btnUpgrade;
     private ImageButton btnBack;
     private EditText editTextUsername, editTextOldPassword, editTextNewPassword, editTextConfirmPassword;
     private ChangeProfilePicControl changeProfilePicControl;
     private ChangeLanguageControl changeLanguageControl;
     private String accountType;
+    private LinearLayout btnMenuSelectTranslator;
+    private LinearLayout btnMenuChangeLanguage;
+    private LinearLayout btnMenuChangePassword;
+    private ChangeUsernameControl changeUsernameControl;
+    private ViewGroup translatorButtonsContainer;
 
     public CardView getLayoutLanguageSelection() {
 
@@ -63,9 +72,16 @@ public class ProfileFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
+        
+        // Initialize views
         initializeViews(view);
+        
+        // Setup translator buttons
+        translatorButtonsContainer = view.findViewById(R.id.translatorButtonsContainer);
+        setupTranslatorButtons(translatorButtonsContainer);
+        
         if (Variables.guestUser.equals(FirebaseAuth.getInstance().getCurrentUser().getEmail())) {
             view.findViewById(R.id.cardViewProfile).setVisibility(View.GONE);
             view.findViewById(R.id.imageViewUserPicture).setVisibility(View.GONE);
@@ -89,20 +105,15 @@ public class ProfileFragment extends Fragment {
         textViewUsername = view.findViewById(R.id.textViewUsername);
         textViewEmail = view.findViewById(R.id.textViewEmail);
         imageViewUserPicture = view.findViewById(R.id.imageViewUserPicture);
-        layoutChangeUsername = view.findViewById(R.id.cardViewChangeUsername);
+        layoutChangeUsername = view.findViewById(R.id.includeChangeUsername);
         layoutProfile = view.findViewById(R.id.cardViewProfile);
         layoutLanguageSelection = view.findViewById(R.id.includeLanguageSelection);
         layoutChangePass = view.findViewById(R.id.includeChangePassword);
         layoutChangeTranslator = view.findViewById(R.id.includeTranslatorSelection);
         btnLogout = view.findViewById(R.id.btnLogout);
         btnSaveChanges = view.findViewById(R.id.btnSaveChanges);
-        btnChangeLanguage = view.findViewById(R.id.btnMenuChangeLanguage);
-        btnChangePassword = view.findViewById(R.id.btnMenuChangePassword);
         btnChangePassword2 = view.findViewById(R.id.btnChangePassword2);
-        btnChangeTranslator = view.findViewById(R.id.btnMenuSelectTranslator);
-        btnGoogle = view.findViewById(R.id.btnGoogle);
-        btnOpenAi = view.findViewById(R.id.btnOpenAi);
-        btnDeepSeek = view.findViewById(R.id.btnDeepSeek);
+        btnMenuSelectTranslator = view.findViewById(R.id.btnMenuSelectTranslator);
         btnBack = view.findViewById(R.id.btnBack);
         btnUpgrade = view.findViewById(R.id.btnUpgrade);
         editTextUsername = view.findViewById(R.id.editTextUsername);
@@ -110,7 +121,16 @@ public class ProfileFragment extends Fragment {
         editTextNewPassword = view.findViewById(R.id.editTextNewPassword);
         editTextConfirmPassword = view.findViewById(R.id.editTextConfirmPassword);
         changeLanguageControl = new ChangeLanguageControl(this);
-
+        textViewTranslatorValue = view.findViewById(R.id.textViewTranslatorValue);
+        textViewLanguageValue = view.findViewById(R.id.textViewLanguageValue);
+        btnMenuChangeLanguage = view.findViewById(R.id.btnMenuChangeLanguage);
+        btnMenuChangePassword = view.findViewById(R.id.btnMenuChangePassword);
+        
+        // Initialize the controller
+        changeUsernameControl = new ChangeUsernameControl(this,
+            layoutChangeUsername.findViewById(R.id.editTextUsername),
+            layoutChangeUsername,
+            layoutProfile);
     }
 
 
@@ -126,7 +146,7 @@ public class ProfileFragment extends Fragment {
                     if (dataSnapshot.exists()) {
                         User user = dataSnapshot.getValue(User.class);
                         if (user != null) {
-                            btnChangeLanguage.setText("Language: " + user.getLanguage());
+                            textViewLanguageValue.setText(user.getLanguage());
                             textViewUsername.setText(user.getUsername());
                             editTextUsername.setText(user.getUsername());
                             textViewEmail.setText(user.getEmail());
@@ -137,22 +157,14 @@ public class ProfileFragment extends Fragment {
                                 imageViewUserPicture.setImageResource(R.drawable.default_userpic);
                             }
                             if (accountType.equals("free")) {
-                                btnChangeTranslator.setText("Translator: Google Translate");
+                                textViewTranslatorValue.setText("Google Translate");
                                 btnUpgrade.setVisibility(View.VISIBLE);
                                 userRef.child("translator").setValue("google");
                             }
                             else {
-                                switch (user.getTranslator()) {
-                                    case "openai":
-                                        btnChangeTranslator.setText("Translator: OpenAI");
-                                        break;
-                                    case "deepseek":
-                                        btnChangeTranslator.setText("Translator: DeepSeek");
-                                        break;
-                                    default:
-                                        btnChangeTranslator.setText("Translator: Google Translate");
-                                        break;
-                                }
+                                textViewTranslatorValue.setText(
+                                    TranslatorType.fromId(user.getTranslator()).getDisplayName()
+                                );
                             }
                             if(accountType.equals("premium")){
                                 btnUpgrade.setVisibility(View.GONE);
@@ -183,10 +195,10 @@ public class ProfileFragment extends Fragment {
 
 
         //CHANGE LANGUAGE LISTENERS
-        btnChangeLanguage.setOnClickListener(v -> toggleCardViews(layoutLanguageSelection, layoutProfile));
+        btnMenuChangeLanguage.setOnClickListener(v -> toggleCardViews(layoutLanguageSelection, layoutProfile));
 
         //CHANGE PASSWORD LISTENERS
-        btnChangePassword.setOnClickListener(v -> toggleCardViews(layoutChangePass, layoutProfile));
+        btnMenuChangePassword.setOnClickListener(v -> toggleCardViews(layoutChangePass, layoutProfile));
         btnChangePassword2.setOnClickListener(new ChangePassControl(getContext(), 
             editTextOldPassword, 
             editTextNewPassword,
@@ -201,20 +213,21 @@ public class ProfileFragment extends Fragment {
 
         //CHANGE USERNAME LISTENERS
         textViewUsername.setOnClickListener(v -> toggleCardViews(layoutChangeUsername, layoutProfile));
-        btnSaveChanges.setOnClickListener(v -> updateUsername());
+        
+        View usernameBackBtn = layoutChangeUsername.findViewById(R.id.btnBack);
+        usernameBackBtn.setOnClickListener(v -> toggleCardViews(layoutProfile, layoutChangeUsername));
+        
+        layoutChangeUsername.findViewById(R.id.btnSaveChanges)
+            .setOnClickListener(v -> changeUsernameControl.updateUsername());
 
         //CHANGE TRANSLATOR LISTENERS
-        btnChangeTranslator.setOnClickListener(v -> {
+        btnMenuSelectTranslator.setOnClickListener(v -> {
             if(accountType.equals("free")){
                 startActivity(new Intent(getActivity(), UpgradeAccountActivity.class));
                 return;
             }
             toggleCardViews(layoutChangeTranslator, layoutProfile);
         });
-
-        btnGoogle.setOnClickListener(v -> updateTranslator("google", "Google Translate"));
-        btnOpenAi.setOnClickListener(v -> updateTranslator("openai", "OpenAI Translator"));
-        btnDeepSeek.setOnClickListener(v -> updateTranslator("deepseek", "DeepSeek Translator"));
 
         // Add back button listener for translator selection
         View translatorView = layoutChangeTranslator.findViewById(R.id.btnBack);
@@ -298,5 +311,18 @@ public class ProfileFragment extends Fragment {
                     CustomNotification.showNotification(requireActivity(), 
                         "Failed to change translator", false);
                 });
+    }
+
+    private void setupTranslatorButtons(ViewGroup container) {
+        for (TranslatorType type : TranslatorType.values()) {
+            MaterialButton button = (MaterialButton) LayoutInflater.from(getContext())
+                .inflate(R.layout.translator_button, container, false);
+            
+            button.setText(type.getDisplayName());
+            button.setIcon(ContextCompat.getDrawable(requireContext(), type.getIconResourceId()));
+            button.setOnClickListener(v -> updateTranslator(type.getId(), type.getDisplayName()));
+            
+            container.addView(button);
+        }
     }
 }

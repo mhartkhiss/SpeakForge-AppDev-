@@ -1,7 +1,6 @@
 package com.example.appdev.adapters;
 
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -9,7 +8,7 @@ import com.google.android.material.button.MaterialButton;
 import com.example.appdev.R;
 import java.util.List;
 
-public class LanguageAdapter extends RecyclerView.Adapter<LanguageAdapter.LanguageViewHolder> {
+public class LanguageAdapter extends RecyclerView.Adapter<LanguageAdapter.ViewHolder> {
     private List<String> languages;
     private OnLanguageSelectedListener listener;
 
@@ -24,17 +23,17 @@ public class LanguageAdapter extends RecyclerView.Adapter<LanguageAdapter.Langua
 
     @NonNull
     @Override
-    public LanguageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        MaterialButton button = (MaterialButton) LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_language, parent, false);
-        return new LanguageViewHolder(view);
+        return new ViewHolder(button);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull LanguageViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String language = languages.get(position);
-        holder.btnLanguage.setText(language);
-        holder.btnLanguage.setOnClickListener(v -> listener.onLanguageSelected(language));
+        holder.button.setText(language);
+        holder.button.setOnClickListener(v -> listener.onLanguageSelected(language));
     }
 
     @Override
@@ -42,12 +41,12 @@ public class LanguageAdapter extends RecyclerView.Adapter<LanguageAdapter.Langua
         return languages.size();
     }
 
-    static class LanguageViewHolder extends RecyclerView.ViewHolder {
-        MaterialButton btnLanguage;
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        MaterialButton button;
 
-        LanguageViewHolder(View itemView) {
-            super(itemView);
-            btnLanguage = (MaterialButton) itemView;
+        ViewHolder(MaterialButton button) {
+            super(button);
+            this.button = button;
         }
     }
 } 

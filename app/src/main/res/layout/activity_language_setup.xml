@@ -29,8 +29,8 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
         android:fontFamily="@font/akaya_telivigala"
-        android:paddingTop="30dp"
         android:gravity="center"
+        android:paddingTop="30dp"
         android:text="Select your language for chat translation when receiving messages"
         android:textColor="#6C6C6C"
         android:textSize="25dp"
@@ -46,81 +46,35 @@
         app:cardCornerRadius="8dp"
         app:cardElevation="4dp"
         app:cardUseCompatPadding="true"
-        app:layout_constraintTop_toBottomOf="@id/imageView5"
-        app:layout_constraintBottom_toTopOf="@id/linearLayout2"
+        app:layout_constraintTop_toBottomOf="@id/textView"
         app:cardBackgroundColor="@color/lightGrey">
 
     </androidx.cardview.widget.CardView>
 
-    <!-- ConstraintLayout for buttons -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/linearLayout2"
+    <!-- Replace LinearLayout with ScrollView -->
+    <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/cardViewLanguage"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_height="0dp"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="16dp"
+        app:layout_constraintTop_toBottomOf="@id/cardViewLanguage"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- Select Language Text -->
-        <TextView
-            android:id="@+id/textViewSelectLanguage"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/linearLayout2"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Language"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp" />
+            android:orientation="vertical">
 
-        <!-- English Button -->
-        <Button
-            android:id="@+id/btnEnglish"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#3DB8EF"
-            android:text="English"
-            android:textColor="@android:color/black"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textViewSelectLanguage"
-            android:layout_marginTop="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp" />
+            <!-- Container for dynamically added buttons -->
+            <LinearLayout
+                android:id="@+id/buttonContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="16dp" />
 
-        <!-- Tagalog Button -->
-        <Button
-            android:id="@+id/btnTagalog"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#3DB8EF"
-            android:text="Tagalog"
-            android:textColor="@android:color/black"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnEnglish"
-            android:layout_marginTop="8dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp" />
-
-        <!-- Bisaya Button -->
-        <Button
-            android:id="@+id/btnBisaya"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#3DB8EF"
-            android:text="Bisaya"
-            android:textColor="@android:color/black"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btnTagalog"
-            android:layout_marginTop="8dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

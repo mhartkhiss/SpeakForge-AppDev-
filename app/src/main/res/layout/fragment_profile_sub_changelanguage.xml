@@ -3,23 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="16dp"
-    app:cardCornerRadius="15dp"
-    app:cardElevation="4dp"
-    app:cardUseCompatPadding="true">
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:orientation="vertical">
 
         <!-- Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/sub_fragment_header_background"
             android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="16dp">
 
             <ImageButton
                 android:id="@+id/btnBack"
@@ -34,17 +35,20 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:text="Select Language"
-                android:textSize="20sp"
                 android:textColor="#212121"
+                android:textSize="20sp"
                 android:fontFamily="@font/poppins_semibold" />
         </LinearLayout>
 
-        <!-- Language Options -->
+        <!-- Content -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/languageRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:overScrollMode="never" />
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:padding="16dp"
+            android:layout_gravity="center_horizontal"/>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

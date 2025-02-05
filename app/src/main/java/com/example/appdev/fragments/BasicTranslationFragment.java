@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Handler;
-import android.speech.RecognitionListener;
-import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.os.Bundle;
 import android.text.Editable;
@@ -18,9 +16,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ImageButton;
@@ -30,18 +26,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.android.volley.VolleyError;
 import com.example.appdev.R;
 import com.example.appdev.Variables;
-import com.example.appdev.translators.Translation_GoogleTranslate;
-import com.example.appdev.translators.Translation_OpenAI;
-import com.example.appdev.translators.Translation_DeepSeekV3;
+import com.example.appdev.ConversationalActivity;
 import com.example.appdev.models.Languages;
 import com.example.appdev.utils.SpeechRecognitionDialog;
 import com.example.appdev.utils.CustomNotification;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -52,7 +44,6 @@ import com.example.appdev.models.User;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -66,6 +57,11 @@ import com.example.appdev.utils.TranslationHistoryManager;
 import com.example.appdev.adapters.TranslationHistoryAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+
+import com.example.appdev.translators.TranslatorFactory;
+import com.example.appdev.translators.TranslatorType;
+import android.os.AsyncTask;
+import com.example.appdev.utils.SpeechRecognitionHelper;
 
 public class BasicTranslationFragment extends Fragment {
 
@@ -90,6 +86,12 @@ public class BasicTranslationFragment extends Fragment {
     private DatabaseReference userRef;
     private TextView currentTranslatorText;
     private ImageView translatorIcon;
+    private View resultCard;
+    private boolean isTranslating = false;
+    private FloatingActionButton stopTranslationButton;
+    private AsyncTask<String, Void, String> currentTranslator;
+    private FloatingActionButton btnStartConversation;
+    private SpeechRecognitionHelper speechHelper;
 
     @Nullable
     @Override
@@ -99,18 +101,22 @@ public class BasicTranslationFragment extends Fragment {
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
+                if (isTranslating) return;  // Skip keyboard checks during translation
+
                 Rect r = new Rect();
                 rootView.getWindowVisibleDisplayFrame(r);
                 int screenHeight = rootView.getRootView().getHeight();
                 int keypadHeight = screenHeight - r.bottom;
 
-                View resultCard = rootView.findViewById(R.id.resultCard);
                 if (keypadHeight > screenHeight * 0.15) {
-                    // Keyboard is shown
+                    // Keyboard is shown - always hide result card
                     resultCard.setVisibility(View.GONE);
                 } else {
-                    // Keyboard is hidden
-                    resultCard.setVisibility(View.VISIBLE);
+                    // Keyboard is hidden - show if we have a translation
+                    if (!TextUtils.isEmpty(textViewResult.getText()) && 
+                        !textViewResult.getText().toString().contains("Translating")) {
+                        resultCard.setVisibility(View.VISIBLE);
+                    }
                 }
             }
         });
@@ -122,21 +128,28 @@ public class BasicTranslationFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Initialize views
         textInput = view.findViewById(R.id.textInputEditText);
         textInputLayout = view.findViewById(R.id.textInputLayout);
         textViewResult = view.findViewById(R.id.txtTranslatedText);
         progressBar = view.findViewById(R.id.translationProgress);
-        currentLanguageLabel = requireView().findViewById(R.id.currentLanguageLabel);
+        currentLanguageLabel = view.findViewById(R.id.currentLanguageLabel);
         btnStartSpeech = view.findViewById(R.id.startSpeakingButton);
         btnTranslate = view.findViewById(R.id.translateButton);
         btnClear = view.findViewById(R.id.clearButton);
         currentTranslatorText = view.findViewById(R.id.currentTranslatorText);
         translatorIcon = view.findViewById(R.id.translatorIcon);
+        btnStartConversation = view.findViewById(R.id.startConversationButton);
+        outputLanguageSelection = view.findViewById(R.id.languageSpinner);  // Initialize Spinner here
+
+        // Initialize spinner with default values
+        setupLanguageSpinners();  // Initial setup
 
         // Initialize button states
         String currentText = textInput.getText().toString().trim();
         boolean hasText = !currentText.isEmpty();
         btnStartSpeech.setVisibility(hasText ? View.GONE : View.VISIBLE);
+        btnStartConversation.setVisibility(hasText ? View.GONE : View.VISIBLE);
         btnTranslate.setVisibility(hasText ? View.VISIBLE : View.GONE);
         btnClear.setVisibility(hasText ? View.VISIBLE : View.GONE);
 
@@ -153,24 +166,14 @@ public class BasicTranslationFragment extends Fragment {
                     currentLanguageLabel.setText(Variables.userLanguage);
                     
                     // Update spinner with filtered languages
-                    setupLanguageSpinner();
+                    if (outputLanguageSelection != null) {
+                        setupLanguageSpinners();
+                    }
 
                     // Update translator text and icon based on user's selected translator
-                    String translatorName = "Google Translate"; // default
-                    int iconResource = R.drawable.translator_icon_google;
-
-                    switch(currentUser.getTranslator()) {
-                        case "openai":
-                            translatorName = "OpenAI Translator";
-                            iconResource = R.drawable.translator_icon_openai;
-                            break;
-                        case "deepseek":
-                            translatorName = "DeepSeek Translator";
-                            iconResource = R.drawable.translator_icon_deepseek;
-                            break;
-                    }
-                    currentTranslatorText.setText(translatorName);
-                    translatorIcon.setImageResource(iconResource);
+                    TranslatorType translatorType = TranslatorType.fromId(currentUser.getTranslator());
+                    currentTranslatorText.setText(translatorType.getDisplayName());
+                    translatorIcon.setImageResource(translatorType.getIconResourceId());
                 }
             }
 
@@ -190,6 +193,16 @@ public class BasicTranslationFragment extends Fragment {
         // Initialize history button
         btnHistory = view.findViewById(R.id.btnHistory);
         btnHistory.setOnClickListener(v -> showHistoryDialog());
+
+        resultCard = view.findViewById(R.id.resultCard);
+
+        // Initially hide result card
+        resultCard.setVisibility(View.GONE);
+
+        stopTranslationButton = view.findViewById(R.id.stopTranslationButton);
+        stopTranslationButton.setOnClickListener(v -> stopTranslation());
+
+        speechHelper = new SpeechRecognitionHelper(requireActivity());
     }
 
     private void setListeners(View view) {
@@ -210,9 +223,16 @@ public class BasicTranslationFragment extends Fragment {
         // Clear button listener
         btnClear.setOnClickListener(v -> {
             textInput.setText("");
-            textViewResult.setText("Translation will appear here");
+            textViewResult.setText("");
             textViewResult.setTextColor(getResources().getColor(android.R.color.darker_gray));
             updateButtonVisibility(false);
+            
+            // Hide result card with animation
+            resultCard.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction(() -> resultCard.setVisibility(View.GONE))
+                    .start();
         });
 
         textInput.addTextChangedListener(new TextWatcher() {
@@ -240,10 +260,16 @@ public class BasicTranslationFragment extends Fragment {
 
             return false;
         });
+
+        btnStartConversation.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), ConversationalActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void updateButtonVisibility(boolean hasText) {
         btnStartSpeech.setVisibility(hasText ? View.GONE : View.VISIBLE);
+        btnStartConversation.setVisibility(hasText ? View.GONE : View.VISIBLE);
         btnTranslate.setVisibility(hasText ? View.VISIBLE : View.GONE);
         btnClear.setVisibility(hasText ? View.VISIBLE : View.GONE);
     }
@@ -307,236 +333,116 @@ public class BasicTranslationFragment extends Fragment {
         }
     }
 
+    private void startTranslation() {
+        isTranslating = true;
+        
+        float disabledAlpha = 0.5f;
+        
+        textInput.setEnabled(false);
+        textInput.animate().alpha(disabledAlpha).setDuration(300);
+        
+        btnTranslate.setEnabled(false);
+        btnTranslate.animate().alpha(disabledAlpha).setDuration(300);
+        
+        btnClear.setEnabled(false);
+        btnClear.animate().alpha(disabledAlpha).setDuration(300);
+        
+        btnStartConversation.setEnabled(false);
+        btnStartConversation.animate().alpha(disabledAlpha).setDuration(300);
+        
+        outputLanguageSelection.setEnabled(false);
+        outputLanguageSelection.animate().alpha(disabledAlpha).setDuration(300);
+        
+        stopTranslationButton.setVisibility(View.VISIBLE);
+    }
+
+    private void stopTranslation() {
+        if (currentTranslator != null) {
+            currentTranslator.cancel(true);
+            currentTranslator = null;
+        }
+
+        // Reset UI
+        stopAnimation();
+        enableInputSection();
+        
+        // Hide result card with animation
+        resultCard.animate()
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction(() -> {
+                    resultCard.setVisibility(View.GONE);
+                    textViewResult.setText("");  // Clear the translated text
+                })
+                .start();
+            
+        stopTranslationButton.setVisibility(View.GONE);
+        isTranslating = false;
+    }
+
+    private void enableInputSection() {
+        textInput.setEnabled(true);
+        textInput.animate().alpha(1f).setDuration(300);
+        
+        btnTranslate.setEnabled(true);
+        btnTranslate.animate().alpha(1f).setDuration(300);
+        
+        btnClear.setEnabled(true);
+        btnClear.animate().alpha(1f).setDuration(300);
+        
+        btnStartConversation.setEnabled(true);
+        btnStartConversation.animate().alpha(1f).setDuration(300);
+        
+        outputLanguageSelection.setEnabled(true);
+        outputLanguageSelection.animate().alpha(1f).setDuration(300);
+        
+        stopTranslationButton.setVisibility(View.GONE);
+    }
+
     private void translateAndDisplay(String text, String targetLanguage) {
+        if (text.isEmpty()) return;
+
+        if (currentTranslator != null) {
+            currentTranslator.cancel(true);
+        }
+
+        // Start translation UI state
+        startTranslation();
+
+        // Show result card with animation
+        resultCard.setVisibility(View.VISIBLE);
+        resultCard.setAlpha(0f);
+        resultCard.animate()
+                .alpha(1f)
+                .setDuration(300)
+                .start();
+
+        // Hide keyboard
+        InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
+        if (imm != null && getView() != null) {
+            imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
+        }
+
+        // Set to single translation mode (not variations)
+        Variables.openAiPrompt = 1;
+
         // Start animation
         translateAnimation();
 
-        switch (Variables.userTranslator) {
-            case "openai":
-                // OpenAI translation
-                Variables.openAiPrompt = 1;
-                Translation_OpenAI translationOpenAITask = new Translation_OpenAI(targetLanguage, translatedMessage -> {
-                    if (getActivity() == null) return; // Check if fragment is still attached
-                    
-                    requireActivity().runOnUiThread(() -> {
-                        if (!TextUtils.isEmpty(translatedMessage)) {
-                            String[] lines = translatedMessage.split("\n");
-                            if (lines.length > 0) {
-                                stopAnimation(); // Stop the animation before showing result
-                                String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
-                                textViewResult.setText(firstLine);
-                                textViewResult.setTextColor(getResources().getColor(R.color.black));
-                                textViewResult.setTextSize(38);
-                                textViewResult.setAlpha(1.0f); // Ensure full opacity
-                            }
-                        }
-                        progressBar.setVisibility(View.GONE);
-                        saveToHistory(text, translatedMessage, targetLanguage);
-                    });
+        currentTranslator = TranslatorFactory.createTranslator(
+            TranslatorType.fromId(Variables.userTranslator),
+            targetLanguage,
+            translatedMessage -> {
+                if (getActivity() == null) return;
+                requireActivity().runOnUiThread(() -> {
+                    handleTranslationResult(translatedMessage);
+                    enableInputSection();
+                    isTranslating = false;
                 });
-                translationOpenAITask.execute(text);
-                break;
-
-            case "deepseek":
-                // DeepSeek translation
-                Variables.openAiPrompt = 1;
-                Translation_DeepSeekV3 translationDeepSeekTask = new Translation_DeepSeekV3(targetLanguage, translatedMessage -> {
-                    if (getActivity() == null) return; // Check if fragment is still attached
-                    
-                    requireActivity().runOnUiThread(() -> {
-                        if (!TextUtils.isEmpty(translatedMessage)) {
-                            String[] lines = translatedMessage.split("\n");
-                            if (lines.length > 0) {
-                                stopAnimation(); // Stop the animation before showing result
-                                String firstLine = lines[0].replaceAll("\\d+\\.", "").trim();
-                                textViewResult.setText(firstLine);
-                                textViewResult.setTextColor(getResources().getColor(R.color.black));
-                                textViewResult.setTextSize(38);
-                                textViewResult.setAlpha(1.0f); // Ensure full opacity
-                            }
-                        }
-                        progressBar.setVisibility(View.GONE);
-                        saveToHistory(text, translatedMessage, targetLanguage);
-                    });
-                });
-                translationDeepSeekTask.execute(text);
-                break;
-
-            default:
-                // Google Translate (default)
-                Translation_GoogleTranslate translationGoogleTask = new Translation_GoogleTranslate(requireContext());
-                translationGoogleTask.translateText(text, targetLanguage, new Translation_GoogleTranslate.TranslateListener() {
-                    @Override
-                    public void onSuccess(String translatedText) {
-                        if (getActivity() == null) return; // Check if fragment is still attached
-                        
-                        requireActivity().runOnUiThread(() -> {
-                            if (!TextUtils.isEmpty(translatedText)) {
-                                stopAnimation(); // Stop the animation before showing result
-                                textViewResult.setText(translatedText);
-                                textViewResult.setTextColor(getResources().getColor(R.color.black));
-                                textViewResult.setTextSize(38);
-                                textViewResult.setAlpha(1.0f); // Ensure full opacity
-                            }
-                            progressBar.setVisibility(View.GONE);
-                            saveToHistory(text, translatedText, targetLanguage);
-                        });
-                    }
-
-                    @Override
-                    public void onError(VolleyError error) {
-                        if (getActivity() == null) return; // Check if fragment is still attached
-                        
-                        requireActivity().runOnUiThread(() -> {
-                            stopAnimation(); // Stop animation on error
-                            textViewResult.setText("Translation failed");
-                            textViewResult.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-                            textViewResult.setTextSize(38);
-                            textViewResult.setAlpha(1.0f); // Ensure full opacity
-                            progressBar.setVisibility(View.GONE);
-                        });
-                    }
-                });
-                break;
-        }
-    }
-
-    private void startSpeechRecognition() {
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-
-        speechBuilder.setLength(0);
-        
-        speechDialog = new SpeechRecognitionDialog(requireContext(), new SpeechRecognitionDialog.SpeechRecognitionListener() {
-            @Override
-            public void onCancelled() {
-                stopListening();
-            }
-
-            @Override
-            public void onFinished(String text) {
-                stopListening();
-                if (!text.isEmpty()) {
-                    textInput.setText(text);
-                    String targetLanguage = outputLanguageSelection.getSelectedItem().toString();
-                    translateAndDisplay(text, targetLanguage);
-                }
-            }
-        });
-        
-        try {
-            if (speechRecognizer != null) {
-                speechRecognizer.destroy();
-            }
-            
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(requireContext());
-            speechRecognizer.setRecognitionListener(new RecognitionListener() {
-                @Override
-                public void onReadyForSpeech(Bundle params) {
-                    speechDialog.show();
-                }
-
-                @Override
-                public void onBeginningOfSpeech() {}
-
-                @Override
-                public void onRmsChanged(float rmsdB) {
-                    if (speechDialog != null) {
-                        speechDialog.updateVoiceAnimation(rmsdB);
-                    }
-                }
-
-                @Override
-                public void onBufferReceived(byte[] buffer) {}
-
-                @Override
-                public void onEndOfSpeech() {}
-
-                @Override
-                public void onError(int error) {
-                    String errorMessage;
-                    switch (error) {
-                        case SpeechRecognizer.ERROR_AUDIO:
-                            errorMessage = "Audio recording error";
-                            break;
-                        case SpeechRecognizer.ERROR_CLIENT:
-                            errorMessage = "Client side error";
-                            break;
-                        case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
-                            errorMessage = "Insufficient permissions";
-                            break;
-                        case SpeechRecognizer.ERROR_NETWORK:
-                            errorMessage = "Network error";
-                            break;
-                        case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
-                            errorMessage = "Network timeout";
-                            break;
-                        case SpeechRecognizer.ERROR_NO_MATCH:
-                            errorMessage = "No speech input";
-                            break;
-                        case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                            errorMessage = "Recognition service busy";
-                            break;
-                        case SpeechRecognizer.ERROR_SERVER:
-                            errorMessage = "Server error";
-                            break;
-                        case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                            errorMessage = "No speech input";
-                            break;
-                        default:
-                            errorMessage = "Speech recognition error";
-                            break;
-                    }
-                    if (speechDialog != null && speechDialog.isShowing()) {
-                        speechDialog.dismiss();
-                    }
-                    CustomNotification.showNotification(requireActivity(), errorMessage, false);
-                }
-
-                @Override
-                public void onResults(Bundle results) {
-                    ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                    if (matches != null && !matches.isEmpty()) {
-                        String text = matches.get(0);
-                        speechBuilder.append(text);
-                        speechDialog.updateRecognizedText(speechBuilder.toString());
-                    }
-                }
-
-                @Override
-                public void onPartialResults(Bundle partialResults) {
-                    ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                    if (matches != null && !matches.isEmpty()) {
-                        String text = matches.get(0);
-                        speechDialog.updateRecognizedText(text);
-                    }
-                }
-
-                @Override
-                public void onEvent(int eventType, Bundle params) {}
-            });
-
-            speechRecognizer.startListening(intent);
-        } catch (Exception e) {
-            CustomNotification.showNotification(requireActivity(), 
-                "Speech recognition not available", false);
-        }
-    }
-
-    private void stopListening() {
-        if (speechRecognizer != null) {
-            try {
-                speechRecognizer.stopListening();
-                speechRecognizer.destroy();
-                speechRecognizer = null;
-            } catch (Exception ignored) {}
-        }
-        if (speechDialog != null && speechDialog.isShowing()) {
-            speechDialog.dismiss();
-        }
+            },
+            requireContext()
+        );
+        currentTranslator.execute(text);
     }
 
     private void checkPermissionAndStartSpeechRecognition() {
@@ -550,6 +456,14 @@ public class BasicTranslationFragment extends Fragment {
         } else {
             startSpeechRecognition();
         }
+    }
+
+    private void startSpeechRecognition() {
+        speechHelper.startSpeechRecognition(text -> {
+            textInput.setText(text);
+            String targetLanguage = outputLanguageSelection.getSelectedItem().toString();
+            translateAndDisplay(text, targetLanguage);
+        });
     }
 
     @Override
@@ -576,6 +490,9 @@ public class BasicTranslationFragment extends Fragment {
         String translatorText = currentTranslatorText.getText().toString();
         if (translatorText.contains("OpenAI")) return "openai";
         if (translatorText.contains("DeepSeek")) return "deepseek";
+        if (translatorText.contains("GPT-4")) return "gpt4";
+        if (translatorText.contains("Gemini")) return "gemini";
+        if (translatorText.contains("Claude")) return "claude";
         return "google";
     }
 
@@ -642,22 +559,59 @@ public class BasicTranslationFragment extends Fragment {
         confirmDialog.show();
     }
 
-    private void setupLanguageSpinner() {
-        // Set up language spinner with filtered languages
-        outputLanguageSelection = requireView().findViewById(R.id.languageSpinner);
-        String[] languages = Languages.getLanguages().toArray(new String[0]);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), 
-            R.layout.simple_spinner_item_custom, languages);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        outputLanguageSelection.setAdapter(adapter);
+    private void setupLanguageSpinners() {
+        if (outputLanguageSelection == null || !isAdded()) return;
+
+        // Get all languages except the current user's language
+        List<String> languages = Languages.getAllLanguages();
+        List<String> outputLanguages = new ArrayList<>(languages);
+        String currentLanguage = Variables.userLanguage != null ? Variables.userLanguage : "English";
+        outputLanguages.remove(currentLanguage);
+
+        // Setup output language spinner with filtered languages
+        ArrayAdapter<String> outputAdapter = new ArrayAdapter<>(requireContext(),
+            R.layout.simple_spinner_item_custom, outputLanguages);
+        outputAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        outputLanguageSelection.setAdapter(outputAdapter);
+
+        // Update current language label
+        if (currentLanguageLabel != null) {
+            currentLanguageLabel.setText(currentLanguage);
+        }
     }
 
     // Add cleanup in onDestroy to prevent memory leaks
     @Override
     public void onDestroy() {
         super.onDestroy();
+        stopTranslation();
         stopAnimation();
-        stopListening();
+        if (speechHelper != null) {
+            speechHelper.destroy();
+        }
+    }
+
+    // Helper methods to handle translation results
+    private void handleTranslationResult(String translatedText) {
+        if (!TextUtils.isEmpty(translatedText)) {
+            stopAnimation();
+            textViewResult.setText(translatedText);
+            textViewResult.setTextColor(getResources().getColor(R.color.black));
+            textViewResult.setTextSize(38);
+            textViewResult.setAlpha(1.0f);
+        }
+        progressBar.setVisibility(View.GONE);
+        saveToHistory(textInput.getText().toString(), translatedText, 
+            outputLanguageSelection.getSelectedItem().toString());
+    }
+
+    private void handleTranslationError() {
+        stopAnimation();
+        textViewResult.setText("Translation failed");
+        textViewResult.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+        textViewResult.setTextSize(38);
+        textViewResult.setAlpha(1.0f);
+        progressBar.setVisibility(View.GONE);
     }
 
 }

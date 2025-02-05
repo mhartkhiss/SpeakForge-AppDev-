@@ -1,12 +1,15 @@
 package com.example.appdev.translators;
 
+import com.example.appdev.R;
+
 public enum TranslatorType {
     GOOGLE("google", "Google Translate", R.drawable.translator_icon_google),
-    OPENAI("openai", "OpenAI", R.drawable.translator_icon_openai),
+    //OPENAI("openai", "OpenAI", R.drawable.translator_icon_openai),
+    CLAUDE("claude", "Claude", R.drawable.translator_icon_claude),
     DEEPSEEK("deepseek", "DeepSeek", R.drawable.translator_icon_deepseek),
-    GPT4("gpt4", "GPT-4", R.drawable.translator_icon_gpt4),
-    GEMINI("gemini", "Gemini", R.drawable.translator_icon_gemini),
-    CLAUDE("claude", "Claude 3.5 Sonnet", R.drawable.translator_icon_claude);
+    //GPT4("gpt4", "GPT-4", R.drawable.translator_icon_gpt4),
+    GEMINI("gemini", "Gemini", R.drawable.translator_icon_gemini);
+
 
     private final String id;
     private final String displayName;

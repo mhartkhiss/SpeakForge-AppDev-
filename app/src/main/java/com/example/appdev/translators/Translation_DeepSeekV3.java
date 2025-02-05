@@ -118,18 +118,36 @@ public class Translation_DeepSeekV3 extends AsyncTask<String, Void, String> {
 
                 // Parse the response
                 JSONObject jsonResponse = new JSONObject(response.toString());
-                return jsonResponse
+                String content = jsonResponse
                     .getJSONArray("choices")
                     .getJSONObject(0)
                     .getJSONObject("message")
                     .getString("content")
                     .trim();
+
+                // Clean the response by removing content between <think> tags
+                content = cleanThinkTags(content);
+
+                return content;
             } else {
                 return "Error: " + responseCode;
             }
         } catch (IOException | JSONException e) {
             return "Error: " + e.getMessage();
         }
+    }
+
+    private String cleanThinkTags(String text) {
+        // Remove everything between <think> and </think> tags
+        String cleaned = text.replaceAll("(?s)<think>.*?</think>", "").trim();
+        
+        // Remove any remaining <think> or </think> tags just in case
+        cleaned = cleaned.replaceAll("</?think>", "").trim();
+        
+        // Remove any double newlines that might have been created
+        cleaned = cleaned.replaceAll("\\n\\s*\\n", "\n").trim();
+        
+        return cleaned;
     }
 
     @Override

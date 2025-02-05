@@ -1,4 +1,4 @@
-package com.example.appdev.activities;
+package com.example.appdev;
 
 import android.os.Bundle;
 import android.view.View;
@@ -11,7 +11,6 @@ import android.widget.AdapterView;
 import android.os.AsyncTask;
 import android.os.Build;
 
-import com.example.appdev.R;
 import com.example.appdev.models.Languages;
 import com.example.appdev.utils.SpeechRecognitionDialog;
 import com.example.appdev.utils.SpeechRecognitionHelper;
@@ -19,7 +18,6 @@ import com.example.appdev.utils.CustomNotification;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.example.appdev.translators.TranslatorFactory;
 import com.example.appdev.translators.TranslatorType;
-import com.example.appdev.Variables;
 
 public class ConversationalActivity extends AppCompatActivity {
     

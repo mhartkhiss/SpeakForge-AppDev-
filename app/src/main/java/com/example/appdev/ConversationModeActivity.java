@@ -24,6 +24,10 @@ import com.bumptech.glide.Glide;
 import com.example.appdev.adapters.ChatAdapter;
 import com.example.appdev.translators.Translation_GoogleTranslate;
 import com.example.appdev.translators.Translation_OpenAI;
+import com.example.appdev.translators.Translation_DeepSeekV3;
+import com.example.appdev.translators.Translation_GPT4;
+import com.example.appdev.translators.Translation_Gemini;
+import com.example.appdev.translators.Translation_Claude;
 import com.example.appdev.models.Message;
 import com.example.appdev.utils.CustomNotification;
 import com.google.firebase.auth.FirebaseAuth;
@@ -38,6 +42,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+
+import android.os.AsyncTask;
+import com.example.appdev.translators.TranslatorFactory;
+import com.example.appdev.translators.TranslatorType;
 
 public class ConversationModeActivity extends AppCompatActivity {
 
@@ -109,7 +117,7 @@ public class ConversationModeActivity extends AppCompatActivity {
         buttonSend = findViewById(R.id.buttonSend);
 
         // Initialize RecyclerView
-        chatAdapter = new ChatAdapter(messagesRef, roomId);
+        chatAdapter = new ChatAdapter(messagesRef, roomId, this);
 
         recyclerViewChat.setAdapter(chatAdapter);
 
@@ -303,33 +311,22 @@ public class ConversationModeActivity extends AppCompatActivity {
     }
 
     private void translateMessage(String targetLanguage, String messageTextOG, String messageId) {
-        if(recipientTranslator.equals("openai")){
-            // OpenAI
-            Variables.openAiPrompt = 1;
-            Translation_OpenAI translationOpenAITask = new Translation_OpenAI(targetLanguage, translatedMessage -> {
-                if (!TextUtils.isEmpty(translatedMessage)) {
-                    messagesRef.child(roomId).child(messageId).child("message").setValue(removeQuotationMarks(translatedMessage));
-                }
-            });
-            translationOpenAITask.execute(messageTextOG);
-        } else {
-            // Google Translate
-            Translation_GoogleTranslate translationGoogleTask = new Translation_GoogleTranslate(ConversationModeActivity.this);
-            translationGoogleTask.translateText(messageTextOG, targetLanguage, new Translation_GoogleTranslate.TranslateListener() {
-                @Override
-                public void onSuccess(String translatedText) {
-                    if (!TextUtils.isEmpty(translatedText)) {
-                        messagesRef.child(roomId).child(messageId).child("message").setValue(
-                                removeQuotationMarks(translatedText));
-                    }
-                }
+        // Set to single translation mode (not variations)
+        Variables.openAiPrompt = 1;
 
-                @Override
-                public void onError(VolleyError error) {
-                    // Handle error
+        AsyncTask<String, Void, String> translator = TranslatorFactory.createTranslator(
+            TranslatorType.fromId(recipientTranslator),
+            targetLanguage,
+            translatedMessage -> {
+                if (!TextUtils.isEmpty(translatedMessage)) {
+                    String cleanTranslation = removeQuotationMarks(translatedMessage);
+                    messagesRef.child(roomId).child(messageId).child("message")
+                        .setValue(cleanTranslation);
                 }
-            });
-        }
+            },
+            this
+        );
+        translator.execute(messageTextOG);
     }
 
     private String removeQuotationMarks(String text) {

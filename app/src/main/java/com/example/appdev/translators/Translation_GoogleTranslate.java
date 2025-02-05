@@ -9,10 +9,14 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.android.volley.toolbox.StringRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Map;
+import java.util.HashMap;
 
 public class Translation_GoogleTranslate {
 
@@ -26,6 +30,8 @@ public class Translation_GoogleTranslate {
     }
 
     private final Context context;
+    private RequestQueue requestQueue;
+    private Request<?> currentRequest;
 
     public Translation_GoogleTranslate(Context context) {
         this.context = context;
@@ -48,32 +54,41 @@ public class Translation_GoogleTranslate {
             return;
         }
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, requestBody,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            JSONObject data = response.getJSONObject("data");
-                            JSONArray translations = data.getJSONArray("translations");
-                            String translatedText = translations.getJSONObject(0).getString("translatedText");
-                            listener.onSuccess(translatedText);
-                        } catch (JSONException e) {
-                            Log.e(TAG, "Error parsing response", e);
-                            listener.onError(new VolleyError("Error parsing response"));
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(TAG, "Translation request failed", error);
-                        listener.onError(error);
-                    }
-                });
+        // Use JsonObjectRequest instead of StringRequest
+        currentRequest = new JsonObjectRequest(Request.Method.POST, url, requestBody,
+            response -> {
+                try {
+                    JSONObject data = response.getJSONObject("data");
+                    JSONArray translations = data.getJSONArray("translations");
+                    String translatedText = translations.getJSONObject(0).getString("translatedText");
+                    listener.onSuccess(translatedText);
+                } catch (JSONException e) {
+                    Log.e(TAG, "Error parsing response", e);
+                    listener.onError(new VolleyError("Error parsing response"));
+                }
+            },
+            error -> {
+                Log.e(TAG, "Translation request failed", error);
+                listener.onError(error);
+            }) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Content-Type", "application/json");
+                return headers;
+            }
+        };
 
-        // Add the request to the RequestQueue
-        RequestQueue queue = Volley.newRequestQueue(context.getApplicationContext());
-        queue.add(request);
+        if (requestQueue == null) {
+            requestQueue = Volley.newRequestQueue(context.getApplicationContext());
+        }
+        requestQueue.add(currentRequest);
+    }
+
+    public void cancelTranslation() {
+        if (currentRequest != null) {
+            currentRequest.cancel();
+        }
     }
 
     private String convertToLanguageCode(String language) {

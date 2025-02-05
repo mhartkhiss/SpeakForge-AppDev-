@@ -3,23 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="16dp"
-    app:cardCornerRadius="15dp"
-    app:cardElevation="4dp"
-    app:cardUseCompatPadding="true">
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:orientation="vertical">
 
         <!-- Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/sub_fragment_header_background"
             android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="16dp">
 
             <ImageButton
                 android:id="@+id/btnBack"
@@ -34,67 +35,18 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:text="Select Translator"
-                android:textSize="20sp"
                 android:textColor="#212121"
+                android:textSize="20sp"
                 android:fontFamily="@font/poppins_semibold" />
         </LinearLayout>
 
-        <!-- Translator Options -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGoogle"
+        <!-- Content -->
+        <LinearLayout
+            android:id="@+id/translatorButtonsContainer"
             android:layout_width="match_parent"
-            android:layout_height="72dp"
-            android:layout_marginBottom="16dp"
-            android:text="Google Translate"
-            android:textColor="#212121"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:textAlignment="textStart"
-            app:icon="@drawable/translator_icon_google"
-            app:iconGravity="start"
-            app:iconSize="32dp"
-            app:iconPadding="24dp"
-            app:iconTint="@null"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            app:strokeColor="#E0E0E0"
-            app:cornerRadius="12dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnOpenAi"
-            android:layout_width="match_parent"
-            android:layout_height="72dp"
-            android:layout_marginBottom="16dp"
-            android:text="OpenAI Translator"
-            android:textColor="#212121"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:textAlignment="textStart"
-            app:icon="@drawable/translator_icon_openai"
-            app:iconGravity="start"
-            app:iconSize="32dp"
-            app:iconPadding="24dp"
-            app:iconTint="@null"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            app:strokeColor="#E0E0E0"
-            app:cornerRadius="12dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDeepSeek"
-            android:layout_width="match_parent"
-            android:layout_height="72dp"
-            android:text="DeepSeek Translator"
-            android:textColor="#212121"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:textAlignment="textStart"
-            app:icon="@drawable/translator_icon_deepseek"
-            app:iconGravity="start"
-            app:iconSize="32dp"
-            app:iconPadding="24dp"
-            app:iconTint="@null"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            app:strokeColor="#E0E0E0"
-            app:cornerRadius="12dp"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp"/>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

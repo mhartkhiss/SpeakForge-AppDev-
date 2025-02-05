@@ -77,6 +77,52 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "Failed to fetch DeepSeek API keys: " + databaseError.getMessage());
             }
         });
+
+        // Add Gemini keys loading
+        DatabaseReference geminiKeysRef = FirebaseDatabase.getInstance()
+                .getReference("apikeys")
+                .child("gemini");
+
+        geminiKeysRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Variables.geminiKeys.clear();
+                for (DataSnapshot keySnapshot : dataSnapshot.getChildren()) {
+                    String apiKey = keySnapshot.getValue(String.class);
+                    if (apiKey != null) {
+                        Variables.geminiKeys.add(apiKey);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e(TAG, "Failed to fetch Gemini API keys: " + databaseError.getMessage());
+            }
+        });
+
+        // Add Claude keys loading
+        DatabaseReference claudeKeysRef = FirebaseDatabase.getInstance()
+                .getReference("apikeys")
+                .child("claude");
+
+        claudeKeysRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Variables.claudeKeys.clear();
+                for (DataSnapshot keySnapshot : dataSnapshot.getChildren()) {
+                    String apiKey = keySnapshot.getValue(String.class);
+                    if (apiKey != null) {
+                        Variables.claudeKeys.add(apiKey);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e(TAG, "Failed to fetch Claude API keys: " + databaseError.getMessage());
+            }
+        });
     }
 
     private void userDataListener(){
