@@ -21,17 +21,17 @@ public class SplashActivity extends AppCompatActivity {
         // Initialize the logo ImageView
         ImageView splashLogo = findViewById(R.id.splashLogo);
 
-        // Load and start the animation
-        Animation scaleAnimation = AnimationUtils.loadAnimation(this, R.anim.splash_scale);
-        splashLogo.startAnimation(scaleAnimation);
+        // Initial fade in animation
+        Animation fadeIn = AnimationUtils.loadAnimation(this, R.anim.splash_fade_in);
+        splashLogo.startAnimation(fadeIn);
 
         // Create a handler to start the main activity after the splash duration
         new Handler().postDelayed(() -> {
             Intent intent = new Intent(SplashActivity.this, WelcomeScreen.class);
             startActivity(intent);
             finish();
-            // Use a fade transition
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+            // Remove default transition animation
+            overridePendingTransition(0, 0);
         }, SPLASH_DURATION);
     }
 
