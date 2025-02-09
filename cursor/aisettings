@@ -1,0 +1,32 @@
+# AI Service Configuration
+ai.default_translator=google
+
+# API Rate Limits (requests per minute)
+ai.rate_limit.google=100
+ai.rate_limit.claude=20
+ai.rate_limit.gemini=60
+ai.rate_limit.deepseek=30
+
+# Model Settings
+ai.model.claude=claude-3-sonnet
+ai.model.gemini=gemini-pro
+ai.model.deepseek=deepseek-chat
+
+# Translation Settings
+ai.translation.max_length=2000
+ai.translation.timeout_seconds=30
+ai.translation.retry_attempts=3
+
+# Cache Settings
+ai.cache.enabled=true
+ai.cache.max_size=100
+ai.cache.expiry_minutes=60
+
+# Premium Features
+ai.premium.models=claude,gemini,deepseek
+ai.premium.max_length=5000
+ai.premium.concurrent_requests=true
+
+# Development Settings
+ai.debug.logging=true
+ai.debug.response_time_tracking=true 

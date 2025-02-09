@@ -1,114 +1,250 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F7FA">
 
-    <!-- Header Background with curved bottom -->
-    <View
-        android:id="@+id/headerBackground"
+    <!-- Main Profile Content -->
+    <RelativeLayout
+        android:id="@+id/mainContent"
         android:layout_width="match_parent"
-        android:layout_height="240dp"
-        android:background="@drawable/profile_header_background" />
+        android:layout_height="match_parent">
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:overScrollMode="never">
-
-        <RelativeLayout
+        <!-- Header Background with curved bottom -->
+        <View
+            android:id="@+id/headerBackground"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="20dp">
+            android:layout_height="200dp"
+            android:background="@drawable/profile_header_background" />
 
-            <!-- Profile Text -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="40dp"
-                android:layout_centerHorizontal="true"
-                android:text="My Profile"
-                android:textColor="#FFFFFF"
-                android:textSize="24sp"
-                android:fontFamily="@font/poppins_semibold" />
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:overScrollMode="never">
 
-            <!-- Profile Picture with larger size and elevation -->
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/imageViewUserPicture"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:layout_centerHorizontal="true"
-                android:layout_marginTop="90dp"
-                android:src="@drawable/default_userpic"
-                android:elevation="4dp"
-                app:civ_border_color="#FFFFFF"
-                app:civ_border_width="4dp" />
-
-            <!-- Main Card with improved styling -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardViewProfile"
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/imageViewUserPicture"
-                android:layout_marginTop="-30dp"
-                android:layout_marginHorizontal="4dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="2dp"
-                app:cardUseCompatPadding="true">
+                android:paddingHorizontal="2dp">
 
-                <LinearLayout
+                <!-- Profile Text -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="40dp"
+                    android:layout_centerHorizontal="true"
+                    android:text="My Profile"
+                    android:textColor="#FFFFFF"
+                    android:textSize="24sp"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:visibility="gone" />
+
+                <!-- Profile Picture with larger size and elevation -->
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/imageViewUserPicture"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="70dp"
+                    android:src="@drawable/default_userpic"
+                    android:elevation="4dp"
+                    app:civ_border_color="#FFFFFF"
+                    app:civ_border_width="4dp" />
+
+                <!-- Main Card with improved styling -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewProfile"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="24dp">
+                    android:layout_below="@id/imageViewUserPicture"
+                    android:layout_marginTop="-30dp"
+                    android:layout_marginHorizontal="2dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:cardUseCompatPadding="true">
 
-                    <!-- Name with larger text -->
-                    <TextView
-                        android:id="@+id/textViewUsername"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textAlignment="center"
-                        android:textSize="24sp"
-                        android:textColor="#212121"
-                        android:layout_marginTop="16dp"
-                        android:fontFamily="@font/poppins_semibold"/>
-
-                    <!-- Email with improved styling -->
-                    <TextView
-                        android:id="@+id/textViewEmail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textAlignment="center"
-                        android:textSize="14sp"
-                        android:textColor="#757575"
-                        android:fontFamily="@font/poppins"
-                        android:layout_marginBottom="24dp"/>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginBottom="24dp"
-                        android:background="#E0E0E0" />
-
-                    <!-- Profile Options with improved button styling -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="16dp">
+                        android:padding="16dp">
+
+                        <!-- User Type -->
+                        <LinearLayout
+                            android:id="@+id/layoutUserType"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:background="@drawable/user_type_background"
+                            android:paddingVertical="8dp"
+                            android:paddingHorizontal="12dp"
+                            android:layout_gravity="center"
+                            android:layout_marginBottom="8dp"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/premium1"
+                                android:tint="#FFB300"/>
+
+                            <TextView
+                                android:id="@+id/textViewUserType"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Free User"
+                                android:textColor="#212121"
+                                android:textSize="14sp"
+                                android:layout_marginStart="8dp"
+                                android:fontFamily="@font/poppins_medium"/>
+                        </LinearLayout>
+
+                        <!-- Name with larger text -->
+                        <TextView
+                            android:id="@+id/textViewUsername"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textAlignment="center"
+                            android:textSize="24sp"
+                            android:textColor="#212121"
+                            android:fontFamily="@font/poppins_semibold"/>
+
+                        <!-- Email with improved styling -->
+                        <TextView
+                            android:id="@+id/textViewEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textAlignment="center"
+                            android:textSize="14sp"
+                            android:textColor="#757575"
+                            android:fontFamily="@font/poppins"
+                            android:layout_marginBottom="8dp"/>
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- Stats Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewStats"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/cardViewProfile"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginHorizontal="2dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:gravity="center">
+
+                        <!-- Friends Count Container -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="12dp"
+                            android:minHeight="100dp"
+                            android:background="@drawable/stats_count_background">
+
+                            <TextView
+                                android:id="@+id/textViewFriendsCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0"
+                                android:textColor="#2196F3"
+                                android:textSize="28sp"
+                                android:layout_gravity="center"
+                                android:fontFamily="@font/poppins_semibold"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Friends"
+                                android:textColor="#757575"
+                                android:textSize="14sp"
+                                android:fontFamily="@font/poppins"
+                                android:layout_marginTop="-4dp"/>
+                        </LinearLayout>
+
+                        <!-- Spacer -->
+                        <View
+                            android:layout_width="16dp"
+                            android:layout_height="0dp"/>
+
+                        <!-- Member Since Container -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="12dp"
+                            android:minHeight="100dp"
+                            android:background="@drawable/stats_count_background">
+                            
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Member Since"
+                                android:textColor="#757575"
+                                android:textSize="14sp"
+                                android:fontFamily="@font/poppins"
+                                android:layout_marginTop="-4dp"/>
+
+                            <TextView
+                                android:id="@+id/textViewMemberSince"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Oct 25, 2024"
+                                android:textColor="#FF9800"
+                                android:textSize="19sp"
+                                android:layout_gravity="center"
+                                android:fontFamily="@font/poppins_semibold"/>
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Profile Options Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewProfileOptions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/cardViewStats"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginHorizontal="2dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:cardUseCompatPadding="true">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
                         <!-- Change Language Section -->
                         <LinearLayout
                             android:id="@+id/btnMenuChangeLanguage"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="12dp"
+                            android:layout_marginBottom="8dp"
                             android:background="@drawable/ripple_background"
                             android:orientation="horizontal"
-                            android:padding="12dp"
+                            android:padding="8dp"
                             android:clickable="true"
                             android:focusable="true">
 
@@ -157,10 +293,10 @@
                             android:id="@+id/btnMenuSelectTranslator"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="12dp"
+                            android:layout_marginBottom="8dp"
                             android:background="@drawable/ripple_background"
                             android:orientation="horizontal"
-                            android:padding="12dp"
+                            android:padding="8dp"
                             android:clickable="true"
                             android:focusable="true">
 
@@ -209,10 +345,10 @@
                             android:id="@+id/btnMenuChangePassword"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="12dp"
+                            android:layout_marginBottom="8dp"
                             android:background="@drawable/ripple_background"
                             android:orientation="horizontal"
-                            android:padding="12dp"
+                            android:padding="8dp"
                             android:clickable="true"
                             android:focusable="true">
 
@@ -241,141 +377,145 @@
                                 android:tint="#757575"/>
                         </LinearLayout>
 
-                        <!-- Logout Button with improved styling -->
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnLogout"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:text="Logout"
-                            android:textColor="#FF5252"
-                            android:fontFamily="@font/poppins_medium"
-                            android:textAlignment="textStart"
-                            android:paddingStart="20dp"
-                            android:paddingEnd="20dp"
-                            app:icon="@drawable/profile_logout"
-                            app:iconGravity="start"
-                            app:iconPadding="24dp"
-                            app:iconSize="24dp"
-                            app:iconTint="#FF5252"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            app:cornerRadius="12dp"/>
-
                     </LinearLayout>
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginVertical="8dp"
-                        android:background="#E0E0E0" />
+                </androidx.cardview.widget.CardView>
 
-                    <!-- Upgrade Button with gradient background -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnUpgrade"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:layout_marginTop="8dp"
-                        android:text="Upgrade to Premium"
-                        android:textColor="#FFFFFF"
-                        android:fontFamily="@font/poppins_medium"
-                        app:icon="@drawable/premium1"
-                        app:iconGravity="textStart"
-                        app:iconTint="#FFD700"
-                        app:iconPadding="24dp"
-                        app:cornerRadius="12dp"
-                        android:backgroundTint="#2196F3"/>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <!-- Change Username Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardViewChangeUsername"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/imageViewUserPicture"
-                android:layout_marginTop="16dp"
-                android:visibility="gone"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="4dp"
-                app:cardUseCompatPadding="true"
-                app:cardBackgroundColor="#FFFFFF">
-
-                <LinearLayout
+                <!-- Separate Logout Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewLogout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="24dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Change Username"
-                        android:textSize="20sp"
-                        android:textColor="@color/black"
-                        android:fontFamily="@font/poppins_semibold"
-                        android:layout_marginBottom="16dp"/>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/textInputLayoutUsername"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="24dp"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/editTextUsername"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="Display Name"
-                            android:textColor="@color/black"/>
-                    </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_below="@id/cardViewProfileOptions"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginHorizontal="2dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="2dp"
+                    app:cardUseCompatPadding="true">
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSaveChanges"
+                        android:id="@+id/btnLogout"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:text="Logout"
+                        android:textColor="#FF5252"
+                        android:fontFamily="@font/poppins_medium"
+                        android:textAlignment="textStart"
+                        android:paddingStart="20dp"
+                        android:paddingEnd="20dp"
+                        app:icon="@drawable/profile_logout"
+                        app:iconGravity="start"
+                        app:iconPadding="24dp"
+                        app:iconSize="24dp"
+                        app:iconTint="#FF5252"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        app:cornerRadius="12dp"/>
+
+                </androidx.cardview.widget.CardView>
+
+                <!-- Change Username Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardViewChangeUsername"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/imageViewUserPicture"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone"
+                    app:cardCornerRadius="15dp"
+                    app:cardElevation="4dp"
+                    app:cardUseCompatPadding="true"
+                    app:cardBackgroundColor="#FFFFFF">
+
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Save Changes"
-                        android:textColor="#FFFFFF"
-                        android:padding="12dp"
-                        app:cornerRadius="12dp"
-                        android:backgroundTint="#2196F3"/>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                        android:orientation="vertical"
+                        android:padding="24dp">
 
-            <!-- Include other layouts -->
-            <include
-                android:id="@+id/includeChangePassword"
-                layout="@layout/fragment_profile_sub_changepass"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/imageViewUserPicture"
-                android:visibility="gone" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Change Username"
+                            android:textSize="20sp"
+                            android:textColor="@color/black"
+                            android:fontFamily="@font/poppins_semibold"
+                            android:layout_marginBottom="16dp"/>
 
-            <include
-                android:id="@+id/includeLanguageSelection"
-                layout="@layout/fragment_profile_sub_changelanguage"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/imageViewUserPicture"
-                android:visibility="gone" />
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/textInputLayoutUsername"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="24dp"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <include
-                android:id="@+id/includeTranslatorSelection"
-                layout="@layout/fragment_profile_sub_changetranslator"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/imageViewUserPicture"
-                android:visibility="gone" />
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/editTextUsername"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="Display Name"
+                                android:textColor="@color/black"/>
+                        </com.google.android.material.textfield.TextInputLayout>
 
-            <include
-                android:id="@+id/includeChangeUsername"
-                layout="@layout/fragment_profile_sub_changeusername"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/imageViewUserPicture"
-                android:visibility="gone" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSaveChanges"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Save Changes"
+                            android:textColor="#FFFFFF"
+                            android:padding="12dp"
+                            app:cornerRadius="12dp"
+                            android:backgroundTint="#2196F3"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-        </RelativeLayout>
-    </ScrollView>
-</RelativeLayout>
+            </RelativeLayout>
+        </ScrollView>
+    </RelativeLayout>
+
+    <!-- Sub-layouts Container (on top of main content) -->
+    <RelativeLayout
+        android:id="@+id/subLayoutsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#F5F7FA"
+        android:visibility="gone">
+
+        <include
+            android:id="@+id/includeChangePassword"
+            layout="@layout/fragment_profile_sub_changepass"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginHorizontal="16dp"
+            android:visibility="gone" />
+
+        <include
+            android:id="@+id/includeLanguageSelection"
+            layout="@layout/fragment_profile_sub_changelanguage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginHorizontal="16dp"
+            android:visibility="gone" />
+
+        <include
+            android:id="@+id/includeTranslatorSelection"
+            layout="@layout/fragment_profile_sub_changetranslator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginHorizontal="16dp"
+            android:visibility="gone" />
+
+        <include
+            android:id="@+id/includeChangeUsername"
+            layout="@layout/fragment_profile_sub_changeusername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginHorizontal="16dp"
+            android:visibility="gone" />
+
+    </RelativeLayout>
+
+</FrameLayout>
