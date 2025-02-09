@@ -18,7 +18,7 @@ import com.example.appdev.Variables;
 
 public class Translation_Gemini extends AsyncTask<String, Void, String> {
     private static final String TAG = "GeminiTranslator";
-    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
+    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     
     private String targetLanguage;
     private TranslationListener listener;

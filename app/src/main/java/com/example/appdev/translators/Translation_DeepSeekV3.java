@@ -18,7 +18,7 @@ import java.net.URL;
 
 public class Translation_DeepSeekV3 extends AsyncTask<String, Void, String> {
     private static final String TAG = "DeepSeekTranslator";
-    private static final String DEEPSEEK_URL = "https://api.hyperbolic.xyz/v1/chat/completions";
+    private static final String DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
     private String targetLanguage;
     private TranslationListener listener;
 
@@ -91,11 +91,8 @@ public class Translation_DeepSeekV3 extends AsyncTask<String, Void, String> {
             userMessage.put("content", inputText);
             messages.put(userMessage);
 
-            requestBody.put("model", "deepseek-ai/DeepSeek-V3");
+            requestBody.put("model", "deepseek-chat");
             requestBody.put("messages", messages);
-            requestBody.put("max_tokens", 5000);
-            requestBody.put("temperature", 0.1);
-            requestBody.put("top_p", 0.9);
             requestBody.put("stream", false);
 
             // Send the request
