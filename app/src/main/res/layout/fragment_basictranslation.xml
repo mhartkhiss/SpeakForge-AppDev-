@@ -285,24 +285,41 @@
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="16dp">
+                android:layout_height="match_parent">
 
-                <ScrollView
+                <LinearLayout
+                    android:id="@+id/resultContainer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:fillViewport="true">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <TextView
-                        android:id="@+id/txtTranslatedText"
+                    <ScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:fillViewport="true">
+
+                        <TextView
+                            android:id="@+id/txtTranslatedText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/poppins"
+                            android:gravity="center"
+                            android:textColor="#9E9E9E"
+                            android:textSize="18sp"
+                            android:paddingBottom="16dp"/>
+
+                    </ScrollView>
+
+                    <!-- Space for loading dots -->
+                    <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:fontFamily="@font/poppins"
-                        android:gravity="center"
-                        android:textColor="#9E9E9E"
-                        android:textSize="18sp" />
+                        android:minHeight="80dp"
+                        android:gravity="center"/>
 
-                </ScrollView>
+                </LinearLayout>
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/stopTranslationButton"
@@ -316,14 +333,8 @@
                     app:backgroundTint="#F44336"
                     app:tint="#FFFFFF" />
 
-                <ProgressBar
-                    android:id="@+id/translationProgress"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_centerInParent="true"
-                    android:visibility="gone" />
-
             </RelativeLayout>
+
         </androidx.cardview.widget.CardView>
 
     </LinearLayout>

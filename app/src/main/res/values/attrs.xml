@@ -1,1 +1,10 @@
- 
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="LoadingDotsView">
+        <attr name="dotColor" format="color" />
+        <attr name="dotSize" format="dimension" />
+        <attr name="animationDuration" format="integer" />
+        <attr name="animationDelay" format="integer" />
+        <attr name="scaleMultiplier" format="float" />
+    </declare-styleable>
+</resources> 

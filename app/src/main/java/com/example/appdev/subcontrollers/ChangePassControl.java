@@ -75,7 +75,6 @@ public class ChangePassControl implements View.OnClickListener {
                                 editTextOldPassword.setText("");
                                 editTextNewPassword.setText("");
                                 editTextConfirmPassword.setText("");
-                                profileFragment.toggleCardViews(cardViewProfile, cardViewChangePassword);
                             })
                             .addOnFailureListener(e -> 
                                 CustomNotification.showNotification((android.app.Activity) context, 

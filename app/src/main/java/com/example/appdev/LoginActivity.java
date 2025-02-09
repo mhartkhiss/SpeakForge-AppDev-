@@ -15,6 +15,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.LinearLayout;
+import android.widget.ImageView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -27,7 +31,7 @@ import com.google.android.material.button.MaterialButton;
 import com.example.appdev.utils.CustomDialog;
 import com.example.appdev.utils.CustomNotification;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends BaseAuthActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
@@ -39,6 +43,53 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        ImageView logoImage = findViewById(R.id.speakForgeLogo);
+        setupKeyboardVisibilityListener(logoImage);
+        LinearLayout formContainer = findViewById(R.id.loginFormContainer);
+        
+        logoImage.setVisibility(View.INVISIBLE);
+        formContainer.setVisibility(View.INVISIBLE);
+        
+        Animation logoAnimation = AnimationUtils.loadAnimation(this, R.anim.fade_in_logo);
+        Animation formAnimation = AnimationUtils.loadAnimation(this, R.anim.slide_up_form);
+        
+        logoImage.setVisibility(View.VISIBLE);
+        formContainer.setVisibility(View.VISIBLE);
+        
+        logoImage.startAnimation(logoAnimation);
+        formContainer.startAnimation(formAnimation);
+
+        logoImage.setOnClickListener(v -> {
+            Animation fadeOutLogo = AnimationUtils.loadAnimation(this, R.anim.fade_out_logo);
+            Animation slideDownForm = AnimationUtils.loadAnimation(this, R.anim.slide_down_form);
+            
+            fadeOutLogo.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                    // Disable click to prevent multiple triggers
+                    logoImage.setEnabled(false);
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    // Make views invisible before transition
+                    logoImage.setVisibility(View.INVISIBLE);
+                    formContainer.setVisibility(View.INVISIBLE);
+                    
+                    Intent intent = new Intent(LoginActivity.this, WelcomeScreen.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                    finish();
+                    overridePendingTransition(0, 0);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {}
+            });
+            
+            logoImage.startAnimation(fadeOutLogo);
+            formContainer.startAnimation(slideDownForm);
+        });
 
         View loadingView = LayoutInflater.from(this).inflate(R.layout.loading, null);
         ViewGroup rootView = findViewById(android.R.id.content);
@@ -92,9 +143,7 @@ public class LoginActivity extends AppCompatActivity {
         TextView txtForgotPassword = findViewById(R.id.txtForgotPassword);
 
         txtForgotPassword.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
-            startActivity(intent);
-            finish();
+            goToForgotPassword();
         });
 
         btnLogin.setOnClickListener(v -> {
@@ -104,9 +153,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         btnSignUp.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, SignUpActivity.class);
-            startActivity(intent);
-            finish();
+            goToSignUp();
         });
 
     }
@@ -153,6 +200,15 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    private void goToSignUp() {
+        Intent intent = new Intent(this, SignUpActivity.class);
+        startActivity(intent);
+        finish();
+    }
 
-
+    private void goToForgotPassword() {
+        Intent intent = new Intent(this, ForgotPasswordActivity.class);
+        startActivity(intent);
+        finish();
+    }
 }

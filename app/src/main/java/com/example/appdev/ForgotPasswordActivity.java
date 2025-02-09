@@ -12,6 +12,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.LinearLayout;
+import android.widget.ImageView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -21,7 +25,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.example.appdev.utils.CustomDialog;
 
-public class ForgotPasswordActivity extends AppCompatActivity {
+public class ForgotPasswordActivity extends BaseAuthActivity {
 
     private ProgressDialog progressDialog;
     private Button resetPasswordButton;
@@ -31,21 +35,41 @@ public class ForgotPasswordActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_forgot_password);
-        progressDialog = new ProgressDialog(ForgotPasswordActivity.this);
+
+        // Initialize views with animations
+        ImageView logoImage = findViewById(R.id.speakForgeLogo);
+        LinearLayout formContainer = findViewById(R.id.forgotPasswordFormContainer);
         resetPasswordButton = findViewById(R.id.btnResetPassword);
         emailSentLabel = findViewById(R.id.txtEmailSent);
+
+        // Initially hide views
+        logoImage.setVisibility(View.INVISIBLE);
+        formContainer.setVisibility(View.INVISIBLE);
+
+        // Load and start animations
+        Animation logoAnimation = AnimationUtils.loadAnimation(this, R.anim.scale_fade_in_logo);
+        Animation formAnimation = AnimationUtils.loadAnimation(this, R.anim.slide_up_fade_in);
+
+        logoImage.setVisibility(View.VISIBLE);
+        formContainer.setVisibility(View.VISIBLE);
+
+        logoImage.startAnimation(logoAnimation);
+        formContainer.startAnimation(formAnimation);
+
+        progressDialog = new ProgressDialog(ForgotPasswordActivity.this);
         setListeners();
     }
 
     private void setListeners() {
         resetPasswordButton.setOnClickListener(v -> resetPassword());
         TextView backToLogin = findViewById(R.id.txtBackToLogin);
-        backToLogin.setOnClickListener(v -> {
-            Intent intent = new Intent(ForgotPasswordActivity.this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        });
+        backToLogin.setOnClickListener(v -> goToLoginActivity());
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        goToLoginActivity();
     }
 
     private void resetPassword() {
@@ -109,5 +133,12 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 resetPasswordButton.setEnabled(true);
             }
         }.start();
+    }
+
+    private void goToLoginActivity() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 }

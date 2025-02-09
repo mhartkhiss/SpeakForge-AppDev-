@@ -9,7 +9,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.example.appdev.utils.CustomDialog;
@@ -31,17 +35,36 @@ public class WelcomeScreen extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private ProgressDialog progressDialog;
+    private LinearLayout textContent, buttonContainer;
+    private ImageView welcomeImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome_screen);
 
+        // Find views
+        textContent = findViewById(R.id.textContent);
+        buttonContainer = findViewById(R.id.buttonContainer);
+        welcomeImage = findViewById(R.id.imageView4);
+        
+        // Initially hide the text and buttons
+        textContent.setAlpha(0f);
+        buttonContainer.setAlpha(0f);
+        
+        // Animate text and buttons
+        textContent.animate()
+            .alpha(1f)
+            .setDuration(500)
+            .setStartDelay(300);
+            
+        buttonContainer.animate()
+            .alpha(1f)
+            .setDuration(500)
+            .setStartDelay(500);
+
         btnWLogin = findViewById(R.id.btnWLogin);
         btnWSkip = findViewById(R.id.btnWSkip);
-
-        btnWLogin.setVisibility(View.GONE);
-        btnWSkip.setVisibility(View.GONE);
 
         mAuth = FirebaseAuth.getInstance();
         progressDialog = new ProgressDialog(WelcomeScreen.this);

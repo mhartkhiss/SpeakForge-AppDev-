@@ -1,11 +1,13 @@
 package com.example.appdev.adapters;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.example.appdev.R;
+import com.example.appdev.models.Languages;
 import java.util.List;
 
 public class LanguageAdapter extends RecyclerView.Adapter<LanguageAdapter.ViewHolder> {
@@ -16,8 +18,8 @@ public class LanguageAdapter extends RecyclerView.Adapter<LanguageAdapter.ViewHo
         void onLanguageSelected(String language);
     }
 
-    public LanguageAdapter(List<String> languages, OnLanguageSelectedListener listener) {
-        this.languages = languages;
+    public LanguageAdapter(Context context, OnLanguageSelectedListener listener) {
+        this.languages = Languages.getAllLanguages();
         this.listener = listener;
     }
 

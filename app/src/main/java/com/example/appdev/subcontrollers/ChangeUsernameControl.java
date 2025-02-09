@@ -25,7 +25,7 @@ public class ChangeUsernameControl {
 
     public void updateUsername() {
         String newUsername = editTextUsername.getText().toString().trim();
-        if (TextUtils.isEmpty(newUsername)) {
+        if (newUsername.isEmpty()) {
             editTextUsername.setError("Username cannot be empty");
             return;
         }
@@ -36,7 +36,6 @@ public class ChangeUsernameControl {
                 .addOnSuccessListener(aVoid -> {
                     CustomNotification.showNotification(profileFragment.requireActivity(), 
                         "Username updated successfully", true);
-                    profileFragment.toggleCardViews(layoutProfile, layoutChangeUsername);
                 })
                 .addOnFailureListener(e -> {
                     CustomNotification.showNotification(profileFragment.requireActivity(), 

@@ -11,6 +11,7 @@ import android.widget.Toast;
 import android.widget.PopupWindow;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -18,6 +19,7 @@ import com.example.appdev.Variables;
 import com.example.appdev.models.Message;
 import com.example.appdev.R;
 import com.example.appdev.subcontrollers.RegenerateMessageTranslation;
+import com.example.appdev.utils.LoadingDotsView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -109,6 +111,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     public static class ChatViewHolder extends RecyclerView.ViewHolder {
 
         private TextView textViewMessage, textViewOriginalMessage;
+        private LoadingDotsView loadingDots;
         private DatabaseReference messagesRef;
         private String roomId;
         private List<TextView> visibleOriginalMessages;
@@ -121,6 +124,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             super(itemView);
             textViewMessage = itemView.findViewById(R.id.textViewMessage);
             textViewOriginalMessage = itemView.findViewById(R.id.textViewOriginalMessage);
+            loadingDots = itemView.findViewById(R.id.loadingDots);
             this.messagesRef = messagesRef;
             this.roomId = roomId;
             this.visibleOriginalMessages = visibleOriginalMessages;
@@ -155,22 +159,34 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 });
             } else {
                 loadProfileImage(message.getSenderId());
-                textViewMessage.setText(message.getMessage());
+                
+                // Handle loading state
+                if (message.getMessage() != null && message.getMessage().equals("......")) {
+                    textViewMessage.setVisibility(View.GONE);
+                    loadingDots.setVisibility(View.VISIBLE);
+                    loadingDots.startAnimation();
+                } else {
+                    textViewMessage.setVisibility(View.VISIBLE);
+                    loadingDots.setVisibility(View.GONE);
+                    loadingDots.stopAnimation();
+                    textViewMessage.setText(message.getMessage());
+                }
 
                 // Change background color based on translation status
-                androidx.cardview.widget.CardView cardView = 
-                    (androidx.cardview.widget.CardView) textViewMessage.getParent();
-                
-                if (message.getMessage() != null && 
-                    message.getMessageOG() != null && 
-                    message.getMessage().equals(message.getMessageOG())) {
-                    // Message is not translated - use light gray
-                    cardView.setCardBackgroundColor(itemView.getContext()
-                        .getResources().getColor(R.color.light_gray));
-                } else {
-                    // Message is translated - use original orange color
-                    cardView.setCardBackgroundColor(itemView.getContext()
-                        .getResources().getColor(R.color.message_received_bg));
+                View cardView = (View) textViewMessage.getParent().getParent();
+                if (cardView instanceof CardView) {
+                    CardView messageCard = (CardView) cardView;
+                    if (message.getMessage() != null && 
+                        message.getMessageOG() != null && 
+                        message.getMessage().equals(message.getMessageOG())) {
+                        // Message is not translated - use light gray
+                        messageCard.setCardBackgroundColor(itemView.getContext()
+                            .getResources().getColor(R.color.light_gray));
+                    } else {
+                        // Message is translated - use original orange color
+                        messageCard.setCardBackgroundColor(itemView.getContext()
+                            .getResources().getColor(R.color.message_received_bg));
+                    }
                 }
 
                 // Show/hide avatar based on consecutive messages
@@ -234,7 +250,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         private void handleMessageTranslationClick(Message message) {
             // Check if the user is a free user
             if(Variables.userAccountType.equals("free")){
-                Toast.makeText(itemView.getContext(), "You need to upgrade to regenerate translations", Toast.LENGTH_SHORT).show();
+                Toast.makeText(itemView.getContext(), 
+                    "You need to upgrade to regenerate translations", 
+                    Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -248,15 +266,26 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             visibleOriginalMessages.clear();
 
             List<String> messageVariations = new ArrayList<>();
-            if (message.getMessageVar1() == null && !textViewMessage.getText().toString().equals("......")) {
+            if (message.getMessageVar1() == null && 
+                !textViewMessage.getText().toString().equals("......")) {
                 String textMessage = message.getMessageOG();
                 String textLanguage = Variables.userLanguage;
-                textViewMessage.setText("......");
-                RegenerateMessageTranslation regenerateMessageTranslation = new RegenerateMessageTranslation(context);
+                
+                // Show loading animation
+                textViewMessage.setVisibility(View.GONE);
+                loadingDots.setVisibility(View.VISIBLE);
+                loadingDots.startAnimation();
+
+                RegenerateMessageTranslation regenerateMessageTranslation = 
+                    new RegenerateMessageTranslation(context);
                 regenerateMessageTranslation.setOnTranslationRegeneratedListener(newTranslation -> {
                     textViewMessage.setText(newTranslation);
+                    textViewMessage.setVisibility(View.VISIBLE);
+                    loadingDots.setVisibility(View.GONE);
+                    loadingDots.stopAnimation();
                 });
-                regenerateMessageTranslation.regenerate(textMessage, message.getMessageId(), textLanguage);
+                regenerateMessageTranslation.regenerate(textMessage, message.getMessageId(), 
+                    textLanguage);
                 return;
             }
 

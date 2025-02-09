@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:text="•"
         android:textSize="48sp"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="#2196F3"
         android:layout_marginHorizontal="4dp"/>
 
     <TextView
@@ -20,7 +20,7 @@
         android:layout_height="wrap_content"
         android:text="•"
         android:textSize="48sp"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="#2196F3"
         android:layout_marginHorizontal="4dp"/>
 
     <TextView
@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:text="•"
         android:textSize="48sp"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="#2196F3"
         android:layout_marginHorizontal="4dp"/>
 
     <TextView
@@ -38,7 +38,7 @@
         android:layout_height="wrap_content"
         android:text="•"
         android:textSize="48sp"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="#2196F3"
         android:layout_marginHorizontal="4dp"/>
 
     <TextView
@@ -47,6 +47,6 @@
         android:layout_height="wrap_content"
         android:text="•"
         android:textSize="48sp"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="#2196F3"
         android:layout_marginHorizontal="4dp"/>
 </LinearLayout> 

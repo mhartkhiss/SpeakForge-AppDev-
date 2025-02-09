@@ -11,6 +11,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.LinearLayout;
+import android.widget.ImageView;
 
 import com.example.appdev.models.User;
 import com.google.firebase.auth.FirebaseAuth;
@@ -24,7 +28,7 @@ import java.util.Locale;
 
 import com.example.appdev.utils.CustomDialog;
 
-public class SignUpActivity extends AppCompatActivity implements View.OnClickListener {
+public class SignUpActivity extends BaseAuthActivity implements View.OnClickListener {
 
     private Boolean isSignUpValid;
     private ProgressDialog progressDialog;
@@ -35,11 +39,31 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
 
+        ImageView logoImage = findViewById(R.id.speakForgeLogo);
+        setupKeyboardVisibilityListener(logoImage);
+        
+        // Initialize views
+        LinearLayout formContainer = findViewById(R.id.signupFormContainer);
         TextView txtLogin = findViewById(R.id.txtLogin);
         Button btnSignUp = findViewById(R.id.btnSignUp);
         emailEditText = findViewById(R.id.email);
         passwordEditText = findViewById(R.id.password);
         confirmPasswordEditText = findViewById(R.id.confirmPassword);
+
+        // Initially hide views
+        logoImage.setVisibility(View.INVISIBLE);
+        formContainer.setVisibility(View.INVISIBLE);
+
+        // Load animations
+        Animation logoAnimation = AnimationUtils.loadAnimation(this, R.anim.scale_fade_in_logo);
+        Animation formAnimation = AnimationUtils.loadAnimation(this, R.anim.slide_up_fade_in);
+
+        // Show and animate views
+        logoImage.setVisibility(View.VISIBLE);
+        formContainer.setVisibility(View.VISIBLE);
+        
+        logoImage.startAnimation(logoAnimation);
+        formContainer.startAnimation(formAnimation);
 
         progressDialog = new ProgressDialog(this);
 
@@ -125,6 +149,20 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        goToLoginActivity();
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        if (!isFinishing()) {
+            overridePendingTransition(R.anim.fade_in_activity, R.anim.fade_out_activity);
+        }
     }
 
 }

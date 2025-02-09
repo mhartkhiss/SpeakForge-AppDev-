@@ -63,6 +63,14 @@ import com.example.appdev.translators.TranslatorType;
 import android.os.AsyncTask;
 import com.example.appdev.utils.SpeechRecognitionHelper;
 
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+
+import android.widget.LinearLayout;
+import android.view.Gravity;
+
+import com.example.appdev.utils.LoadingDotsView;
+
 public class BasicTranslationFragment extends Fragment {
 
     private static final int SPEECH_REQUEST_CODE = 1;
@@ -74,7 +82,6 @@ public class BasicTranslationFragment extends Fragment {
     private FloatingActionButton btnStartSpeech;
     private ExtendedFloatingActionButton btnTranslate, btnClear;
     private View rootView;
-    private ProgressBar progressBar;
     private Handler animationHandler;
     private Runnable animationRunnable;
     private SpeechRecognitionDialog speechDialog;
@@ -92,6 +99,11 @@ public class BasicTranslationFragment extends Fragment {
     private AsyncTask<String, Void, String> currentTranslator;
     private FloatingActionButton btnStartConversation;
     private SpeechRecognitionHelper speechHelper;
+    private LoadingDotsView loadingDotsView;
+    private TextView[] dots;
+    private int currentDotIndex = 0;
+    private Handler dotsHandler = new Handler();
+    private Runnable dotsAnimation;
 
     @Nullable
     @Override
@@ -132,7 +144,6 @@ public class BasicTranslationFragment extends Fragment {
         textInput = view.findViewById(R.id.textInputEditText);
         textInputLayout = view.findViewById(R.id.textInputLayout);
         textViewResult = view.findViewById(R.id.txtTranslatedText);
-        progressBar = view.findViewById(R.id.translationProgress);
         currentLanguageLabel = view.findViewById(R.id.currentLanguageLabel);
         btnStartSpeech = view.findViewById(R.id.startSpeakingButton);
         btnTranslate = view.findViewById(R.id.translateButton);
@@ -275,61 +286,43 @@ public class BasicTranslationFragment extends Fragment {
     }
 
     private void translateAnimation() {
-        // Hide the progress bar since we don't want the spinner
-        progressBar.setVisibility(View.GONE);
+        if (textViewResult == null) return;
         
-        // Initial setup
-        textViewResult.setTextColor(getResources().getColor(R.color.grey));
-        textViewResult.setTextSize(24); // Slightly smaller text for animation
+        // Clear any existing text
+        textViewResult.setText("");
         
-        // Stop any existing animation
-        stopAnimation();
-        
-        // Create animation sequence
-        String[] animationFrames = new String[] {
-            "Translating",
-            "T r a n s l a t i n g",
-            "< T r a n s l a t i n g >",
-            "« T r a n s l a t i n g »",
-            "{ T r a n s l a t i n g }",
-            "[ T r a n s l a t i n g ]",
-            "< T r a n s l a t i n g >",
-        };
-        
-        animationHandler = new Handler();
-        final int[] frameIndex = {0};
-        
-        animationRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (textViewResult != null) {
-                    // Apply frame with fade effect
-                    textViewResult.setAlpha(0.7f);
-                    textViewResult.setText(animationFrames[frameIndex[0]]);
-                    textViewResult.animate()
-                        .alpha(1.0f)
-                        .setDuration(150)
-                        .start();
-                    
-                    // Move to next frame
-                    frameIndex[0] = (frameIndex[0] + 1) % animationFrames.length;
-                    
-                    // Schedule next frame
-                    if (animationHandler != null) {
-                        animationHandler.postDelayed(this, 200);
-                    }
-                }
+        // Initialize loading dots view if not already added
+        if (loadingDotsView == null) {
+            loadingDotsView = new LoadingDotsView(requireContext());
+            
+            // Find the parent ViewGroup that contains textViewResult
+            ViewGroup resultContainer = (ViewGroup) resultCard.findViewById(R.id.resultContainer);
+            
+            // Add the dots view to the result container
+            if (resultContainer != null) {
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                );
+                params.gravity = Gravity.CENTER;
+                loadingDotsView.setLayoutParams(params);
+                
+                resultContainer.addView(loadingDotsView);
             }
-        };
+        }
         
-        animationHandler.post(animationRunnable);
+        loadingDotsView.setVisibility(View.VISIBLE);
+        textViewResult.setVisibility(View.GONE);
+        
+        // Start dots animation
+        loadingDotsView.startAnimation();
+        isTranslating = true;
     }
 
     private void stopAnimation() {
-        if (animationHandler != null && animationRunnable != null) {
-            animationHandler.removeCallbacks(animationRunnable);
-            animationHandler = null;
-            animationRunnable = null;
+        if (loadingDotsView != null) {
+            loadingDotsView.stopAnimation();
+            loadingDotsView.setVisibility(View.GONE);
         }
     }
 
@@ -589,18 +582,23 @@ public class BasicTranslationFragment extends Fragment {
         if (speechHelper != null) {
             speechHelper.destroy();
         }
+        dotsHandler.removeCallbacksAndMessages(null);
     }
 
     // Helper methods to handle translation results
     private void handleTranslationResult(String translatedText) {
         if (!TextUtils.isEmpty(translatedText)) {
             stopAnimation();
+            textViewResult.setVisibility(View.VISIBLE);
             textViewResult.setText(translatedText);
             textViewResult.setTextColor(getResources().getColor(R.color.black));
             textViewResult.setTextSize(38);
             textViewResult.setAlpha(1.0f);
+            
+            if (loadingDotsView != null) {
+                loadingDotsView.setVisibility(View.GONE);
+            }
         }
-        progressBar.setVisibility(View.GONE);
         saveToHistory(textInput.getText().toString(), translatedText, 
             outputLanguageSelection.getSelectedItem().toString());
     }
@@ -611,7 +609,6 @@ public class BasicTranslationFragment extends Fragment {
         textViewResult.setTextColor(getResources().getColor(android.R.color.holo_red_light));
         textViewResult.setTextSize(38);
         textViewResult.setAlpha(1.0f);
-        progressBar.setVisibility(View.GONE);
     }
 
 }
