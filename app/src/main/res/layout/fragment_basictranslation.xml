@@ -87,15 +87,34 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <ImageButton
-                android:id="@+id/btnHistory"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+            <!-- Mode feedback message -->
+            <TextView
+                android:id="@+id/modeFeedbackText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/rounded_background"
+                android:fontFamily="@font/poppins"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="6dp"
+                android:text="Casual Mode"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:visibility="gone"
+                android:alpha="0" />
+
+            <ImageButton
+                android:id="@+id/formalityToggleButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="8dp"
+                android:padding="10dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/translation_mode_casual"
+                android:contentDescription="@string/translation_mode_toggle_description"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="12dp"
-                android:src="@drawable/ic_history"
-                app:tint="#757575" />
+                app:tint="@null" />
 
         </LinearLayout>
 
@@ -273,71 +292,97 @@
                     </com.google.android.material.textfield.TextInputLayout>
                 </ScrollView>
 
-                <!-- Clear Button -->
-                <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-                    android:id="@+id/clearButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:layout_alignParentBottom="true"
-                    android:layout_toStartOf="@id/buttonContainer"
-                    android:layout_marginBottom="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:text="Clear"
-                    android:textSize="14sp"
-                    android:textColor="#FFFFFF"
-                    android:fontFamily="@font/poppins"
-                    android:paddingHorizontal="16dp"
-                    app:cornerRadius="20dp"
-                    app:elevation="2dp"
-                    app:backgroundTint="#9E9E9E" />
-
-                <!-- Container for Mic and Translate buttons -->
-                <LinearLayout
-                    android:id="@+id/buttonContainer"
-                    android:layout_width="wrap_content"
+                <!-- Container for buttons -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
                     android:layout_alignParentBottom="true"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:orientation="horizontal">
-
-                    <!-- Conversation Button -->
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/startConversationButton"
+                    android:layout_marginBottom="16dp">
+                
+                    <!-- Clear Button (centered) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/clearButton"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:src="@drawable/ic_conversational"
-                        app:backgroundTint="#2196F3"
-                        app:tint="#FFFFFF" />
-
-                    <!-- Microphone Button -->
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/startSpeakingButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:src="@drawable/ic_mic"
-                        app:backgroundTint="#FF5722"
-                        app:tint="#FFFFFF" />
-
-                    <!-- Translate Button -->
-                    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-                        android:id="@+id/translateButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="40dp"
-                        android:text="Translate"
-                        android:textSize="14sp"
+                        android:layout_height="48dp"
+                        android:layout_centerHorizontal="true"
+                        android:layout_centerVertical="true"
+                        android:text="Clear"
                         android:textColor="#FFFFFF"
+                        android:textSize="14sp"
                         android:fontFamily="@font/poppins"
                         android:paddingHorizontal="16dp"
                         android:visibility="gone"
-                        app:cornerRadius="20dp"
+                        app:cornerRadius="24dp"
                         app:elevation="2dp"
-                        app:backgroundTint="#2196F3" />
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="#9E9E9E" />
+                        
+                    <!-- History Button (on the left) -->
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/btnHistory"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_toStartOf="@+id/startSpeakingButton"
+                        android:layout_marginEnd="16dp"
+                        android:layout_centerVertical="true"
+                        android:src="@drawable/ic_history"
+                        android:contentDescription="Translation history"
+                        android:scaleType="center"
+                        app:fabSize="normal"
+                        app:maxImageSize="24dp"
+                        app:backgroundTint="#2196F3"
+                        app:tint="#FFFFFF" />
+                    
+                    <!-- Microphone Button (in center, larger) -->
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/startSpeakingButton"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_centerInParent="true"
+                        android:src="@drawable/ic_mic"
+                        android:contentDescription="Speech recognition"
+                        android:scaleType="center"
+                        app:fabSize="normal"
+                        app:maxImageSize="28dp"
+                        app:backgroundTint="#FF5722"
+                        app:tint="#FFFFFF" />
+                       
+                    <!-- Conversation Button (on the right) -->
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/startConversationButton"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_toEndOf="@+id/startSpeakingButton"
+                        android:layout_marginStart="16dp"
+                        android:layout_centerVertical="true"
+                        android:src="@drawable/ic_conversational"
+                        android:contentDescription="Conversation mode"
+                        android:scaleType="center"
+                        app:fabSize="normal"
+                        app:maxImageSize="24dp"
+                        app:backgroundTint="#2196F3"
+                        app:tint="#FFFFFF" />
 
-                </LinearLayout>
+                    <!-- Translate Button (centered) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/translateButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_centerHorizontal="true"
+                        android:layout_centerVertical="true"
+                        android:text="Translate"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/poppins"
+                        android:paddingHorizontal="16dp"
+                        android:visibility="gone"
+                        app:cornerRadius="24dp"
+                        app:elevation="2dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        app:backgroundTint="#2196F3" />
+                </RelativeLayout>
 
             </RelativeLayout>
         </androidx.cardview.widget.CardView>

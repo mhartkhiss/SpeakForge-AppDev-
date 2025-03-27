@@ -5,7 +5,7 @@ import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CardView;
+import androidx.cardview.widget.CardView;
 import android.widget.ImageView;
 import android.widget.TextView;
 

@@ -2,6 +2,8 @@ package com.example.appdev.fragments;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.Context;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.speech.SpeechRecognizer;
@@ -21,6 +23,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -32,6 +35,8 @@ import com.example.appdev.ConversationalActivity;
 import com.example.appdev.models.Languages;
 import com.example.appdev.utils.SpeechRecognitionDialog;
 import com.example.appdev.utils.CustomNotification;
+import com.example.appdev.utils.TranslationModeManager;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -57,7 +62,6 @@ import com.example.appdev.models.TranslationHistory;
 import com.example.appdev.utils.TranslationHistoryManager;
 import com.example.appdev.adapters.TranslationHistoryAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import com.example.appdev.translators.TranslatorFactory;
 import com.example.appdev.translators.TranslatorType;
@@ -78,6 +82,8 @@ import android.view.ViewGroup.LayoutParams;
 
 import pl.droidsonroids.gif.GifImageView;
 
+import android.graphics.drawable.GradientDrawable;
+
 public class BasicTranslationFragment extends Fragment {
 
     private static final int SPEECH_REQUEST_CODE = 1;
@@ -87,7 +93,7 @@ public class BasicTranslationFragment extends Fragment {
     private TextInputEditText textInput;
     private TextInputLayout textInputLayout;
     private FloatingActionButton btnStartSpeech;
-    private ExtendedFloatingActionButton btnTranslate, btnClear;
+    private MaterialButton btnTranslate, btnClear;
     private View rootView;
     private Handler animationHandler;
     private Runnable animationRunnable;
@@ -106,6 +112,7 @@ public class BasicTranslationFragment extends Fragment {
     private FloatingActionButton stopTranslationButton;
     private AsyncTask<String, Void, String> currentTranslator;
     private FloatingActionButton btnStartConversation;
+    private ImageButton formalityToggleButton;
     private SpeechRecognitionHelper speechHelper;
     private LoadingDotsView loadingDotsView;
     private TextView[] dots;
@@ -115,6 +122,8 @@ public class BasicTranslationFragment extends Fragment {
     private View translatorSection;
     private ChangeTranslatorControl translatorControl;
     private GifImageView translatingAnimation;
+    private TextView modeFeedbackText;
+    private Handler feedbackHandler = new Handler();
 
     @Nullable
     @Override
@@ -162,7 +171,19 @@ public class BasicTranslationFragment extends Fragment {
         currentTranslatorText = view.findViewById(R.id.currentTranslatorText);
         translatorIcon = view.findViewById(R.id.translatorIcon);
         btnStartConversation = view.findViewById(R.id.startConversationButton);
+        formalityToggleButton = view.findViewById(R.id.formalityToggleButton);
         outputLanguageSelection = view.findViewById(R.id.languageSpinner);  // Initialize Spinner here
+        btnHistory = view.findViewById(R.id.btnHistory);
+        modeFeedbackText = view.findViewById(R.id.modeFeedbackText);
+
+        // Initialize translation mode from SharedPreferences
+        TranslationModeManager.initializeFromPreferences(requireContext());
+        
+        // Explicitly initialize toggle button
+        if (formalityToggleButton != null) {
+            // Set the icon based on mode
+            updateFormalityToggleIcon();
+        }
 
         // Initialize spinner with default values
         setupLanguageSpinners();  // Initial setup
@@ -172,6 +193,7 @@ public class BasicTranslationFragment extends Fragment {
         boolean hasText = !currentText.isEmpty();
         btnStartSpeech.setVisibility(hasText ? View.GONE : View.VISIBLE);
         btnStartConversation.setVisibility(hasText ? View.GONE : View.VISIBLE);
+        btnHistory.setVisibility(hasText ? View.GONE : View.VISIBLE);
         btnTranslate.setVisibility(hasText ? View.VISIBLE : View.GONE);
         btnClear.setVisibility(hasText ? View.VISIBLE : View.GONE);
 
@@ -254,8 +276,7 @@ public class BasicTranslationFragment extends Fragment {
         // Initialize history manager
         historyManager = new TranslationHistoryManager(requireContext());
         
-        // Initialize history button
-        btnHistory = view.findViewById(R.id.btnHistory);
+        // Initialize history button click listener
         btnHistory.setOnClickListener(v -> showHistoryDialog());
 
         resultCard = view.findViewById(R.id.resultCard);
@@ -340,13 +361,27 @@ public class BasicTranslationFragment extends Fragment {
         btnStartConversation.setOnClickListener(v -> {
             startConversationalMode();
         });
+
+        // Add formality toggle listener
+        if (formalityToggleButton != null) {
+            formalityToggleButton.setOnClickListener(v -> toggleFormality());
+        }
     }
 
     private void updateButtonVisibility(boolean hasText) {
+        // Speech and conversation buttons are only visible when there's no text
         btnStartSpeech.setVisibility(hasText ? View.GONE : View.VISIBLE);
         btnStartConversation.setVisibility(hasText ? View.GONE : View.VISIBLE);
+        btnHistory.setVisibility(hasText ? View.GONE : View.VISIBLE);
+        
+        // Translate and clear buttons are only visible when there's text
         btnTranslate.setVisibility(hasText ? View.VISIBLE : View.GONE);
         btnClear.setVisibility(hasText ? View.VISIBLE : View.GONE);
+        
+        // Keep formality toggle button always visible
+        if (formalityToggleButton != null) {
+            formalityToggleButton.setVisibility(View.VISIBLE);
+        }
     }
 
     private void translateAnimation() {
@@ -371,9 +406,11 @@ public class BasicTranslationFragment extends Fragment {
         
         float disabledAlpha = 0.5f;
         
+        // Disable input field
         textInput.setEnabled(false);
         textInput.animate().alpha(disabledAlpha).setDuration(300);
         
+        // Disable buttons
         btnTranslate.setEnabled(false);
         btnTranslate.animate().alpha(disabledAlpha).setDuration(300);
         
@@ -383,9 +420,20 @@ public class BasicTranslationFragment extends Fragment {
         btnStartConversation.setEnabled(false);
         btnStartConversation.animate().alpha(disabledAlpha).setDuration(300);
         
+        btnStartSpeech.setEnabled(false);
+        btnStartSpeech.animate().alpha(disabledAlpha).setDuration(300);
+        
+        btnHistory.setEnabled(false);
+        btnHistory.animate().alpha(disabledAlpha).setDuration(300);
+        
+        formalityToggleButton.setEnabled(false);
+        formalityToggleButton.animate().alpha(disabledAlpha).setDuration(300);
+        
+        // Disable language selection
         outputLanguageSelection.setEnabled(false);
         outputLanguageSelection.animate().alpha(disabledAlpha).setDuration(300);
         
+        // Show stop button
         stopTranslationButton.setVisibility(View.VISIBLE);
     }
 
@@ -414,9 +462,11 @@ public class BasicTranslationFragment extends Fragment {
     }
 
     private void enableInputSection() {
+        // Enable input field
         textInput.setEnabled(true);
         textInput.animate().alpha(1f).setDuration(300);
         
+        // Enable buttons
         btnTranslate.setEnabled(true);
         btnTranslate.animate().alpha(1f).setDuration(300);
         
@@ -426,9 +476,20 @@ public class BasicTranslationFragment extends Fragment {
         btnStartConversation.setEnabled(true);
         btnStartConversation.animate().alpha(1f).setDuration(300);
         
+        btnStartSpeech.setEnabled(true);
+        btnStartSpeech.animate().alpha(1f).setDuration(300);
+        
+        btnHistory.setEnabled(true);
+        btnHistory.animate().alpha(1f).setDuration(300);
+        
+        formalityToggleButton.setEnabled(true);
+        formalityToggleButton.animate().alpha(1f).setDuration(300);
+        
+        // Enable language selection
         outputLanguageSelection.setEnabled(true);
         outputLanguageSelection.animate().alpha(1f).setDuration(300);
         
+        // Hide stop button
         stopTranslationButton.setVisibility(View.GONE);
     }
 
@@ -462,19 +523,26 @@ public class BasicTranslationFragment extends Fragment {
         // Start animation
         translateAnimation();
 
+        // Create and execute the translator
         currentTranslator = TranslatorFactory.createTranslator(
-            TranslatorType.fromId(Variables.userTranslator),
-            targetLanguage,
-            translatedMessage -> {
-                if (getActivity() == null) return;
-                requireActivity().runOnUiThread(() -> {
-                    handleTranslationResult(translatedMessage);
-                    enableInputSection();
-                    isTranslating = false;
-                });
-            },
-            requireContext()
-        );
+                TranslatorType.fromId(getCurrentTranslator()),
+                targetLanguage,
+                translatedText -> {
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            handleTranslationResult(translatedText);
+                            isTranslating = false;
+
+                            // Save to history
+                            if (!translatedText.startsWith("Error:")) {
+                                saveToHistory(text, translatedText, targetLanguage);
+                            }
+                        });
+                    }
+                },
+                requireContext());
+        
+        // Execute the translation
         currentTranslator.execute(text);
     }
 
@@ -511,12 +579,17 @@ public class BasicTranslationFragment extends Fragment {
         }
     }
 
+    /**
+     * Save the translation to history
+     */
     private void saveToHistory(String originalText, String translatedText, String targetLanguage) {
-        String sourceLanguage = Variables.userLanguage;
-        String translator = getCurrentTranslator();
-        TranslationHistory history = new TranslationHistory(
-            originalText, translatedText, sourceLanguage, targetLanguage, translator);
-        historyManager.saveTranslation(history);
+        if (historyManager != null) {
+            String sourceLanguage = Variables.userLanguage;
+            String translator = getCurrentTranslator();
+            TranslationHistory history = new TranslationHistory(
+                originalText, translatedText, sourceLanguage, targetLanguage, translator);
+            historyManager.saveTranslation(history);
+        }
     }
 
     private String getCurrentTranslator() {
@@ -647,16 +720,19 @@ public class BasicTranslationFragment extends Fragment {
 
     // Helper methods to handle translation results
     private void handleTranslationResult(String translatedText) {
-        if (!TextUtils.isEmpty(translatedText)) {
-            stopAnimation();
-            textViewResult.setVisibility(View.VISIBLE);
-            textViewResult.setText(translatedText);
-            textViewResult.setTextColor(getResources().getColor(R.color.black));
-            textViewResult.setTextSize(38);
-            textViewResult.setAlpha(1.0f);
+        // Stop animation
+        stopAnimation();
+        enableInputSection();
+        
+        if (translatedText.startsWith("Error:")) {
+            handleTranslationError();
+            return;
         }
-        saveToHistory(textInput.getText().toString(), translatedText, 
-            outputLanguageSelection.getSelectedItem().toString());
+        
+        // Display result
+        textViewResult.setVisibility(View.VISIBLE);
+        textViewResult.setText(translatedText);
+        textViewResult.setTextColor(getResources().getColor(android.R.color.black));
     }
 
     private void handleTranslationError() {
@@ -731,6 +807,8 @@ public class BasicTranslationFragment extends Fragment {
             rootView.setEnabled(true);
             rootView.setClickable(true);
         }
+        // Refresh UI based on current formality mode
+        updateFormalityToggleIcon();
     }
 
     private void showLanguageSelectionDialog() {
@@ -764,5 +842,73 @@ public class BasicTranslationFragment extends Fragment {
         }
 
         languageDialog.show();
+    }
+
+    /**
+     * Toggle between formal and casual translation modes
+     */
+    private void toggleFormality() {
+        // Toggle the formality mode
+        Variables.isFormalTranslationMode = !Variables.isFormalTranslationMode;
+        
+        // Update shared preferences
+        TranslationModeManager.saveToPreferences(requireContext(), Variables.isFormalTranslationMode);
+        
+        // Update the toggle button icon
+        updateFormalityToggleIcon();
+        
+        // Show feedback to the user
+        String feedbackMessage = Variables.isFormalTranslationMode ? 
+                                "Formal Translation" : "Casual Translation";
+        
+        // Show text feedback instead of toast
+        showModeFeedback(feedbackMessage);
+    }
+    
+    /**
+     * Update the formality toggle button icon based on current mode
+     */
+    private void updateFormalityToggleIcon() {
+        if (formalityToggleButton != null) {
+            // Set the icon based on mode
+            formalityToggleButton.setImageResource(
+                Variables.isFormalTranslationMode ? 
+                R.drawable.translation_mode_formal : 
+                R.drawable.translation_mode_casual
+            );
+        }
+    }
+
+    private void showModeFeedback(String message) {
+        // Cancel any pending feedback dismissal
+        feedbackHandler.removeCallbacksAndMessages(null);
+        
+        // Set the feedback message
+        modeFeedbackText.setText(message);
+        
+        // Set background color based on mode
+        int backgroundColor = Variables.isFormalTranslationMode ? 
+                            Color.parseColor("#3F51B5") : Color.parseColor("#FF9800");
+        GradientDrawable background = (GradientDrawable) modeFeedbackText.getBackground();
+        background.setColor(backgroundColor);
+        
+        // Make the feedback visible
+        modeFeedbackText.setVisibility(View.VISIBLE);
+        modeFeedbackText.setAlpha(0f);
+        
+        // Animate the feedback in
+        modeFeedbackText.animate()
+                .alpha(1f)
+                .setDuration(250)
+                .start();
+        
+        // Schedule feedback to disappear after 2 seconds
+        feedbackHandler.postDelayed(() -> {
+            modeFeedbackText.animate()
+                    .alpha(0f)
+                    .setDuration(250)
+                    .withEndAction(() -> modeFeedbackText.setVisibility(View.GONE))
+                    .start();
+        }, 2000);
     }
 }

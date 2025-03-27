@@ -10,6 +10,7 @@ public class Variables {
     // SharedPreferences constants
     public static final String PREFS_NAME = "SpeakForgePrefs";
     public static final String PREF_IS_GUEST_USER = "isGuestUser";
+    public static final String PREF_FORMAL_TRANSLATION_MODE = "formalTranslationMode";
 
     // Public variables
     public static String userUID = "";
@@ -20,6 +21,7 @@ public class Variables {
     public static String userTranslator = "";
     public static String roomId = "";
     public static int openAiPrompt = 1;
+    public static boolean isFormalTranslationMode = false;
 
     // API Keys
     public static List<String> klusterAiKeys = new ArrayList<>();

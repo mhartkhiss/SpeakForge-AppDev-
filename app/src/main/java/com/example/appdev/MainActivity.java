@@ -13,6 +13,7 @@ import android.os.Bundle;
 import androidx.viewpager.widget.ViewPager;
 
 import android.util.Log;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -21,6 +22,7 @@ import com.example.appdev.fragments.ChatFragment;
 import com.example.appdev.fragments.ProfileFragment;
 import com.example.appdev.fragments.BasicTranslationFragment;
 import com.example.appdev.models.User;
+import com.example.appdev.utils.TranslationModeManager;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -190,6 +192,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialize translation mode from SharedPreferences
+        TranslationModeManager.initializeFromPreferences(this);
+
         // Load API keys at startup
         loadApiKeys();
 
@@ -198,29 +203,45 @@ public class MainActivity extends AppCompatActivity {
         if (isTaskRoot() && getIntent().hasCategory(Intent.CATEGORY_LAUNCHER)) {
             // App was started from launcher, clear any existing tasks
             Intent intent = new Intent(this, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
-            finish();
             return;
         }
 
+        // Check if user data is available
         userDataListener();
 
+        // Set up tabbed interface
         ViewPager viewPager = findViewById(R.id.viewPager);
         TabLayout tabLayout = findViewById(R.id.tabLayout);
 
-        // Create an adapter that returns a fragment for each tab
         TabAdapter adapter = new TabAdapter(getSupportFragmentManager());
         adapter.addFragment(new ProfileFragment(), "Profile");
-        adapter.addFragment(new BasicTranslationFragment(), "");
+        adapter.addFragment(new BasicTranslationFragment(), "Voice");
         adapter.addFragment(new ChatFragment(), "Chat");
 
-        // Set the adapter onto the view pager
         viewPager.setAdapter(adapter);
-
-        // Connect the tab layout with the view pager
         tabLayout.setupWithViewPager(viewPager);
+
+        // Set tab icons
+        tabLayout.getTabAt(0).setIcon(R.drawable.ic_person);
+        tabLayout.getTabAt(1).setIcon(R.drawable.ic_voice);
+        tabLayout.getTabAt(2).setIcon(R.drawable.ic_chat);
+
+        // Set starting tab to the middle one (Voice)
+        viewPager.setCurrentItem(1);
+
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
+        // Check if this is a guest user
+        if ("guest".equals(Variables.userUID)) {
+            // Guest user, just continue
+            Log.d(TAG, "Guest user detected");
+        } else if (mAuth.getCurrentUser() == null) {
+            // User is not logged in, redirect to WelcomeScreen
+            startActivity(new Intent(this, WelcomeScreen.class));
+            finish();
+        }
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override

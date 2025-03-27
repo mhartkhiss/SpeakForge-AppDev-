@@ -1,20 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item>
-        <shape android:shape="oval">
-            <solid android:color="@color/formal_mode_bg" />
-            <size android:width="24dp" android:height="24dp" />
-        </shape>
-    </item>
-    <item android:gravity="center">
-        <vector
-            android:width="14dp"
-            android:height="14dp"
-            android:viewportWidth="24"
-            android:viewportHeight="24">
-            <path
-                android:fillColor="#FFFFFF"
-                android:pathData="M9,7h6v2h-6V7zM9,11h6v2h-4v2h-2V7C9,7 9,11 9,11z"/>
-        </vector>
-    </item>
-</layer-list> 
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/formal_mode_bg"
+        android:pathData="M12,12m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M16,8L8,8L8,16L10,16L10,13L14,13L14,11L10,11L10,10L16,10z"/>
+</vector> 

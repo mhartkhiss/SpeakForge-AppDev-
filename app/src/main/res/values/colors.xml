@@ -24,4 +24,6 @@
     <color name="user1_color_dark">#D84315</color>
     <color name="user2_color">#2196F3</color>
     <color name="user2_color_dark">#1976D2</color>
+    <color name="formal_mode_bg">#3F51B5</color>
+    <color name="casual_mode_bg">#FF9800</color>
 </resources>

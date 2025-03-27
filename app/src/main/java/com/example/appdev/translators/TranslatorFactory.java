@@ -3,6 +3,7 @@ package com.example.appdev.translators;
 import android.content.Context;
 import android.os.AsyncTask;
 import com.android.volley.VolleyError;
+import com.example.appdev.Variables;
 
 public class TranslatorFactory {
     public interface TranslationListener {
@@ -14,6 +15,9 @@ public class TranslatorFactory {
             String targetLanguage, 
             final TranslationListener listener,
             Context context) {
+        
+        // Pass the formal translation mode flag to translators
+        boolean isFormalMode = Variables.isFormalTranslationMode;
         
         switch (type) {
             case GOOGLE:
@@ -43,7 +47,7 @@ public class TranslatorFactory {
 
             case DEEPSEEK:
                 return new Translation_DeepSeekV3(targetLanguage, 
-                    text -> listener.onTranslationComplete(text));
+                    text -> listener.onTranslationComplete(text), isFormalMode);
 
             //case GPT4:
             //    return new Translation_GPT4(targetLanguage, 
@@ -51,11 +55,11 @@ public class TranslatorFactory {
 
             case GEMINI:
                 return new Translation_Gemini(targetLanguage, 
-                    text -> listener.onTranslationComplete(text));
+                    text -> listener.onTranslationComplete(text), isFormalMode);
 
             case CLAUDE:
                 return new Translation_Claude(targetLanguage, 
-                    text -> listener.onTranslationComplete(text));
+                    text -> listener.onTranslationComplete(text), isFormalMode);
 
             default:
                 return createTranslator(TranslatorType.GOOGLE, targetLanguage, listener, context);
