@@ -17,6 +17,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.example.appdev.translators.TranslatorFactory;
 import com.example.appdev.translators.TranslatorType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RegenerateMessageTranslation {
     private static final String TAG = "RegenerateTranslation";
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -52,40 +55,83 @@ public class RegenerateMessageTranslation {
             return;
         }
 
-        AsyncTask<String, Void, String> translator = TranslatorFactory.createTranslator(
-            translatorType,
-            targetLanguage,
-            translatedMessage -> {
-                if (!TextUtils.isEmpty(translatedMessage)) {
-                    // Split and store variations
-                    String[] variations = translatedMessage.split("\n");
-                    if (variations.length >= 3) {
-                        storeTranslationVariations(variations, messageId);
-                    } else {
-                        // If we don't get 3 variations, just store the single translation
-                        storeTranslatedText(translatedMessage, messageId);
-                    }
+        // Get the source language for this message
+        messagesRef.child(Variables.roomId).child(messageId).child("sourceLanguage")
+            .get().addOnCompleteListener(task -> {
+                String sourceLanguage;
+                if (task.isSuccessful() && task.getResult() != null && task.getResult().getValue() != null) {
+                    sourceLanguage = task.getResult().getValue(String.class);
+                } else {
+                    // Fallback to current user language if sourceLanguage not found
+                    sourceLanguage = Variables.userLanguage;
                 }
-            },
-            context
-        );
-        translator.execute(message);
+
+                AsyncTask<String, Void, String> translator = TranslatorFactory.createTranslator(
+                    translatorType,
+                    targetLanguage,
+                    translatedMessage -> {
+                        if (!TextUtils.isEmpty(translatedMessage)) {
+                            // Split and store variations
+                            String[] variations = translatedMessage.split("\n");
+                            storeTranslationVariations(variations, messageId);
+                        }
+                    },
+                    context
+                );
+                translator.execute(message);
+            });
     }
 
     private void storeTranslationVariations(String[] variations, String messageId) {
-        String var1 = cleanVariation(variations[0]);
-        String var2 = cleanVariation(variations[1]);
-        String var3 = cleanVariation(variations[2]);
+        // Clean up variations and handle the format
+        List<String> cleanVariations = new ArrayList<>();
+        
+        // First, handle case where variations are combined in one string
+        if (variations.length == 1) {
+            String[] splitVariations = variations[0]
+                .split("(?=\\d+\\.)"); // Split on number followed by dot
+            
+            for (String variation : splitVariations) {
+                String cleanVar = cleanVariation(variation);
+                if (!cleanVar.isEmpty()) {
+                    cleanVariations.add(cleanVar);
+                }
+            }
+        } else {
+            // Handle normal case where variations are already split
+            for (String variation : variations) {
+                if (variation.trim().isEmpty()) continue;
+                String cleanVar = cleanVariation(variation);
+                if (!cleanVar.isEmpty()) {
+                    cleanVariations.add(cleanVar);
+                }
+            }
+        }
+
+        // Ensure we have at least one variation
+        if (cleanVariations.isEmpty()) {
+            return;
+        }
 
         // Store variations in Firebase
-        messagesRef.child(Variables.roomId).child(messageId).child("messageVar1").setValue(var1);
-        messagesRef.child(Variables.roomId).child(messageId).child("messageVar2").setValue(var2);
-        messagesRef.child(Variables.roomId).child(messageId).child("messageVar3").setValue(var3);
-        // Set the main message to var2 (middle variation)
-        messagesRef.child(Variables.roomId).child(messageId).child("message").setValue(var2);
+        if (cleanVariations.size() >= 3) {
+            messagesRef.child(Variables.roomId).child(messageId).child("messageVar1")
+                .setValue(cleanVariations.get(0));
+            messagesRef.child(Variables.roomId).child(messageId).child("messageVar2")
+                .setValue(cleanVariations.get(1));
+            messagesRef.child(Variables.roomId).child(messageId).child("messageVar3")
+                .setValue(cleanVariations.get(2));
+            // Set the main message to var2 (middle variation)
+            messagesRef.child(Variables.roomId).child(messageId).child("message")
+                .setValue(cleanVariations.get(1));
 
-        if (listener != null) {
-            listener.onTranslationRegenerated(var2);
+            if (listener != null) {
+                listener.onTranslationRegenerated(cleanVariations.get(1));
+            }
+        } else {
+            // If we don't have 3 variations, just use the first one
+            String translation = cleanVariations.get(0);
+            storeTranslatedText(translation, messageId);
         }
     }
 
@@ -99,17 +145,10 @@ public class RegenerateMessageTranslation {
     }
 
     private String cleanVariation(String text) {
-        // Remove quotation marks
-        text = removeQuotationMarks(text);
-        // Remove numbered prefix (e.g., "1. ", "2. ")
-        text = text.replaceFirst("^\\d+\\.\\s*", "");
-        return text.trim();
-    }
-
-    private String removeQuotationMarks(String text) {
-        if (text.startsWith("\"") && text.endsWith("\"")) {
-            return text.substring(1, text.length() - 1);
-        }
-        return text;
+        return text
+            .replaceAll("^\\s*\\d+\\.\\s*", "") // Remove numbered prefixes
+            .replaceAll("\\\\\\s*n", "") // Remove "\n" or "\ n"
+            .replaceAll("^\"|\"$", "") // Remove surrounding quotes
+            .trim();
     }
 }

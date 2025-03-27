@@ -16,10 +16,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.appdev.R;
 import com.example.appdev.adapters.UserAdapter;
-import com.example.appdev.Variables;
 import com.example.appdev.models.User;
 import com.example.appdev.utils.CustomNotification;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -43,15 +43,17 @@ public class ChatFragment extends Fragment {
     private UserAdapter userAdapter;
     private List<User> userList;
     private TextView emptyStateText;
+    private DatabaseReference messagesRef;
+    private DatabaseReference usersRef;
+    private ValueEventListener messagesValueEventListener;
+    private ValueEventListener usersValueEventListener;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chat, container, false);
-        String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
-        if (Variables.guestUser.equals(userEmail)) {
-            view.setVisibility(View.GONE);
-        }
+
+        
         return view;
     }
 
@@ -61,11 +63,21 @@ public class ChatFragment extends Fragment {
 
         // Initialize userList and userAdapter
         userList = new ArrayList<>();
-        userAdapter = new UserAdapter(userList, requireContext(), FirebaseAuth.getInstance().getCurrentUser().getUid(), 
-            (view, user) -> {
-                // Show popup menu when three dots is clicked
-                showPopupMenu(view, user);
-            });
+        
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            userAdapter = new UserAdapter(userList, requireContext(), currentUser.getUid(), 
+                (view, user) -> {
+                    // Show popup menu when three dots is clicked
+                    showPopupMenu(view, user);
+                });
+        } else {
+            userAdapter = new UserAdapter(userList, requireContext(), "", 
+                (view, user) -> {
+                    // Show popup menu when three dots is clicked
+                    showPopupMenu(view, user);
+                });
+        }
     }
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -118,11 +130,24 @@ public class ChatFragment extends Fragment {
     }
 
     private void getUsersFromFirebase() {
-        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages");
-        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            // Handle case when user is not authenticated
+            if (emptyStateText != null) {
+                emptyStateText.setText("Please log in to view your chats");
+                emptyStateText.setVisibility(View.VISIBLE);
+            }
+            if (recyclerViewUsers != null) {
+                recyclerViewUsers.setVisibility(View.GONE);
+            }
+            return;
+        }
+        
+        String currentUserId = currentUser.getUid();
+        messagesRef = FirebaseDatabase.getInstance().getReference("messages");
+        usersRef = FirebaseDatabase.getInstance().getReference("users");
 
-        messagesRef.addValueEventListener(new ValueEventListener() {
+        messagesValueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 Map<String, Pair<String, Long>> userLastMessageInfo = new HashMap<>();
@@ -161,7 +186,7 @@ public class ChatFragment extends Fragment {
                 }
 
                 // Now get user details and sort by timestamp
-                usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                usersValueEventListener = new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         List<UserWithTimestamp> usersWithTimestamp = new ArrayList<>();
@@ -171,8 +196,7 @@ public class ChatFragment extends Fragment {
                             if (user != null && user.getUserId() != null && 
                                 userLastMessageInfo.containsKey(user.getUserId()) && 
                                 !user.getUserId().equals(currentUserId) && 
-                                user.getEmail() != null && 
-                                !Variables.guestUser.equals(user.getEmail())) {
+                                user.getEmail() != null) {
                                 
                                 Pair<String, Long> messageInfo = userLastMessageInfo.get(user.getUserId());
                                 user.setLastMessage(messageInfo.first);
@@ -207,24 +231,52 @@ public class ChatFragment extends Fragment {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
-                        CustomNotification.showNotification(requireActivity(), 
-                            "Failed to load users", false);
+                        if (isAdded() && getActivity() != null && 
+                            FirebaseAuth.getInstance().getCurrentUser() != null) {
+                            CustomNotification.showNotification(requireActivity(), 
+                                "Failed to load users", false);
+                        }
                     }
-                });
+                };
+                usersRef.addListenerForSingleValueEvent(usersValueEventListener);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                CustomNotification.showNotification(requireActivity(), 
-                    "Failed to load chat rooms", false);
+                if (isAdded() && getActivity() != null && 
+                    FirebaseAuth.getInstance().getCurrentUser() != null) {
+                    CustomNotification.showNotification(requireActivity(), 
+                        "Failed to load chat rooms", false);
+                }
             }
-        });
+        };
+        messagesRef.addValueEventListener(messagesValueEventListener);
     }
 
     private void searchUsers(String searchText) {
-        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages");
-        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            // Handle case when user is not authenticated
+            if (emptyStateText != null) {
+                emptyStateText.setText("Please log in to view your chats");
+                emptyStateText.setVisibility(View.VISIBLE);
+            }
+            if (recyclerViewUsers != null) {
+                recyclerViewUsers.setVisibility(View.GONE);
+            }
+            return;
+        }
+        
+        String currentUserId = currentUser.getUid();
+        
+        // Use the class-level references
+        if (messagesRef == null) {
+            messagesRef = FirebaseDatabase.getInstance().getReference("messages");
+        }
+        
+        if (usersRef == null) {
+            usersRef = FirebaseDatabase.getInstance().getReference("users");
+        }
 
         // First get users with message history
         messagesRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -258,8 +310,7 @@ public class ChatFragment extends Fragment {
                             User user = snapshot.getValue(User.class);
                             if (user != null && user.getUserId() != null && 
                                 !user.getUserId().equals(currentUserId) && 
-                                user.getEmail() != null && 
-                                !Variables.guestUser.equals(user.getEmail())) {
+                                user.getEmail() != null) {
                                 
                                 boolean matchesSearch = (user.getUsername() != null && 
                                     user.getUsername().toLowerCase().contains(searchText)) ||
@@ -294,21 +345,34 @@ public class ChatFragment extends Fragment {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
-                        CustomNotification.showNotification(requireActivity(), 
-                            "Failed to search users", false);
+                        if (isAdded() && getActivity() != null && 
+                            FirebaseAuth.getInstance().getCurrentUser() != null) {
+                            CustomNotification.showNotification(requireActivity(), 
+                                "Failed to search users", false);
+                        }
                     }
                 });
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                CustomNotification.showNotification(requireActivity(), 
-                    "Failed to load chat rooms", false);
+                if (isAdded() && getActivity() != null && 
+                    FirebaseAuth.getInstance().getCurrentUser() != null) {
+                    CustomNotification.showNotification(requireActivity(), 
+                        "Failed to load chat rooms", false);
+                }
             }
         });
     }
 
     private void showPopupMenu(View view, User user) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            CustomNotification.showNotification(requireActivity(), 
+                "Please log in to perform this action", false);
+            return;
+        }
+        
         PopupMenu popup = new PopupMenu(requireContext(), view);
         popup.getMenuInflater().inflate(R.menu.chat_user_context_menu, popup.getMenu());
 
@@ -325,5 +389,19 @@ public class ChatFragment extends Fragment {
         });
 
         popup.show();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        
+        // Remove any Firebase listeners if they exist
+        if (messagesRef != null) {
+            messagesRef.removeEventListener(messagesValueEventListener);
+        }
+        
+        if (usersRef != null) {
+            usersRef.removeEventListener(usersValueEventListener);
+        }
     }
 }

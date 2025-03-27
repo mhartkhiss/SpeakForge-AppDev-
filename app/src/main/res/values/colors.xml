@@ -12,11 +12,16 @@
     <color name="lightGrey">#DFDFDF</color>
     <color name="selectedCardColor">#FF4081</color>
     <color name="transparent">#00000000</color>
-    <color name="light_gray">#D1D1D1</color>
-    <color name="message_received_bg">#68FF9800</color>
+    <color name="light_gray">#84CCCCCC</color>
+    <color name="message_received_bg">#50FF9800</color>
     <color name="success_green">#4CAF50</color>
     <color name="error_red">#FF5252</color>
     <color name="grey_500">#9E9E9E</color>
     <color name="blue">#2196F3</color>
     <color name="light_blue">#3DB8EF</color>
+    <color name="output_background">#F5F5F5</color>
+    <color name="user1_color">#FF5722</color>
+    <color name="user1_color_dark">#D84315</color>
+    <color name="user2_color">#2196F3</color>
+    <color name="user2_color_dark">#1976D2</color>
 </resources>

@@ -2,6 +2,7 @@ package com.example.appdev;
 
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -10,6 +11,20 @@ import androidx.annotation.NonNull;
 import android.widget.AdapterView;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.graphics.drawable.Drawable;
+import androidx.core.content.ContextCompat;
+import android.speech.RecognizerIntent;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.BackgroundColorSpan;
+import android.widget.ImageView;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.os.Handler;
+import android.view.animation.Interpolator;
 
 import com.example.appdev.models.Languages;
 import com.example.appdev.utils.SpeechRecognitionDialog;
@@ -18,6 +33,8 @@ import com.example.appdev.utils.CustomNotification;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.example.appdev.translators.TranslatorFactory;
 import com.example.appdev.translators.TranslatorType;
+import com.example.appdev.utils.ConversationalSpeechRecognizer;
+import com.example.appdev.utils.LoadingDotsView;
 
 public class ConversationalActivity extends AppCompatActivity {
     
@@ -32,13 +49,73 @@ public class ConversationalActivity extends AppCompatActivity {
     private FloatingActionButton user2SpeakButton;
 
     // Speech Recognition
-    private SpeechRecognitionHelper speechHelper;
+    private ConversationalSpeechRecognizer speechRecognizer;
     private static final int PERMISSION_REQUEST_CODE = 123;
+
+    private boolean isUser1Speaking = false;
+    private boolean isUser2Speaking = false;
+    private Drawable micIcon;
+    private Drawable stopIcon;
+
+    // Loading dots
+    private LoadingDotsView user1LoadingDots;
+    private LoadingDotsView user2LoadingDots;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Make the window background light
+        getWindow().setBackgroundDrawableResource(android.R.color.white);
+        
+        // Add full screen flags
+        getWindow().setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN
+        );
+        
+        // Hide system bars
+        View decorView = getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        decorView.setSystemUiVisibility(uiOptions);
+        
         setContentView(R.layout.activity_conversational);
+
+        // Get references to the top and bottom sections
+        View topSection = findViewById(R.id.user2Section);
+        View bottomSection = findViewById(R.id.user1Section);
+        View centerDivider = findViewById(R.id.centerDivider);
+
+        // Initially hide the sections
+        topSection.setVisibility(View.INVISIBLE);
+        bottomSection.setVisibility(View.INVISIBLE);
+        centerDivider.setAlpha(0f);
+
+        // Load animations
+        Animation slideInTop = AnimationUtils.loadAnimation(this, R.anim.slide_fade_in_top);
+        Animation slideInBottom = AnimationUtils.loadAnimation(this, R.anim.slide_fade_in_bottom);
+
+        // Post the animations to ensure views are properly laid out
+        topSection.post(() -> {
+            // Show and animate top section
+            topSection.setVisibility(View.VISIBLE);
+            topSection.startAnimation(slideInTop);
+        });
+
+        bottomSection.post(() -> {
+            // Show and animate bottom section
+            bottomSection.setVisibility(View.VISIBLE);
+            bottomSection.startAnimation(slideInBottom);
+        });
+
+        // Fade in the center divider
+        centerDivider.animate()
+            .alpha(1f)
+            .setDuration(800)
+            .setStartDelay(400)
+            .start();
 
         // Initialize User 1 (Bottom) Views
         user1Result = findViewById(R.id.user1Result);
@@ -50,8 +127,26 @@ public class ConversationalActivity extends AppCompatActivity {
         user2LanguageSpinner = findViewById(R.id.user2LanguageSpinner);
         user2SpeakButton = findViewById(R.id.user2SpeakButton);
 
-        // Initialize Speech Recognition Helper
-        speechHelper = new SpeechRecognitionHelper(this);
+        // Initialize text views with empty state
+        updateTextView(user1Result, "", false);
+        updateTextView(user2Result, "", false);
+
+        // Initialize Speech Recognition
+        speechRecognizer = new ConversationalSpeechRecognizer(this);
+
+        // Initialize icons
+        micIcon = ContextCompat.getDrawable(this, R.drawable.ic_mic);
+        stopIcon = ContextCompat.getDrawable(this, R.drawable.ic_stop);
+
+        // Initialize loading dots
+        user1LoadingDots = findViewById(R.id.user1LoadingDots);
+        user2LoadingDots = findViewById(R.id.user2LoadingDots);
+
+        // Initialize conversational icon
+        ImageView conversationalIcon = findViewById(R.id.conversationalIcon);
+        conversationalIcon.setOnClickListener(v -> {
+            finish(); // This will close the activity
+        });
 
         // Setup language spinners
         setupLanguageSpinners();
@@ -61,9 +156,23 @@ public class ConversationalActivity extends AppCompatActivity {
     }
 
     private void setupLanguageSpinners() {
-        // Setup User 1 Spinner
-        ArrayAdapter<String> user1Adapter = new ArrayAdapter<>(this,
-            R.layout.simple_spinner_item_custom, Languages.getUser1Languages());
+        // Setup User 1 Spinner (Orange user)
+        ArrayAdapter<String> user1Adapter = new ArrayAdapter<String>(this,
+            R.layout.simple_spinner_item_custom, Languages.getUser1Languages()) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView view = (TextView) super.getView(position, convertView, parent);
+                view.setTextColor(ContextCompat.getColor(getContext(), R.color.user1_color));
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                TextView view = (TextView) super.getDropDownView(position, convertView, parent);
+                view.setTextColor(ContextCompat.getColor(getContext(), R.color.user1_color));
+                return view;
+            }
+        };
         user1Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         user1LanguageSpinner.setAdapter(user1Adapter);
         
@@ -73,9 +182,23 @@ public class ConversationalActivity extends AppCompatActivity {
             user1LanguageSpinner.setSelection(user1Position);
         }
 
-        // Setup User 2 Spinner
-        ArrayAdapter<String> user2Adapter = new ArrayAdapter<>(this,
-            R.layout.simple_spinner_item_custom, Languages.getUser2Languages());
+        // Setup User 2 Spinner (Blue user)
+        ArrayAdapter<String> user2Adapter = new ArrayAdapter<String>(this,
+            R.layout.simple_spinner_item_custom, Languages.getUser2Languages()) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView view = (TextView) super.getView(position, convertView, parent);
+                view.setTextColor(ContextCompat.getColor(getContext(), R.color.user2_color));
+                return view;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                TextView view = (TextView) super.getDropDownView(position, convertView, parent);
+                view.setTextColor(ContextCompat.getColor(getContext(), R.color.user2_color));
+                return view;
+            }
+        };
         user2Adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         user2LanguageSpinner.setAdapter(user2Adapter);
         
@@ -121,62 +244,247 @@ public class ConversationalActivity extends AppCompatActivity {
 
     private void setupClickListeners() {
         user1SpeakButton.setOnClickListener(v -> {
-            checkPermissionAndStartSpeechRecognition(true);
+            if (!isUser1Speaking) {
+                startSpeechRecognition(true);
+            } else {
+                stopSpeechRecognition(true);
+            }
         });
 
         user2SpeakButton.setOnClickListener(v -> {
-            checkPermissionAndStartSpeechRecognition(false);
+            if (!isUser2Speaking) {
+                startSpeechRecognition(false);
+            } else {
+                stopSpeechRecognition(false);
+            }
         });
     }
 
-    private void checkPermissionAndStartSpeechRecognition(boolean isUser1) {
+    private void startSpeechRecognition(boolean isUser1) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int permissionResult = checkSelfPermission(android.Manifest.permission.RECORD_AUDIO);
             if (permissionResult == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                startSpeechRecognition(isUser1);
+                startListening(isUser1);
             } else {
                 requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, PERMISSION_REQUEST_CODE);
             }
         } else {
-            startSpeechRecognition(isUser1);
+            startListening(isUser1);
         }
     }
 
-    private void startSpeechRecognition(boolean isUser1) {
-        // Create a custom dialog for User 2 that's rotated 180 degrees
-        SpeechRecognitionDialog dialog = new SpeechRecognitionDialog(this, 
-            new SpeechRecognitionDialog.SpeechRecognitionListener() {
-                @Override
-                public void onCancelled() {
-                    speechHelper.stopListening();
-                }
+    private void startListening(boolean isUser1) {
+        // Update UI state
+        if (isUser1) {
+            isUser1Speaking = true;
+            user1SpeakButton.setImageDrawable(stopIcon);
+            pulseAnimation(user1SpeakButton);
+            updateTextView(user1Result, "", false);
+            
+            // Show loading dots for User 2 with User 1's color
+            user2LoadingDots.setDotColor(ContextCompat.getColor(this, R.color.user1_color));
+            user2LoadingDots.setVisibility(View.VISIBLE);
+            user2LoadingDots.startAnimation();
+            user2Result.setVisibility(View.GONE);
+            
+            // Disable User 2's controls
+            user2SpeakButton.setEnabled(false);
+            user2SpeakButton.setAlpha(0.5f);
+            user2LanguageSpinner.setEnabled(false);
+            user2LanguageSpinner.setAlpha(0.5f);
+        } else {
+            isUser2Speaking = true;
+            user2SpeakButton.setImageDrawable(stopIcon);
+            pulseAnimation(user2SpeakButton);
+            updateTextView(user2Result, "", false);
+            
+            // Show loading dots for User 1 with User 2's color
+            user1LoadingDots.setDotColor(ContextCompat.getColor(this, R.color.user2_color));
+            user1LoadingDots.setVisibility(View.VISIBLE);
+            user1LoadingDots.startAnimation();
+            user1Result.setVisibility(View.GONE);
+            
+            // Disable User 1's controls
+            user1SpeakButton.setEnabled(false);
+            user1SpeakButton.setAlpha(0.5f);
+            user1LanguageSpinner.setEnabled(false);
+            user1LanguageSpinner.setAlpha(0.5f);
+        }
 
-                @Override
-                public void onFinished(String text) {
-                    speechHelper.stopListening();
-                    if (!text.isEmpty()) {
-                        String targetLanguage;
-                        if (isUser1) {
-                            targetLanguage = user2LanguageSpinner.getSelectedItem().toString();
-                        } else {
-                            targetLanguage = user1LanguageSpinner.getSelectedItem().toString();
-                        }
-                        translateAndDisplay(text, targetLanguage, isUser1);
+        // Get selected language for speech recognition
+        String language = isUser1 ? 
+            user1LanguageSpinner.getSelectedItem().toString() : 
+            user2LanguageSpinner.getSelectedItem().toString();
+
+        speechRecognizer.startListening(language, new ConversationalSpeechRecognizer.OnSpeechResultListener() {
+            @Override
+            public void onPartialResult(String text) {
+                runOnUiThread(() -> {
+                    if (isUser1) {
+                        updateTextView(user1Result, text, false); // Input text, no background
+                    } else {
+                        updateTextView(user2Result, text, false); // Input text, no background
                     }
-                }
-            }, !isUser1);  // Pass isUpsideDown parameter
+                });
+            }
 
-        speechHelper.startSpeechRecognition(text -> {
-            if (!text.isEmpty()) {
-                String targetLanguage;
-                if (isUser1) {
-                    targetLanguage = user2LanguageSpinner.getSelectedItem().toString();
-                } else {
-                    targetLanguage = user1LanguageSpinner.getSelectedItem().toString();
-                }
-                translateAndDisplay(text, targetLanguage, isUser1);
+            @Override
+            public void onError(String errorMessage) {
+                runOnUiThread(() -> {
+                    CustomNotification.showNotification(ConversationalActivity.this, errorMessage, false);
+                    stopSpeechRecognition(isUser1);
+                });
             }
         });
+    }
+
+    private void stopSpeechRecognition(boolean isUser1) {
+        speechRecognizer.stopListening();
+
+        if (isUser1) {
+            isUser1Speaking = false;
+            user1SpeakButton.setImageDrawable(micIcon);
+            user1SpeakButton.clearAnimation();
+            
+            // Hide User 2's loading dots
+            user2LoadingDots.stopAnimation();
+            user2LoadingDots.setVisibility(View.GONE);
+            user2Result.setVisibility(View.VISIBLE);
+            
+            // Re-enable User 2's controls
+            user2SpeakButton.setEnabled(true);
+            user2SpeakButton.setAlpha(1.0f);
+            user2LanguageSpinner.setEnabled(true);
+            user2LanguageSpinner.setAlpha(1.0f);
+            
+            String text = user1Result.getText().toString();
+            if (!text.isEmpty()) {
+                String targetLanguage = user2LanguageSpinner.getSelectedItem().toString();
+                translateAndDisplay(text, targetLanguage, true);
+            }
+        } else {
+            isUser2Speaking = false;
+            user2SpeakButton.setImageDrawable(micIcon);
+            user2SpeakButton.clearAnimation();
+            
+            // Hide User 1's loading dots
+            user1LoadingDots.stopAnimation();
+            user1LoadingDots.setVisibility(View.GONE);
+            user1Result.setVisibility(View.VISIBLE);
+            
+            // Re-enable User 1's controls
+            user1SpeakButton.setEnabled(true);
+            user1SpeakButton.setAlpha(1.0f);
+            user1LanguageSpinner.setEnabled(true);
+            user1LanguageSpinner.setAlpha(1.0f);
+            
+            String text = user2Result.getText().toString();
+            if (!text.isEmpty()) {
+                String targetLanguage = user1LanguageSpinner.getSelectedItem().toString();
+                translateAndDisplay(text, targetLanguage, false);
+            }
+        }
+    }
+
+    private void pulseAnimation(View view) {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", 1f, 1.2f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", 1f, 1.2f);
+        
+        scaleX.setRepeatCount(ObjectAnimator.INFINITE);
+        scaleY.setRepeatCount(ObjectAnimator.INFINITE);
+        scaleX.setRepeatMode(ObjectAnimator.REVERSE);
+        scaleY.setRepeatMode(ObjectAnimator.REVERSE);
+        
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(scaleX, scaleY);
+        animatorSet.setDuration(1000);
+        animatorSet.setInterpolator(new AccelerateDecelerateInterpolator());
+        animatorSet.start();
+    }
+
+    private void updateTextView(TextView textView, String text, boolean isOutput) {
+        boolean isUser1 = (textView == user1Result);
+        
+        if (isOutput && !text.isEmpty()) {
+            // Set the appropriate speech bubble background
+            textView.setBackground(ContextCompat.getDrawable(this,
+                isUser1 ? R.drawable.speech_bubble_user1 : R.drawable.speech_bubble_user2));
+            // Add padding for better appearance
+            textView.setPadding(
+                dpToPx(24), // left
+                dpToPx(24), // top
+                dpToPx(24), // right
+                dpToPx(24)  // bottom
+            );
+            // Use white text for better contrast on colored backgrounds
+            textView.setTextColor(ContextCompat.getColor(this, android.R.color.white));
+        } else {
+            // Reset background and padding for input text or empty text
+            textView.setBackground(null);
+            textView.setPadding(
+                dpToPx(16), // left
+                dpToPx(16), // top
+                dpToPx(16), // right
+                dpToPx(16)  // bottom
+            );
+            // Use user's color for input text
+            textView.setTextColor(ContextCompat.getColor(this, 
+                isUser1 ? R.color.user1_color : R.color.user2_color));
+        }
+        
+        textView.setText(text);
+    }
+
+    // Helper method to convert dp to pixels
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+    private void translateAndDisplay(String text, String targetLanguage, boolean isUser1) {
+        // Start translation UI state
+        startTranslation(isUser1);
+
+        // Show loading dots for translation
+        if (isUser1) {
+            user2LoadingDots.setDotColor(ContextCompat.getColor(this, R.color.user1_color));
+            user2LoadingDots.setVisibility(View.VISIBLE);
+            user2LoadingDots.startAnimation();
+            user2Result.setVisibility(View.GONE);
+        } else {
+            user1LoadingDots.setDotColor(ContextCompat.getColor(this, R.color.user2_color));
+            user1LoadingDots.setVisibility(View.VISIBLE);
+            user1LoadingDots.startAnimation();
+            user1Result.setVisibility(View.GONE);
+        }
+
+        // Create and execute translator
+        AsyncTask<String, Void, String> translator = TranslatorFactory.createTranslator(
+            TranslatorType.fromId(Variables.userTranslator),
+            targetLanguage,
+            translatedMessage -> {
+                if (!isFinishing()) {
+                    runOnUiThread(() -> {
+                        if (isUser1) {
+                            // Hide loading dots and show result
+                            user2LoadingDots.stopAnimation();
+                            user2LoadingDots.setVisibility(View.GONE);
+                            user2Result.setVisibility(View.VISIBLE);
+                            updateTextView(user2Result, translatedMessage, true);
+                        } else {
+                            // Hide loading dots and show result
+                            user1LoadingDots.stopAnimation();
+                            user1LoadingDots.setVisibility(View.GONE);
+                            user1Result.setVisibility(View.VISIBLE);
+                            updateTextView(user1Result, translatedMessage, true);
+                        }
+                        enableControls(isUser1);
+                    });
+                }
+            },
+            this
+        );
+        translator.execute(text);
     }
 
     private void startTranslation(boolean isUser1) {
@@ -211,31 +519,6 @@ public class ConversationalActivity extends AppCompatActivity {
         }
     }
 
-    private void translateAndDisplay(String text, String targetLanguage, boolean isUser1) {
-        // Start translation UI state
-        startTranslation(isUser1);
-
-        // Create and execute translator
-        AsyncTask<String, Void, String> translator = TranslatorFactory.createTranslator(
-            TranslatorType.fromId(Variables.userTranslator),
-            targetLanguage,
-            translatedMessage -> {
-                if (!isFinishing()) {
-                    runOnUiThread(() -> {
-                        if (isUser1) {
-                            user2Result.setText(translatedMessage);
-                        } else {
-                            user1Result.setText(translatedMessage);
-                        }
-                        enableControls(isUser1);
-                    });
-                }
-            },
-            this
-        );
-        translator.execute(text);
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -255,8 +538,57 @@ public class ConversationalActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (speechHelper != null) {
-            speechHelper.destroy();
+        if (speechRecognizer != null) {
+            speechRecognizer.destroy();
+        }
+        user1SpeakButton.clearAnimation();
+        user2SpeakButton.clearAnimation();
+        user1LoadingDots.stopAnimation();
+        user2LoadingDots.stopAnimation();
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        // Disable default animation when going back
+        overridePendingTransition(0, 0);
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Get references to views
+        View topSection = findViewById(R.id.user2Section);
+        View bottomSection = findViewById(R.id.user1Section);
+        View centerDivider = findViewById(R.id.centerDivider);
+
+        // Create and start exit animations
+        Animation slideOutTop = AnimationUtils.loadAnimation(this, R.anim.slide_fade_in_top);
+        slideOutTop.setDuration(400);
+        slideOutTop.setInterpolator(new ReverseInterpolator());
+        
+        Animation slideOutBottom = AnimationUtils.loadAnimation(this, R.anim.slide_fade_in_bottom);
+        slideOutBottom.setDuration(400);
+        slideOutBottom.setInterpolator(new ReverseInterpolator());
+
+        // Start animations
+        topSection.startAnimation(slideOutTop);
+        bottomSection.startAnimation(slideOutBottom);
+        
+        // Fade out center divider
+        centerDivider.animate()
+            .alpha(0f)
+            .setDuration(300)
+            .start();
+
+        // Finish activity after animation
+        new Handler().postDelayed(this::finish, 350);
+    }
+
+    // Custom interpolator to reverse animations
+    private static class ReverseInterpolator implements Interpolator {
+        @Override
+        public float getInterpolation(float input) {
+            return Math.abs(input - 1f);
         }
     }
 } 

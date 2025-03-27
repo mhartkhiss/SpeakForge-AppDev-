@@ -33,6 +33,7 @@ import com.example.appdev.R;
 import com.example.appdev.Variables;
 import com.example.appdev.subcontrollers.ChangeProfilePicControl;
 import com.example.appdev.subcontrollers.ChangeLanguageControl;
+import com.example.appdev.subcontrollers.ChangeUsernameControl;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -41,7 +42,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.example.appdev.utils.CustomNotification;
-import com.example.appdev.subcontrollers.ChangeUsernameControl;
 import com.google.android.material.button.MaterialButton;
 import androidx.core.content.ContextCompat;
 import com.example.appdev.translators.TranslatorType;
@@ -49,6 +49,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.example.appdev.adapters.LanguageAdapter;
 import java.util.HashSet;
 import java.util.Set;
+import com.example.appdev.subcontrollers.ChangeTranslatorControl;
 
 public class ProfileFragment extends Fragment {
 
@@ -68,6 +69,8 @@ public class ProfileFragment extends Fragment {
     private TextView friendsCountView;
     private TextView userTypeView;
     private ValueEventListener valueEventListener;
+    private ValueEventListener friendsCountListener;
+    private ChangeTranslatorControl changeTranslatorControl;
 
     public CardView getLayoutProfile() {
         return layoutProfile;
@@ -80,14 +83,47 @@ public class ProfileFragment extends Fragment {
         // Initialize views
         initializeViews(view);
         
-        // Setup translator buttons
+        // Setup translator buttons using the controller
         translatorButtonsContainer = view.findViewById(R.id.translatorButtonsContainer);
-        setupTranslatorButtons(translatorButtonsContainer);
+        changeTranslatorControl = new ChangeTranslatorControl(this);
+        changeTranslatorControl.setupTranslatorButtons(translatorButtonsContainer);
         
-        if (Variables.guestUser.equals(FirebaseAuth.getInstance().getCurrentUser().getEmail())) {
+        // Check if this is a guest user
+        if ("guest".equals(Variables.userUID)) {
+            
+            // Hide all UI elements in guest mode
+            // Hide the main components
             view.findViewById(R.id.cardViewProfile).setVisibility(View.GONE);
             view.findViewById(R.id.imageViewUserPicture).setVisibility(View.GONE);
             view.findViewById(R.id.headerBackground).setVisibility(View.GONE);
+            
+            // Hide all other UI components
+            if (view.findViewById(R.id.textViewUsername) != null)
+                view.findViewById(R.id.textViewUsername).setVisibility(View.GONE);
+            if (view.findViewById(R.id.textViewEmail) != null)
+                view.findViewById(R.id.textViewEmail).setVisibility(View.GONE);
+            if (view.findViewById(R.id.btnLogout) != null)
+                view.findViewById(R.id.btnLogout).setVisibility(View.GONE);
+            if (view.findViewById(R.id.btnBack) != null)
+                view.findViewById(R.id.btnBack).setVisibility(View.GONE);
+            if (view.findViewById(R.id.textViewMemberSince) != null)
+                view.findViewById(R.id.textViewMemberSince).setVisibility(View.GONE);
+            if (view.findViewById(R.id.textViewFriendsCount) != null)
+                view.findViewById(R.id.textViewFriendsCount).setVisibility(View.GONE);
+            if (view.findViewById(R.id.textViewUserType) != null)
+                view.findViewById(R.id.textViewUserType).setVisibility(View.GONE);
+                
+            // Hide the menu items
+            if (view.findViewById(R.id.btnMenuChangeLanguage) != null)
+                view.findViewById(R.id.btnMenuChangeLanguage).setVisibility(View.GONE);
+            if (view.findViewById(R.id.btnMenuChangePassword) != null)
+                view.findViewById(R.id.btnMenuChangePassword).setVisibility(View.GONE);
+            if (view.findViewById(R.id.btnMenuSelectTranslator) != null)
+                view.findViewById(R.id.btnMenuSelectTranslator).setVisibility(View.GONE);
+                
+            // Hide the stats section
+            if (view.findViewById(R.id.cardViewStats) != null)
+                view.findViewById(R.id.cardViewStats).setVisibility(View.GONE);
         }
 
         return view;
@@ -96,6 +132,13 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        
+        // Skip loading user data in guest mode
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null && "guest".equals(Variables.userUID)) {
+            return; // Skip the rest of initialization in guest mode
+        }
+        
         changeProfilePicControl = new ChangeProfilePicControl(this);
         userDataListener();
         setListeners();
@@ -145,72 +188,75 @@ public class ProfileFragment extends Fragment {
     //This method automatically updates the values of the user's profile UI when the user data changes in the database
     private void userDataListener(){
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
-            valueEventListener = new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    // Check if fragment is still attached
-                    if (!isAdded()) {
-                        return;
-                    }
-
-                    if (dataSnapshot.exists()) {
-                        User user = dataSnapshot.getValue(User.class);
-                        if (user != null) {
-                            textViewLanguageValue.setText(user.getLanguage());
-                            textViewUsername.setText(user.getUsername());
-                            textViewEmail.setText(user.getEmail());
-                            accountType = user.getAccountType();
-                            
-                            // Update member since view with abbreviated month format
-                            TextView memberSinceView = getView().findViewById(R.id.textViewMemberSince);
-                            if (user.getCreatedAt() != null) {
-                                try {
-                                    // Parse the date string to create a Date object
-                                    java.text.SimpleDateFormat inputFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
-                                    java.text.SimpleDateFormat outputFormat = new java.text.SimpleDateFormat("MMM d, yyyy");
-                                    java.util.Date date = inputFormat.parse(user.getCreatedAt());
-                                    String formattedDate = outputFormat.format(date);
-                                    memberSinceView.setText(formattedDate);
-                                } catch (Exception e) {
-                                    Log.e(TAG, "Error formatting date: " + e.getMessage());
-                                    memberSinceView.setText(user.getCreatedAt());
-                                }
-                            }
-                            
-                            // Wrap Glide operations in isAdded() check
-                            if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().equals("none") && isAdded()) {
-                                Glide.with(getContext())
-                                    .load(user.getProfileImageUrl())
-                                    .into(imageViewUserPicture);
-                            } else {
-                                imageViewUserPicture.setImageResource(R.drawable.default_userpic);
-                            }
-                            
-                            if (accountType.equals("free")) {
-                                textViewTranslatorValue.setText("Google Translate");
-                                userRef.child("translator").setValue("google");
-                            } else {
-                                textViewTranslatorValue.setText(
-                                    TranslatorType.fromId(user.getTranslator()).getDisplayName()
-                                );
-                            }
-                            // Update user type text based on account type
-                            userTypeView.setText(accountType.equals("premium") ? "Premium" : "Free User");
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    if (isAdded()) {
-                        Log.e(TAG, "Error getting user: " + databaseError.getMessage());
-                    }
-                }
-            };
-            userRef.addValueEventListener(valueEventListener);
+        if (currentUser == null || "guest".equals(Variables.userUID)) {
+            // Skip for guest users
+            return;
         }
+        
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(currentUser.getUid());
+        valueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                // Check if fragment is still attached
+                if (!isAdded()) {
+                    return;
+                }
+
+                if (dataSnapshot.exists()) {
+                    User user = dataSnapshot.getValue(User.class);
+                    if (user != null) {
+                        textViewLanguageValue.setText(user.getLanguage());
+                        textViewUsername.setText(user.getUsername());
+                        textViewEmail.setText(user.getEmail());
+                        accountType = user.getAccountType();
+                        
+                        // Update member since view with abbreviated month format
+                        TextView memberSinceView = getView().findViewById(R.id.textViewMemberSince);
+                        if (user.getCreatedAt() != null) {
+                            try {
+                                // Parse the date string to create a Date object
+                                java.text.SimpleDateFormat inputFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                                java.text.SimpleDateFormat outputFormat = new java.text.SimpleDateFormat("MMM d, yyyy");
+                                java.util.Date date = inputFormat.parse(user.getCreatedAt());
+                                String formattedDate = outputFormat.format(date);
+                                memberSinceView.setText(formattedDate);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error formatting date: " + e.getMessage());
+                                memberSinceView.setText(user.getCreatedAt());
+                            }
+                        }
+                        
+                        // Wrap Glide operations in isAdded() check
+                        if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().equals("none") && isAdded()) {
+                            Glide.with(getContext())
+                                .load(user.getProfileImageUrl())
+                                .into(imageViewUserPicture);
+                        } else {
+                            imageViewUserPicture.setImageResource(R.drawable.default_userpic);
+                        }
+                        
+                        if (accountType.equals("free")) {
+                            textViewTranslatorValue.setText("Google Translate");
+                            userRef.child("translator").setValue("google");
+                        } else {
+                            textViewTranslatorValue.setText(
+                                TranslatorType.fromId(user.getTranslator()).getDisplayName()
+                            );
+                        }
+                        // Update user type text based on account type
+                        userTypeView.setText(accountType.equals("premium") ? "Premium" : "Free User");
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                if (isAdded()) {
+                    Log.e(TAG, "Error getting user: " + databaseError.getMessage());
+                }
+            }
+        };
+        userRef.addValueEventListener(valueEventListener);
     }
 
     // method to set listeners for the buttons and other elements in the profile fragment
@@ -285,33 +331,13 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupLanguageDialog(View view, BottomSheetDialog dialog) {
-        RecyclerView recyclerView = view.findViewById(R.id.recyclerViewLanguages);
-        if (recyclerView != null) {
-            recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-            LanguageAdapter adapter = new LanguageAdapter(requireContext(), language -> {
-                changeLanguageControl.updateUserLanguage(language);
-                dialog.dismiss();
-            });
-            recyclerView.setAdapter(adapter);
-        }
+        changeLanguageControl.setupLanguageDialog(view, dialog);
     }
 
     private void setupTranslatorDialog(View view, BottomSheetDialog dialog) {
         ViewGroup container = view.findViewById(R.id.translatorButtonsContainer);
         if (container != null) {
-            for (TranslatorType type : TranslatorType.values()) {
-                MaterialButton button = (MaterialButton) LayoutInflater.from(getContext())
-                    .inflate(R.layout.translator_button, container, false);
-                
-                button.setText(type.getDisplayName());
-                button.setIcon(ContextCompat.getDrawable(requireContext(), type.getIconResourceId()));
-                button.setOnClickListener(v -> {
-                    updateTranslator(type.getId(), type.getDisplayName());
-                    dialog.dismiss();
-                });
-                
-                container.addView(button);
-            }
+            changeTranslatorControl.setupTranslatorButtons(container, dialog);
         }
     }
 
@@ -333,35 +359,23 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupUsernameDialog(View view, BottomSheetDialog dialog) {
-        EditText usernameInput = view.findViewById(R.id.editTextUsername);
-        Button btnSave = view.findViewById(R.id.btnSaveChanges);
-        usernameInput.setText(textViewUsername.getText());
-
-        btnSave.setOnClickListener(v -> {
-            String newUsername = usernameInput.getText().toString().trim();
-            if (!newUsername.isEmpty()) {
-                updateUsername(newUsername, dialog);
-            }
-        });
-    }
-
-    private void updateUsername(String newUsername, BottomSheetDialog dialog) {
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
-                .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
-        userRef.child("username").setValue(newUsername)
-                .addOnSuccessListener(aVoid -> {
-                    CustomNotification.showNotification(requireActivity(), 
-                        "Username updated successfully", true);
-                    dialog.dismiss();
-                })
-                .addOnFailureListener(e -> {
-                    CustomNotification.showNotification(requireActivity(), 
-                        "Failed to update username", false);
-                });
+        changeUsernameControl.setupUsernameDialog(view, dialog, textViewUsername.getText().toString());
     }
 
     private void logout() {
+        // Clear all user-related variables before signing out
+        Variables.userUID = "";
+        Variables.userEmail = "";
+        Variables.userDisplayName = "";
+        Variables.userAccountType = "";
+        Variables.userLanguage = "";
+        Variables.userTranslator = "";
+        Variables.roomId = "";
+        
+        // Sign out from Firebase
         FirebaseAuth.getInstance().signOut();
+        
+        // Navigate to login screen
         startActivity(new Intent(requireActivity(), LoginActivity.class));
         requireActivity().finish();
     }
@@ -376,50 +390,36 @@ public class ProfileFragment extends Fragment {
         Glide.with(requireContext()).load(imageUrl).into(imageViewUserPicture);
     }
 
-    private void updateTranslator(String translatorType, String displayName) {
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
-                .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
-        userRef.child("translator").setValue(translatorType)
-                .addOnSuccessListener(aVoid -> {
-                    CustomNotification.showNotification(requireActivity(), 
-                        "Switched to " + displayName, true);
-                })
-                .addOnFailureListener(e -> {
-                    CustomNotification.showNotification(requireActivity(), 
-                        "Failed to change translator", false);
-                });
-    }
-
-    private void setupTranslatorButtons(ViewGroup container) {
-        for (TranslatorType type : TranslatorType.values()) {
-            MaterialButton button = (MaterialButton) LayoutInflater.from(getContext())
-                .inflate(R.layout.translator_button, container, false);
-            
-            button.setText(type.getDisplayName());
-            button.setIcon(ContextCompat.getDrawable(requireContext(), type.getIconResourceId()));
-            button.setOnClickListener(v -> updateTranslator(type.getId(), type.getDisplayName()));
-            
-            container.addView(button);
-        }
-    }
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        
         // Remove the ValueEventListener when the view is destroyed
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
+        if (currentUser != null && valueEventListener != null) {
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users")
                 .child(currentUser.getUid());
             userRef.removeEventListener(valueEventListener);
         }
+        
+        // Remove the friends count listener
+        if (currentUser != null && friendsCountListener != null) {
+            DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages");
+            messagesRef.removeEventListener(friendsCountListener);
+        }
     }
 
     private void updateFriendsCount() {
-        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || "guest".equals(Variables.userUID)) {
+            // Skip for guest users
+            return;
+        }
+        
+        String currentUserId = currentUser.getUid();
         DatabaseReference messagesRef = FirebaseDatabase.getInstance().getReference("messages");
         
-        messagesRef.addValueEventListener(new ValueEventListener() {
+        friendsCountListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 Set<String> uniqueContacts = new HashSet<>();
@@ -444,6 +444,8 @@ public class ProfileFragment extends Fragment {
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Log.e("ProfileFragment", "Error getting conversation rooms: " + databaseError.getMessage());
             }
-        });
+        };
+        
+        messagesRef.addValueEventListener(friendsCountListener);
     }
 }

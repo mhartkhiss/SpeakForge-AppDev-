@@ -57,6 +57,19 @@ public class LanguageSetupActivity extends AppCompatActivity {
     }
 
     private void updateSourceLanguage(String language) {
+        // Check if this is a guest user
+        if ("guest".equals(Variables.userUID)) {
+            // For guest users, just store the language in Variables
+            Variables.userLanguage = language;
+            Variables.userTranslator = "google"; // Default translator for guest
+            
+            Toast.makeText(LanguageSetupActivity.this, "Language set to " + language, Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(LanguageSetupActivity.this, MainActivity.class));
+            finish();
+            return;
+        }
+        
+        // For regular users, continue with Firebase
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
             String uid = currentUser.getUid();

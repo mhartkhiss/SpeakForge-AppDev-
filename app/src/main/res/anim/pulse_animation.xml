@@ -7,31 +7,31 @@
 
     <set android:ordering="together">
         <scale
-            android:duration="1000"
+            android:duration="1500"
             android:fromXScale="1.0"
             android:fromYScale="1.0"
             android:pivotX="50%"
             android:pivotY="50%"
-            android:toXScale="1.05"
-            android:toYScale="1.05" />
+            android:toXScale="1.03"
+            android:toYScale="1.03" />
         <alpha
-            android:duration="1000"
+            android:duration="1500"
             android:fromAlpha="1.0"
-            android:toAlpha="0.8" />
+            android:toAlpha="0.9" />
     </set>
 
     <set android:ordering="together">
         <scale
-            android:duration="1000"
-            android:fromXScale="1.05"
-            android:fromYScale="1.05"
+            android:duration="1500"
+            android:fromXScale="1.03"
+            android:fromYScale="1.03"
             android:pivotX="50%"
             android:pivotY="50%"
             android:toXScale="1.0"
             android:toYScale="1.0" />
         <alpha
-            android:duration="1000"
-            android:fromAlpha="0.8"
+            android:duration="1500"
+            android:fromAlpha="0.9"
             android:toAlpha="1.0" />
     </set>
 </set>

@@ -7,6 +7,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.viewpager.widget.ViewPager;
@@ -126,6 +127,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void userDataListener(){
+        // Check if this is a guest user
+        if ("guest".equals(Variables.userUID)) {
+            // Guest user already has Variables set, just continue with the app
+            Log.d(TAG, "Guest user detected, using local variables");
+            return;
+        }
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
@@ -142,8 +149,23 @@ public class MainActivity extends AppCompatActivity {
                             Variables.userAccountType = user.getAccountType();
                             Variables.userLanguage = user.getLanguage();
                             Variables.userTranslator = user.getTranslator();
-
+                            
+                            // If language is not set, redirect to LanguageSetupActivity
+                            if (user.getLanguage() == null) {
+                                Log.e(TAG, "User language not set");
+                                Intent intent = new Intent(MainActivity.this, LanguageSetupActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+                                finish();
+                            }
                         }
+                    } else {
+                        // If user data doesn't exist, redirect to LanguageSetupActivity
+                        Log.e(TAG, "User data doesn't exist in database");
+                        Intent intent = new Intent(MainActivity.this, LanguageSetupActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
                     }
                 }
 
@@ -152,6 +174,13 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "Error getting user: " + databaseError.getMessage());
                 }
             });
+        } else {
+            // If user is null, redirect to WelcomeScreen
+            Log.e(TAG, "Current user is null");
+            Intent intent = new Intent(MainActivity.this, WelcomeScreen.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
         }
     }
 
@@ -197,16 +226,33 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 int position = tab.getPosition();
-                String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+                
+                // Check for guest user (either way)
+                boolean isGuestUser = "guest".equals(Variables.userUID);
+                if (!isGuestUser && FirebaseAuth.getInstance().getCurrentUser() != null) {
+                    isGuestUser = "guest".equals(Variables.userUID);
+                }
 
-                if ((position == 0 || position == 2) && userEmail.equals(Variables.guestUser)) {
-
+                if ((position == 0 || position == 2) && isGuestUser) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                     builder.setTitle("Login Required")
                             .setMessage("You need to login to use this feature. Do you want to login now?")
                             .setPositiveButton("Yes", (dialog, which) -> {
                                 // Sign out the current user and proceed to LoginActivity
-                                mAuth.signOut();
+                                if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                                    mAuth.signOut();
+                                }
+                                // Reset guest user variables
+                                Variables.userUID = "";
+                                Variables.userEmail = "";
+                                Variables.userAccountType = "";
+                                
+                                // Clear guest user state in SharedPreferences
+                                SharedPreferences prefs = getSharedPreferences(Variables.PREFS_NAME, MODE_PRIVATE);
+                                SharedPreferences.Editor editor = prefs.edit();
+                                editor.putBoolean(Variables.PREF_IS_GUEST_USER, false);
+                                editor.apply();
+                                
                                 startActivity(new Intent(MainActivity.this, LoginActivity.class));
                                 finish(); // Finish the current activity to prevent returning to it
                             })

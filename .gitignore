@@ -16,3 +16,6 @@
 local.properties
 .gitignore
 cursor/aisettings
+
+# windsurf rules
+.windsurfrules

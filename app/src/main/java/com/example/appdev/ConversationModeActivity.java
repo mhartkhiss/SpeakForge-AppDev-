@@ -47,6 +47,11 @@ import android.os.AsyncTask;
 import com.example.appdev.translators.TranslatorFactory;
 import com.example.appdev.translators.TranslatorType;
 
+import org.json.JSONObject;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.OutputStream;
+
 public class ConversationModeActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewChat;
@@ -213,8 +218,11 @@ public class ConversationModeActivity extends AppCompatActivity {
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-                    CustomNotification.showNotification(ConversationModeActivity.this, 
-                        "Failed to load user information", false);
+                    // Only show notification if the user is still logged in
+                    if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                        CustomNotification.showNotification(ConversationModeActivity.this, 
+                            "Failed to load user information", false);
+                    }
                 }
             });
         });
@@ -283,6 +291,7 @@ public class ConversationModeActivity extends AppCompatActivity {
             messageData.put("timestamp", timestamp);
             messageData.put("senderId", senderId);
             messageData.put("messageId", messageId);
+            messageData.put("sourceLanguage", Variables.userLanguage);
 
             // Save message to Firebase Database
             messagesRef.child(roomId).child(messageId).setValue(messageData)
@@ -311,22 +320,51 @@ public class ConversationModeActivity extends AppCompatActivity {
     }
 
     private void translateMessage(String targetLanguage, String messageTextOG, String messageId) {
-        // Set to single translation mode (not variations)
-        Variables.openAiPrompt = 1;
+        new AsyncTask<Void, Void, Boolean>() {
+            @Override
+            protected Boolean doInBackground(Void... voids) {
+                try {
+                    // Prepare the request body
+                    JSONObject requestBody = new JSONObject();
+                    requestBody.put("text", messageTextOG);
+                    requestBody.put("source_language", Variables.userLanguage);
+                    requestBody.put("target_language", targetLanguage);
+                    requestBody.put("mode", "single");
+                    requestBody.put("model", recipientTranslator.toLowerCase());
+                    requestBody.put("room_id", roomId);
+                    requestBody.put("message_id", messageId);
 
-        AsyncTask<String, Void, String> translator = TranslatorFactory.createTranslator(
-            TranslatorType.fromId(recipientTranslator),
-            targetLanguage,
-            translatedMessage -> {
-                if (!TextUtils.isEmpty(translatedMessage)) {
-                    String cleanTranslation = removeQuotationMarks(translatedMessage);
-                    messagesRef.child(roomId).child(messageId).child("message")
-                        .setValue(cleanTranslation);
+                    // Make the API request
+                    URL url = new URL(Variables.API_TRANSLATE_DB_URL);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json");
+                    conn.setDoOutput(true);
+
+                    // Send request body
+                    try (OutputStream os = conn.getOutputStream()) {
+                        byte[] input = requestBody.toString().getBytes("utf-8");
+                        os.write(input, 0, input.length);
+                    }
+
+                    return conn.getResponseCode() == HttpURLConnection.HTTP_OK;
+
+                } catch (Exception e) {
+                    Log.e("ConversationModeActivity", "Translation error: " + e.getMessage());
+                    return false;
                 }
-            },
-            this
-        );
-        translator.execute(messageTextOG);
+            }
+
+            @Override
+            protected void onPostExecute(Boolean success) {
+                if (!success) {
+                    // If translation fails, set message to original text
+                    messagesRef.child(roomId).child(messageId)
+                        .child("message").setValue(messageTextOG.replace("\"", ""));
+                    Log.e("ConversationModeActivity", "Failed to translate message");
+                }
+            }
+        }.execute();
     }
 
     private String removeQuotationMarks(String text) {
@@ -398,4 +436,3 @@ public class ConversationModeActivity extends AppCompatActivity {
 
 
 }
-

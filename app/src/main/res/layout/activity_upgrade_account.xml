@@ -72,7 +72,7 @@
                     android:drawablePadding="16dp"
                     android:fontFamily="@font/poppins"
                     android:gravity="center_vertical"
-                    android:text="Access to OpenAI Translator"
+                    android:text="Access to AI models Translator"
                     android:textColor="#424242"
                     android:textSize="16sp"
                     app:drawableStartCompat="@drawable/ic_check_circle"

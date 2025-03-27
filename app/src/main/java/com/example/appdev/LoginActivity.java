@@ -106,7 +106,7 @@ public class LoginActivity extends BaseAuthActivity {
             FirebaseUser user = firebaseAuth.getCurrentUser();
             if (user != null) {
                 progressDialog.dismiss();
-                if (!Variables.guestUser.equals(user.getEmail())) {
+                if (!"guest".equals(Variables.userUID)) {
                     CustomNotification.showNotification(this, "Welcome " + user.getEmail(), true);
                 }
 

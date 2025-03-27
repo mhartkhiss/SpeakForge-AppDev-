@@ -4,11 +4,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/translation_background_gradient"
+    android:background="@drawable/background"
     android:padding="12dp">
 
     <!-- User 2 Section (Top, Upside Down) -->
     <LinearLayout
+        android:id="@+id/user2Section"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -37,61 +38,63 @@
                     android:layout_height="24dp"
                     android:src="@drawable/ic_language"
                     android:layout_marginStart="8dp"
-                    app:tint="#2196F3"/>
+                    app:tint="@color/user2_color"/>
 
                 <Spinner
                     android:id="@+id/user2LanguageSpinner"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="48dp"
                     android:background="@null"
+                    android:minWidth="120dp"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <!-- Translation Result Card -->
-        <androidx.cardview.widget.CardView
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/white">
+            android:padding="24dp">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="24dp">
+            <TextView
+                android:id="@+id/user2Result"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:textSize="32sp"
+                android:fontFamily="@font/poppins"
+                android:lineSpacingExtra="8dp"
+                android:padding="24dp"
+                android:background="@drawable/speech_bubble_user2"/>
 
-                <TextView
-                    android:id="@+id/user2Result"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:gravity="center"
-                    android:textSize="32sp"
-                    android:fontFamily="@font/poppins"
-                    android:textColor="#FF5722"
-                    android:padding="16dp"/>
+            <com.example.appdev.utils.LoadingDotsView
+                android:id="@+id/user2LoadingDots"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:visibility="gone"/>
 
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/user2SpeakButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_alignParentBottom="true"
-                    android:src="@drawable/ic_mic"
-                    app:fabSize="normal"
-                    app:backgroundTint="#2196F3"
-                    app:tint="@android:color/white"
-                    app:elevation="0dp"
-                    android:layout_margin="8dp"/>
-            </RelativeLayout>
-        </androidx.cardview.widget.CardView>
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/user2SpeakButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentBottom="true"
+                android:src="@drawable/ic_mic"
+                app:fabSize="normal"
+                app:backgroundTint="@color/user2_color"
+                app:tint="@android:color/white"
+                app:elevation="0dp"
+                android:layout_margin="8dp"/>
+        </RelativeLayout>
     </LinearLayout>
 
     <!-- Divider with Icon -->
     <LinearLayout
+        android:id="@+id/centerDivider"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -105,11 +108,14 @@
             android:background="#E3F2FD"/>
 
         <ImageView
+            android:id="@+id/conversationalIcon"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@drawable/ic_conversational"
+            android:src="@drawable/ic_translate_fragment"
             android:layout_marginHorizontal="16dp"
-            app:tint="#BBDEFB"/>
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"/>
 
         <View
             android:layout_width="0dp"
@@ -120,6 +126,7 @@
 
     <!-- User 1 Section (Bottom, Normal) -->
     <LinearLayout
+        android:id="@+id/user1Section"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -147,56 +154,57 @@
                     android:layout_height="24dp"
                     android:src="@drawable/ic_language"
                     android:layout_marginStart="8dp"
-                    app:tint="#FF5722"/>
+                    app:tint="@color/user1_color"/>
 
                 <Spinner
                     android:id="@+id/user1LanguageSpinner"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="48dp"
                     android:background="@null"
+                    android:minWidth="120dp"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <!-- Translation Result Card -->
-        <androidx.cardview.widget.CardView
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/white">
+            android:padding="24dp">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="24dp">
+            <TextView
+                android:id="@+id/user1Result"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:textSize="32sp"
+                android:fontFamily="@font/poppins"
+                android:lineSpacingExtra="8dp"
+                android:padding="24dp"
+                android:background="@drawable/speech_bubble_user1"/>
 
-                <TextView
-                    android:id="@+id/user1Result"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:gravity="center"
-                    android:textSize="32sp"
-                    android:fontFamily="@font/poppins"
-                    android:textColor="#2196F3"
-                    android:padding="16dp"/>
+            <com.example.appdev.utils.LoadingDotsView
+                android:id="@+id/user1LoadingDots"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:visibility="gone"/>
 
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/user1SpeakButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_alignParentBottom="true"
-                    android:src="@drawable/ic_mic"
-                    app:fabSize="normal"
-                    app:backgroundTint="#FF5722"
-                    app:tint="@android:color/white"
-                    app:elevation="0dp"
-                    android:layout_margin="8dp"/>
-            </RelativeLayout>
-        </androidx.cardview.widget.CardView>
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/user1SpeakButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentBottom="true"
+                android:src="@drawable/ic_mic"
+                app:fabSize="normal"
+                app:backgroundTint="@color/user1_color"
+                app:tint="@android:color/white"
+                app:elevation="0dp"
+                android:layout_margin="8dp"/>
+        </RelativeLayout>
     </LinearLayout>
 </LinearLayout> 

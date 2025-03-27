@@ -35,6 +35,7 @@ import com.example.appdev.utils.CustomNotification;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DataSnapshot;
@@ -70,6 +71,12 @@ import android.widget.LinearLayout;
 import android.view.Gravity;
 
 import com.example.appdev.utils.LoadingDotsView;
+import com.example.appdev.subcontrollers.ChangeTranslatorControl;
+
+import android.view.WindowManager;
+import android.view.ViewGroup.LayoutParams;
+
+import pl.droidsonroids.gif.GifImageView;
 
 public class BasicTranslationFragment extends Fragment {
 
@@ -91,6 +98,7 @@ public class BasicTranslationFragment extends Fragment {
     private TranslationHistoryManager historyManager;
     private TextView currentLanguageLabel;
     private DatabaseReference userRef;
+    private ValueEventListener userValueEventListener;
     private TextView currentTranslatorText;
     private ImageView translatorIcon;
     private View resultCard;
@@ -104,6 +112,9 @@ public class BasicTranslationFragment extends Fragment {
     private int currentDotIndex = 0;
     private Handler dotsHandler = new Handler();
     private Runnable dotsAnimation;
+    private View translatorSection;
+    private ChangeTranslatorControl translatorControl;
+    private GifImageView translatingAnimation;
 
     @Nullable
     @Override
@@ -164,37 +175,79 @@ public class BasicTranslationFragment extends Fragment {
         btnTranslate.setVisibility(hasText ? View.VISIBLE : View.GONE);
         btnClear.setVisibility(hasText ? View.VISIBLE : View.GONE);
 
-        // Get current user's language and translator from Firebase
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
-        
-        userRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                User currentUser = snapshot.getValue(User.class);
-                if (currentUser != null && currentUser.getLanguage() != null) {
-                    Variables.userLanguage = currentUser.getLanguage();
-                    currentLanguageLabel.setText(Variables.userLanguage);
-                    
-                    // Update spinner with filtered languages
-                    if (outputLanguageSelection != null) {
-                        setupLanguageSpinners();
+        // Check if this is a guest user
+        if ("guest".equals(Variables.userUID)) {
+            // For guest users, use the values already set in Variables
+            currentLanguageLabel.setText(Variables.userLanguage);
+            setupLanguageSpinners();
+            TranslatorType translatorType = TranslatorType.fromId(Variables.userTranslator);
+            currentTranslatorText.setText(translatorType.getDisplayName());
+            translatorIcon.setImageResource(translatorType.getIconResourceId());
+            
+            // Add click listener to allow guest users to change their source language
+            View languageCard = view.findViewById(R.id.languageCard);
+            if (languageCard != null) {
+                languageCard.setOnClickListener(v -> showLanguageSelectionDialog());
+            } else {
+                // If languageCard is not found, add click listener directly to the label
+                currentLanguageLabel.setOnClickListener(v -> showLanguageSelectionDialog());
+            }
+            
+            // Disable translator selection for guest users
+            View translatorSection = view.findViewById(R.id.translatorSection);
+            if (translatorSection != null) {
+                translatorSection.setClickable(false);
+                translatorSection.setFocusable(false);
+                // Add visual indication that it's disabled
+                translatorSection.setAlpha(0.7f);
+            }
+        }
+        // Get current user's language and translator from Firebase for regular users
+        else if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+            
+            userValueEventListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    User currentUser = snapshot.getValue(User.class);
+                    if (currentUser != null && currentUser.getLanguage() != null) {
+                        Variables.userLanguage = currentUser.getLanguage();
+                        currentLanguageLabel.setText(Variables.userLanguage);
+                        
+                        // Update spinner with filtered languages
+                        if (outputLanguageSelection != null) {
+                            setupLanguageSpinners();
+                        }
+
+                        // Update translator text and icon based on user's selected translator
+                        TranslatorType translatorType = TranslatorType.fromId(currentUser.getTranslator());
+                        currentTranslatorText.setText(translatorType.getDisplayName());
+                        translatorIcon.setImageResource(translatorType.getIconResourceId());
                     }
-
-                    // Update translator text and icon based on user's selected translator
-                    TranslatorType translatorType = TranslatorType.fromId(currentUser.getTranslator());
-                    currentTranslatorText.setText(translatorType.getDisplayName());
-                    translatorIcon.setImageResource(translatorType.getIconResourceId());
                 }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                // Handle error
-                CustomNotification.showNotification(requireActivity(), 
-                    "Failed to load user language and translator info", false);
-            }
-        });
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    // Only show notification if we're still attached to an activity
+                    // AND the user is still logged in (not just logging out)
+                    if (isAdded() && getActivity() != null && 
+                        FirebaseAuth.getInstance().getCurrentUser() != null) {
+                        CustomNotification.showNotification(requireActivity(), 
+                            "Failed to load user language and translator info", false);
+                    }
+                }
+            };
+            userRef.addValueEventListener(userValueEventListener);
+        } else {
+            // Set default values if user is not authenticated
+            Variables.userLanguage = "English";
+            currentLanguageLabel.setText(Variables.userLanguage);
+            setupLanguageSpinners();
+            TranslatorType translatorType = TranslatorType.fromId("google");
+            currentTranslatorText.setText(translatorType.getDisplayName());
+            translatorIcon.setImageResource(translatorType.getIconResourceId());
+        }
 
         setListeners(view);
 
@@ -214,6 +267,18 @@ public class BasicTranslationFragment extends Fragment {
         stopTranslationButton.setOnClickListener(v -> stopTranslation());
 
         speechHelper = new SpeechRecognitionHelper(requireActivity());
+
+        // Initialize translator control
+        translatorControl = new ChangeTranslatorControl(this);
+
+        // Initialize translator section and set click listener
+        translatorSection = view.findViewById(R.id.translatorSection);
+        // Only allow regular users to change the translator
+        if (!"guest".equals(Variables.userUID)) {
+            translatorSection.setOnClickListener(v -> showTranslatorSelectionDialog(v));
+        }
+
+        translatingAnimation = view.findViewById(R.id.translatingAnimation);
     }
 
     private void setListeners(View view) {
@@ -273,8 +338,7 @@ public class BasicTranslationFragment extends Fragment {
         });
 
         btnStartConversation.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), ConversationalActivity.class);
-            startActivity(intent);
+            startConversationalMode();
         });
     }
 
@@ -290,40 +354,16 @@ public class BasicTranslationFragment extends Fragment {
         
         // Clear any existing text
         textViewResult.setText("");
-        
-        // Initialize loading dots view if not already added
-        if (loadingDotsView == null) {
-            loadingDotsView = new LoadingDotsView(requireContext());
-            
-            // Find the parent ViewGroup that contains textViewResult
-            ViewGroup resultContainer = (ViewGroup) resultCard.findViewById(R.id.resultContainer);
-            
-            // Add the dots view to the result container
-            if (resultContainer != null) {
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-                params.gravity = Gravity.CENTER;
-                loadingDotsView.setLayoutParams(params);
-                
-                resultContainer.addView(loadingDotsView);
-            }
-        }
-        
-        loadingDotsView.setVisibility(View.VISIBLE);
         textViewResult.setVisibility(View.GONE);
         
-        // Start dots animation
-        loadingDotsView.startAnimation();
+        // Show the GIF animation
+        translatingAnimation.setVisibility(View.VISIBLE);
+        
         isTranslating = true;
     }
 
     private void stopAnimation() {
-        if (loadingDotsView != null) {
-            loadingDotsView.stopAnimation();
-            loadingDotsView.setVisibility(View.GONE);
-        }
+        translatingAnimation.setVisibility(View.GONE);
     }
 
     private void startTranslation() {
@@ -577,12 +617,32 @@ public class BasicTranslationFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopTranslation();
-        stopAnimation();
-        if (speechHelper != null) {
-            speechHelper.destroy();
+        
+        // Remove Firebase listeners - only if not a guest user
+        if (userRef != null && !"guest".equals(Variables.userUID) && FirebaseAuth.getInstance().getCurrentUser() != null) {
+            userRef.removeEventListener(userValueEventListener);
         }
-        dotsHandler.removeCallbacksAndMessages(null);
+        
+        // Stop any ongoing animations
+        if (animationHandler != null && animationRunnable != null) {
+            animationHandler.removeCallbacks(animationRunnable);
+        }
+        
+        // Stop dots animation
+        if (dotsHandler != null && dotsAnimation != null) {
+            dotsHandler.removeCallbacks(dotsAnimation);
+        }
+        
+        // Release speech recognizer
+        if (speechRecognizer != null) {
+            speechRecognizer.destroy();
+            speechRecognizer = null;
+        }
+        
+        // Cancel any ongoing translation
+        if (currentTranslator != null) {
+            currentTranslator.cancel(true);
+        }
     }
 
     // Helper methods to handle translation results
@@ -594,10 +654,6 @@ public class BasicTranslationFragment extends Fragment {
             textViewResult.setTextColor(getResources().getColor(R.color.black));
             textViewResult.setTextSize(38);
             textViewResult.setAlpha(1.0f);
-            
-            if (loadingDotsView != null) {
-                loadingDotsView.setVisibility(View.GONE);
-            }
         }
         saveToHistory(textInput.getText().toString(), translatedText, 
             outputLanguageSelection.getSelectedItem().toString());
@@ -611,4 +667,102 @@ public class BasicTranslationFragment extends Fragment {
         textViewResult.setAlpha(1.0f);
     }
 
+    private void showTranslatorSelectionDialog(View anchorView) {
+        Dialog translatorDialog = new Dialog(requireContext());
+        translatorDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        translatorDialog.setContentView(R.layout.translator_selection_dialog);
+
+        // Get dialog window and set properties
+        Window window = translatorDialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            
+            // Get location of anchor view
+            int[] location = new int[2];
+            anchorView.getLocationInWindow(location);
+            
+            // Configure window layout
+            WindowManager.LayoutParams params = window.getAttributes();
+            params.gravity = Gravity.TOP | Gravity.START;
+            params.x = location[0];
+            params.y = location[1] + anchorView.getHeight();
+            window.setAttributes(params);
+            
+            // Set dialog width to match anchor view width
+            window.setLayout(anchorView.getWidth(), LayoutParams.WRAP_CONTENT);
+        }
+
+        // Get container for translator buttons
+        LinearLayout container = translatorDialog.findViewById(R.id.translatorButtonsContainer);
+        
+        // Setup translator buttons using the control
+        translatorControl.setupTranslatorButtons(container, translatorDialog);
+
+        translatorDialog.show();
+    }
+
+    private void startConversationalMode() {
+        View rootView = getView();
+        if (rootView != null) {
+            // Disable interaction immediately
+            rootView.setClickable(false);
+            rootView.setEnabled(false);
+            
+            // Use ViewPropertyAnimator for smoother fade out
+            rootView.animate()
+                   .alpha(0f)
+                   .setDuration(300)
+                   .withEndAction(() -> {
+                       Intent intent = new Intent(requireContext(), ConversationalActivity.class);
+                       startActivity(intent);
+                       requireActivity().overridePendingTransition(0, 0);
+                   })
+                   .start();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        View rootView = getView();
+        if (rootView != null) {
+            // Reset alpha and enable interaction
+            rootView.setAlpha(1f);
+            rootView.setEnabled(true);
+            rootView.setClickable(true);
+        }
+    }
+
+    private void showLanguageSelectionDialog() {
+        Dialog languageDialog = new Dialog(requireContext());
+        languageDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        languageDialog.setContentView(R.layout.language_selection_dialog);
+
+        // Get dialog window and set properties
+        Window window = languageDialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, 
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        // Get container for language buttons
+        LinearLayout container = languageDialog.findViewById(R.id.languageButtonsContainer);
+        
+        // Setup language buttons
+        List<String> languages = Languages.getAllLanguages();
+        for (String language : languages) {
+            View languageButton = LayoutInflater.from(requireContext()).inflate(R.layout.language_button, container, false);
+            ((TextView) languageButton.findViewById(R.id.languageText)).setText(language);
+            languageButton.setOnClickListener(v -> {
+                Variables.userLanguage = language;
+                currentLanguageLabel.setText(language);
+                setupLanguageSpinners();
+                languageDialog.dismiss();
+            });
+            container.addView(languageButton);
+        }
+
+        languageDialog.show();
+    }
 }

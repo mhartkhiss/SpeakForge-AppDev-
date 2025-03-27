@@ -64,7 +64,8 @@
         <activity
             android:name=".ConversationalActivity"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppDev.NoActionBar"/>
         <activity
             android:name=".SplashActivity"
             android:exported="true"

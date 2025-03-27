@@ -86,8 +86,11 @@ public class ContactSettingsActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                CustomNotification.showNotification(ContactSettingsActivity.this,
-                    "Failed to load settings", false);
+                // Only show notification if the user is still logged in
+                if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                    CustomNotification.showNotification(ContactSettingsActivity.this,
+                        "Failed to load settings", false);
+                }
             }
         });
 

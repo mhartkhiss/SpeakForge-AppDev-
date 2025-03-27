@@ -2,6 +2,7 @@ package com.example.appdev.adapters;
 
 import android.content.Context;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +29,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -256,70 +265,119 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 return;
             }
 
-            // Get the current message text
-            String currentMessage = textViewMessage.getText().toString();
             String messageId = message.getMessageId();
 
+            // Hide any visible original messages
             for (TextView textView : visibleOriginalMessages) {
                 textView.setVisibility(View.GONE);
             }
             visibleOriginalMessages.clear();
 
-            List<String> messageVariations = new ArrayList<>();
-            if (message.getMessageVar1() == null && 
-                !textViewMessage.getText().toString().equals("......")) {
-                String textMessage = message.getMessageOG();
-                String textLanguage = Variables.userLanguage;
+            // Check if we have existing variations
+            if (message.getMessageVar1() != null && message.getMessageVar2() != null && message.getMessageVar3() != null) {
+                // Get current message text
+                String currentMessage = textViewMessage.getText().toString();
+                List<String> variations = new ArrayList<>();
                 
-                // Show loading animation
-                textViewMessage.setVisibility(View.GONE);
-                loadingDots.setVisibility(View.VISIBLE);
-                loadingDots.startAnimation();
+                variations.add(message.getMessageVar1().replace("\"", ""));
+                variations.add(message.getMessageVar2().replace("\"", ""));
+                variations.add(message.getMessageVar3().replace("\"", ""));
 
-                RegenerateMessageTranslation regenerateMessageTranslation = 
-                    new RegenerateMessageTranslation(context);
-                regenerateMessageTranslation.setOnTranslationRegeneratedListener(newTranslation -> {
-                    textViewMessage.setText(newTranslation);
-                    textViewMessage.setVisibility(View.VISIBLE);
-                    loadingDots.setVisibility(View.GONE);
-                    loadingDots.stopAnimation();
-                });
-                regenerateMessageTranslation.regenerate(textMessage, message.getMessageId(), 
-                    textLanguage);
+                // Find current variation index and switch to next
+                int currentIndex = variations.indexOf(currentMessage);
+                String nextVariation;
+                if (currentIndex == variations.size() - 1 || currentIndex == -1) {
+                    nextVariation = variations.get(0);
+                } else {
+                    nextVariation = variations.get(currentIndex + 1);
+                }
+
+                // Update message in Firebase
+                messagesRef.child(Variables.roomId)
+                    .child(messageId)
+                    .child("message")
+                    .setValue(nextVariation.replace("\"", ""));
                 return;
             }
 
-            if (message.getMessageVar1() != null) {
-                messageVariations.add(message.getMessageVar1().replace("\"", ""));
-            }
-            if (message.getMessageVar2() != null) {
-                messageVariations.add(message.getMessageVar2().replace("\"", ""));
-            }
-            if (message.getMessageVar3() != null) {
-                messageVariations.add(message.getMessageVar3().replace("\"", ""));
-            }
+            // If no variations exist, show loading and make API request
+            textViewMessage.setVisibility(View.GONE);
+            loadingDots.setVisibility(View.VISIBLE);
+            loadingDots.startAnimation();
 
-            if (!messageVariations.isEmpty()) {
-                int currentIndex = messageVariations.indexOf(currentMessage);
+            // Get source language from Firebase if it exists
+            messagesRef.child(Variables.roomId).child(messageId).child("sourceLanguage")
+                .get().addOnCompleteListener(task -> {
+                    String sourceLanguage;
+                    if (task.isSuccessful() && task.getResult() != null && task.getResult().getValue() != null) {
+                        sourceLanguage = task.getResult().getValue(String.class);
+                    } else {
+                        sourceLanguage = "auto"; // Default to auto if not found
+                    }
 
-                String nextVariation;
-                if (currentIndex == messageVariations.size() - 1) {
-                    // If the current message is the last variation in the list, select the first variation
-                    nextVariation = messageVariations.get(0);
-                } else {
-                    // Otherwise, select the next variation in the list
-                    nextVariation = messageVariations.get(currentIndex + 1);
-                }
+                    // Prepare the request body
+                    JSONObject requestBody = new JSONObject();
+                    try {
+                        requestBody.put("text", message.getMessageOG());
+                        requestBody.put("source_language", sourceLanguage);
+                        requestBody.put("target_language", Variables.userLanguage);
+                        requestBody.put("mode", "multiple");
+                        requestBody.put("model", Variables.userTranslator.toLowerCase());
+                        requestBody.put("room_id", Variables.roomId);
+                        requestBody.put("message_id", messageId);
 
-                // Check if roomId and messageId are not null
-                if (roomId != null && messageId != null) {
-                    // Update the message in the Firebase database
-                    nextVariation = nextVariation.replace("\"", "");
-                    messagesRef.child(roomId).child(messageId).child("message").setValue(nextVariation);
-                } else {
-                    Log.e("ChatAdapter", "Room ID or Message ID is null");
-                }
-            }
+                        // Make the API request
+                        String apiUrl = Variables.API_TRANSLATE_DB_URL;
+                        
+                        new AsyncTask<Void, Void, Boolean>() {
+                            @Override
+                            protected Boolean doInBackground(Void... voids) {
+                                try {
+                                    URL url = new URL(apiUrl);
+                                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                                    conn.setRequestMethod("POST");
+                                    conn.setRequestProperty("Content-Type", "application/json");
+                                    conn.setDoOutput(true);
+
+                                    // Send request body
+                                    try (OutputStream os = conn.getOutputStream()) {
+                                        byte[] input = requestBody.toString().getBytes("utf-8");
+                                        os.write(input, 0, input.length);
+                                    }
+
+                                    return conn.getResponseCode() == HttpURLConnection.HTTP_OK;
+                                } catch (Exception e) {
+                                    Log.e("ChatAdapter", "Error making API request: " + e.getMessage());
+                                    return false;
+                                }
+                            }
+
+                            @Override
+                            protected void onPostExecute(Boolean success) {
+                                // Hide loading animation
+                                loadingDots.setVisibility(View.GONE);
+                                loadingDots.stopAnimation();
+                                textViewMessage.setVisibility(View.VISIBLE);
+
+                                if (!success) {
+                                    Toast.makeText(context, 
+                                        "Failed to regenerate translation", 
+                                        Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }.execute();
+
+                    } catch (JSONException e) {
+                        Log.e("ChatAdapter", "Error creating request body: " + e.getMessage());
+                        // Hide loading animation
+                        loadingDots.setVisibility(View.GONE);
+                        loadingDots.stopAnimation();
+                        textViewMessage.setVisibility(View.VISIBLE);
+                        Toast.makeText(context, 
+                            "Failed to regenerate translation", 
+                            Toast.LENGTH_SHORT).show();
+                    }
+                });
         }
 
         private void loadProfileImage(String senderId) {
@@ -409,11 +467,13 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
             removeTranslationItem.setOnClickListener(v -> {
                 if (roomId != null && message.getMessageId() != null) {
-                    // Update the message in Firebase to the original message
-                    messagesRef.child(roomId)
-                            .child(message.getMessageId())
-                            .child("message")
-                            .setValue(message.getMessageOG());
+                    // Update the message in Firebase to the original message and remove variations
+                    DatabaseReference messageRef = messagesRef.child(roomId)
+                            .child(message.getMessageId());
+                    messageRef.child("message").setValue(message.getMessageOG());
+                    messageRef.child("messageVar1").removeValue();
+                    messageRef.child("messageVar2").removeValue();
+                    messageRef.child("messageVar3").removeValue();
                 }
                 popupWindow.dismiss();
             });
