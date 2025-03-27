@@ -22,10 +22,16 @@ public class Translation_Gemini extends AsyncTask<String, Void, String> {
     
     private String targetLanguage;
     private TranslationListener listener;
+    private boolean isFormalMode;
 
     public Translation_Gemini(String targetLanguage, TranslationListener listener) {
+        this(targetLanguage, listener, false);
+    }
+
+    public Translation_Gemini(String targetLanguage, TranslationListener listener, boolean isFormalMode) {
         this.targetLanguage = targetLanguage;
         this.listener = listener;
+        this.isFormalMode = isFormalMode;
     }
 
     @Override
@@ -75,20 +81,29 @@ public class Translation_Gemini extends AsyncTask<String, Void, String> {
             JSONArray userParts = new JSONArray();
             JSONObject textPart = new JSONObject();
 
+            // Define formality instructions based on mode
+            String formalityInstruction = isFormalMode ? 
+                "Use formal language appropriate for academic or professional contexts. Avoid slang, contractions, casual expressions, and filter out any profanity or inappropriate language completely." : 
+                "Preserve any slang or explicit words from the original text.";
+
             // Create the prompt based on the openAiPrompt setting
             String prompt;
             if (Variables.openAiPrompt == 1) {
                 prompt = String.format(
                     "You are a direct translator. If the input is not in %s, silently detect the actual language and translate from that language instead. " +
                     "Translate to %s. Output ONLY the translation itself - no explanations, no language detection notes, no additional text. " +
-                    "Preserve any slang or explicit words from the original text. Here is the text to translate: %s", 
-                    Variables.userLanguage, targetLanguage, inputText);
+                    "%s Here is the text to translate: %s", 
+                    Variables.userLanguage, targetLanguage, formalityInstruction, inputText);
             } else {
+                String variationInstruction = isFormalMode ? 
+                    "Use formal language appropriate for academic or professional contexts in all variations. Filter out any profanity or inappropriate language completely." : 
+                    "Include a mix of formality levels in your variations.";
+                    
                 prompt = String.format(
                     "You are a direct translator. If the input is not in %s, silently detect the actual language and translate from that language instead. " +
                     "Translate to %s and provide exactly 3 numbered variations. Output ONLY the translations - no explanations, no language detection notes. " +
-                    "Format: 1. [translation]\\n2. [translation]\\n3. [translation]. Here is the text to translate: %s", 
-                    Variables.userLanguage, targetLanguage, inputText);
+                    "%s Format: 1. [translation]\\n2. [translation]\\n3. [translation]. Here is the text to translate: %s", 
+                    Variables.userLanguage, targetLanguage, variationInstruction, inputText);
             }
 
             textPart.put("text", prompt);

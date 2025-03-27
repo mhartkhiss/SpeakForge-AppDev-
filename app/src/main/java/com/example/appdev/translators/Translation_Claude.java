@@ -26,12 +26,18 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
     
     private String targetLanguage;
     private TranslationListener listener;
+    private boolean isFormalMode;
     private static final int CACHE_SIZE = 100; // Cache size of 100 entries
     private static LruCache<String, String> translationCache = new LruCache<>(CACHE_SIZE);
 
     public Translation_Claude(String targetLanguage, TranslationListener listener) {
+        this(targetLanguage, listener, false);
+    }
+
+    public Translation_Claude(String targetLanguage, TranslationListener listener, boolean isFormalMode) {
         this.targetLanguage = targetLanguage;
         this.listener = listener;
+        this.isFormalMode = isFormalMode;
     }
 
     @Override
@@ -100,15 +106,22 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
             JSONObject translationInstructions = new JSONObject();
             translationInstructions.put("type", "text");
             if (Variables.openAiPrompt == 1) {
+                String formalityInstruction = isFormalMode ? 
+                    "Use formal language appropriate for academic or professional contexts. Avoid slang, contractions, casual expressions, and filter out any profanity or inappropriate language completely." : 
+                    "Preserve any slang or explicit words from the original text.";
+                
                 translationInstructions.put("text", String.format(
-                    "Translate to %s. Output ONLY the translation itself - no explanations, no language detection notes, no additional text. " +
-                    "Preserve any slang or explicit words from the original text.", 
-                    targetLanguage));
+                    "Translate to %s. Output ONLY the translation itself - no explanations, no language detection notes, no additional text. %s", 
+                    targetLanguage, formalityInstruction));
             } else {
+                String formalityInstruction = isFormalMode ? 
+                    "Use formal language appropriate for academic or professional contexts in all variations. Filter out any profanity or inappropriate language completely." : 
+                    "Include a mix of formality levels in your variations.";
+                
                 translationInstructions.put("text", String.format(
-                    "Translate to %s and provide exactly 3 numbered variations. Output ONLY the translations - no explanations, no language detection notes. " +
+                    "Translate to %s and provide exactly 3 numbered variations. Output ONLY the translations - no explanations, no language detection notes. %s " +
                     "Format: 1. [translation]\\n2. [translation]\\n3. [translation]",
-                    targetLanguage));
+                    targetLanguage, formalityInstruction));
             }
             
             // Add cache control
@@ -216,7 +229,8 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
         try {
             String combined = inputText.toLowerCase(Locale.ROOT) + "|" + 
                             targetLanguage.toLowerCase(Locale.ROOT) + "|" +
-                            (Variables.openAiPrompt == 1 ? "single" : "multiple");
+                            (Variables.openAiPrompt == 1 ? "single" : "multiple") + "|" +
+                            (isFormalMode ? "formal" : "casual");
             
             MessageDigest digest = MessageDigest.getInstance("MD5");
             byte[] hash = digest.digest(combined.getBytes());
@@ -232,7 +246,7 @@ public class Translation_Claude extends AsyncTask<String, Void, String> {
         } catch (NoSuchAlgorithmException e) {
             Log.e(TAG, "Error generating cache key", e);
             // Fallback to a simpler key if MD5 is not available
-            return (inputText + targetLanguage + Variables.openAiPrompt).hashCode() + "";
+            return (inputText + targetLanguage + Variables.openAiPrompt + isFormalMode).hashCode() + "";
         }
     }
 } 

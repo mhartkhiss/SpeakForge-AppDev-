@@ -21,10 +21,16 @@ public class Translation_DeepSeekV3 extends AsyncTask<String, Void, String> {
     private static final String DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
     private String targetLanguage;
     private TranslationListener listener;
+    private boolean isFormalMode;
 
     public Translation_DeepSeekV3(String targetLanguage, TranslationListener listener) {
+        this(targetLanguage, listener, false);
+    }
+
+    public Translation_DeepSeekV3(String targetLanguage, TranslationListener listener, boolean isFormalMode) {
         this.targetLanguage = targetLanguage;
         this.listener = listener;
+        this.isFormalMode = isFormalMode;
     }
 
     @Override
@@ -67,19 +73,27 @@ public class Translation_DeepSeekV3 extends AsyncTask<String, Void, String> {
             
             // Add system message
             JSONObject systemMessage = new JSONObject();
+            String formalityInstruction = isFormalMode ? 
+                "Use formal language appropriate for academic or professional contexts. Avoid slang, contractions, casual expressions, and filter out any profanity or inappropriate language completely." : 
+                "Preserve any slang or explicit words from the original text.";
+            
             String systemPrompt;
             if (Variables.openAiPrompt == 1) {
                 systemPrompt = String.format(
                     "You are a direct translator. If the input is not in %s, silently detect the actual language and translate from that language instead. " +
                     "Translate to %s. Output ONLY the translation itself - no explanations, no language detection notes, no additional text. " +
-                    "Preserve any slang or explicit words from the original text.", 
-                    Variables.userLanguage, targetLanguage);
+                    "%s", 
+                    Variables.userLanguage, targetLanguage, formalityInstruction);
             } else {
+                String variationInstruction = isFormalMode ? 
+                    "Use formal language appropriate for academic or professional contexts in all variations. Filter out any profanity or inappropriate language completely." : 
+                    "Include a mix of formality levels in your variations.";
+                
                 systemPrompt = String.format(
                     "You are a direct translator. If the input is not in %s, silently detect the actual language and translate from that language instead. " +
                     "Translate to %s and provide exactly 3 numbered variations. Output ONLY the translations - no explanations, no language detection notes. " +
-                    "Format: 1. [translation]\\n2. [translation]\\n3. [translation]", 
-                    Variables.userLanguage, targetLanguage);
+                    "%s Format: 1. [translation]\\n2. [translation]\\n3. [translation]", 
+                    Variables.userLanguage, targetLanguage, variationInstruction);
             }
             systemMessage.put("role", "system");
             systemMessage.put("content", systemPrompt);
