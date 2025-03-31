@@ -113,6 +113,15 @@ public class GroupChatActivity extends AppCompatActivity {
                     return;
                 }
                 
+                // Check if current user is still a member of the group
+                String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                if (currentGroup.getMembers() == null || !currentGroup.getMembers().containsKey(currentUserId)) {
+                    CustomNotification.showNotification(GroupChatActivity.this, 
+                        "You are no longer a member of this group", false);
+                    finish();
+                    return;
+                }
+                
                 // Update UI with group details
                 TextView textViewGroupName = findViewById(R.id.textViewGroupName);
                 textViewGroupName.setText(currentGroup.getName());
