@@ -252,6 +252,11 @@ public class GroupMemberAdapter extends RecyclerView.Adapter<GroupMemberAdapter.
         getFilter().filter(query);
     }
     
+    // Add this method to update the original list for filtering
+    public void updateOriginalList() {
+        this.membersOriginal = new ArrayList<>(members);
+    }
+    
     private void makeAdmin(User member, boolean isAdmin) {
         DatabaseReference memberRef = FirebaseDatabase.getInstance().getReference("groups")
                 .child(groupId).child("members").child(member.getUserId());

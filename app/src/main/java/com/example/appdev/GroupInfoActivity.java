@@ -320,6 +320,15 @@ public class GroupInfoActivity extends AppCompatActivity {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
         membersList.clear();
         
+        // Handle the case when there are no members
+        if (members.isEmpty()) {
+            adapter.notifyDataSetChanged();
+            return;
+        }
+        
+        // Track how many members we need to load
+        final int[] membersToLoad = {members.size()};
+        
         for (Map.Entry<String, Boolean> member : members.entrySet()) {
             String userId = member.getKey();
             Boolean isAdmin = member.getValue();
@@ -332,7 +341,17 @@ public class GroupInfoActivity extends AppCompatActivity {
                         user.setUserId(userId);
                         user.setAdmin(isAdmin);
                         membersList.add(user);
+                        
+                        // Update the adapter with each new member
                         adapter.notifyDataSetChanged();
+                    }
+                    
+                    // Decrement the counter
+                    membersToLoad[0]--;
+                    
+                    // If all members have been loaded, update the original list for filtering
+                    if (membersToLoad[0] == 0) {
+                        adapter.updateOriginalList();
                     }
                 }
 
@@ -340,6 +359,14 @@ public class GroupInfoActivity extends AppCompatActivity {
                 public void onCancelled(@NonNull DatabaseError error) {
                     CustomNotification.showNotification(GroupInfoActivity.this, 
                         "Failed to load member info", false);
+                    
+                    // Decrement the counter even on error
+                    membersToLoad[0]--;
+                    
+                    // If all members have been processed (even with errors), update the original list
+                    if (membersToLoad[0] == 0) {
+                        adapter.updateOriginalList();
+                    }
                 }
             });
         }
