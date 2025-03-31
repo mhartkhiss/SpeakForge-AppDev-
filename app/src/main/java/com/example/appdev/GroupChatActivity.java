@@ -125,11 +125,13 @@ public class GroupChatActivity extends AppCompatActivity {
                 }
                 
                 // Update UI with group details
-                TextView textViewGroupName = findViewById(R.id.textViewGroupName);
+                // Find views inside the included layout
+                View headerView = findViewById(R.id.includeGroupHeader);
+                TextView textViewGroupName = headerView.findViewById(R.id.textViewGroupName);
                 textViewGroupName.setText(currentGroup.getName());
                 
                 de.hdodenhof.circleimageview.CircleImageView imageViewGroupPicture = 
-                    findViewById(R.id.imageViewGroupPicture);
+                    headerView.findViewById(R.id.imageViewGroupPicture);
                 
                 if (currentGroup.getGroupImageUrl() != null && !currentGroup.getGroupImageUrl().isEmpty()) {
                     Glide.with(GroupChatActivity.this)
@@ -192,12 +194,13 @@ public class GroupChatActivity extends AppCompatActivity {
             }
         });
         
-        // Set up back button
-        ImageView imageViewBack = findViewById(R.id.imageViewBack);
+        // Set up back button and info button in the included header
+        View headerView = findViewById(R.id.includeGroupHeader);
+        ImageView imageViewBack = headerView.findViewById(R.id.imageViewBack);
         imageViewBack.setOnClickListener(v -> finish());
         
         // Set up group info button
-        ImageView buttonInfo = findViewById(R.id.buttonInfo);
+        ImageView buttonInfo = headerView.findViewById(R.id.buttonInfo);
         buttonInfo.setOnClickListener(v -> {
             Intent intent = new Intent(GroupChatActivity.this, GroupInfoActivity.class);
             intent.putExtra("groupId", groupId);

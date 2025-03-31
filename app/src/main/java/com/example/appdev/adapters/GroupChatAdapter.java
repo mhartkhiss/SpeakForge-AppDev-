@@ -180,21 +180,6 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
                     loadingDots.stopAnimation();
                     textViewMessage.setText(message.getMessage());
                 }
-
-                // Change background color based on translation status
-                if (messageCard != null) {
-                    if (message.getMessage() != null && 
-                        message.getMessageOG() != null && 
-                        message.getMessage().equals(message.getMessageOG())) {
-                        // Message is not translated - use light gray
-                        messageCard.setCardBackgroundColor(context
-                            .getResources().getColor(R.color.light_gray));
-                    } else {
-                        // Message is translated - use original orange color
-                        messageCard.setCardBackgroundColor(context
-                            .getResources().getColor(R.color.message_received_bg));
-                    }
-                }
             }
         }
     }
