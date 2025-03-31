@@ -121,6 +121,15 @@ public class AddGroupMembersActivity extends AppCompatActivity {
                     CustomNotification.showNotification(AddGroupMembersActivity.this, 
                         "You are no longer a member of this group", false);
                     finish();
+                    return;
+                }
+                
+                // Check if user is still an admin, only admins can add members
+                Boolean isAdmin = snapshot.getValue(Boolean.class);
+                if (isAdmin == null || !isAdmin) {
+                    CustomNotification.showNotification(AddGroupMembersActivity.this, 
+                        "You no longer have admin privileges for this group", false);
+                    finish();
                 }
             }
 
