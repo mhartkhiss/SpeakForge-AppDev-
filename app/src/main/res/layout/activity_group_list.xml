@@ -4,20 +4,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
+    android:background="@drawable/background"
     tools:context=".GroupListActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
         <!-- Toolbar -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/primary"
-            app:layout_constraintTop_toTopOf="parent">
+            android:background="@color/primary">
 
             <ImageView
                 android:id="@+id/imageViewBack"
@@ -35,8 +35,8 @@
                 android:layout_height="wrap_content"
                 android:text="My Groups"
                 android:textColor="@color/white"
+                android:fontFamily="@font/poppins_semibold"
                 android:textSize="18sp"
-                android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -44,42 +44,39 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Group List -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewGroups"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:clipToPadding="false"
-            android:padding="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/toolbar"
-            tools:listitem="@layout/item_group" />
-
         <!-- Loading & Empty States -->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+            android:layout_gravity="center"
+            android:layout_marginTop="24dp"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/textViewNoGroups"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:fontFamily="@font/poppins"
+            android:gravity="center"
             android:text="You are not part of any groups yet"
-            android:textColor="@color/secondary_text"
+            android:textColor="#757575"
             android:textSize="16sp"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+            android:visibility="gone" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Group List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewGroups"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="4dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp"
+            tools:listitem="@layout/item_group" />
+
+    </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabCreateGroup"
