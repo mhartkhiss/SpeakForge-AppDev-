@@ -43,6 +43,8 @@ public class GroupInfoActivity extends AppCompatActivity {
     private RecyclerView recyclerViewMembers;
     private Button buttonLeaveGroup;
     private FloatingActionButton fabAddMembers;
+    private ValueEventListener adminStatusListener;
+    private DatabaseReference userMemberRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +58,39 @@ public class GroupInfoActivity extends AppCompatActivity {
             finish();
             return;
         }
+        
+        // Set up admin status check
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        userMemberRef = FirebaseDatabase.getInstance().getReference("groups")
+                .child(groupId).child("members").child(currentUserId);
+
+        adminStatusListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // If user is no longer in the group
+                if (!snapshot.exists()) {
+                    CustomNotification.showNotification(GroupInfoActivity.this, 
+                        "You are no longer a member of this group", false);
+                    finish();
+                    return;
+                }
+                
+                // Check admin status - only admins can see the add members button
+                Boolean isAdmin = snapshot.getValue(Boolean.class);
+                if (isAdmin != null && isAdmin) {
+                    fabAddMembers.setVisibility(View.VISIBLE);
+                } else {
+                    fabAddMembers.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                CustomNotification.showNotification(GroupInfoActivity.this, 
+                    "Failed to load admin status", false);
+            }
+        };
+        userMemberRef.addValueEventListener(adminStatusListener);
 
         // Initialize views
         textViewGroupName = findViewById(R.id.textViewGroupName);
@@ -144,7 +179,6 @@ public class GroupInfoActivity extends AppCompatActivity {
                 }
                 
                 // Check if current user is admin and show/hide edit button
-                String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                 ImageView imageViewEdit = findViewById(R.id.imageViewEdit);
                 
                 if (currentGroup.isAdmin(currentUserId)) {
@@ -168,9 +202,6 @@ public class GroupInfoActivity extends AppCompatActivity {
                     textViewMembersCount.setText(memberCount + " " + 
                         (memberCount == 1 ? "Member" : "Members"));
                 }
-                
-                // Show/hide add members button based on admin status
-                fabAddMembers.setVisibility(currentGroup.isAdmin(currentUserId) ? View.VISIBLE : View.GONE);
             }
 
             @Override
@@ -285,5 +316,13 @@ public class GroupInfoActivity extends AppCompatActivity {
                 CustomNotification.showNotification(this, "Failed to delete group messages", false);
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (adminStatusListener != null) {
+            userMemberRef.removeEventListener(adminStatusListener);
+        }
     }
 }

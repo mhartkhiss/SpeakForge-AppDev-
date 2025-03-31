@@ -55,6 +55,8 @@ public class GroupChatActivity extends AppCompatActivity {
     private int previousMessageCount = 0;
     private String currentUserName;
     private String currentUserProfileUrl;
+    private ValueEventListener membershipListener;
+    private DatabaseReference userMemberRef;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -204,6 +206,24 @@ public class GroupChatActivity extends AppCompatActivity {
         
         // Load messages
         loadGroupMessages();
+        
+        // Initialize membership listener
+        userMemberRef = FirebaseDatabase.getInstance().getReference("groups").child(groupId).child("members").child(currentUserId);
+        membershipListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    CustomNotification.showNotification(GroupChatActivity.this, "You are no longer a member of this group", false);
+                    finish();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("GroupChatActivity", "Failed to check membership: " + error.getMessage());
+            }
+        };
+        userMemberRef.addValueEventListener(membershipListener);
     }
     
     private void sendGroupMessage(String messageText) {
@@ -394,6 +414,14 @@ public class GroupChatActivity extends AppCompatActivity {
                 String spokenText = results.get(0);
                 chatBox.setText(spokenText);
             }
+        }
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (membershipListener != null && userMemberRef != null) {
+            userMemberRef.removeEventListener(membershipListener);
         }
     }
 }

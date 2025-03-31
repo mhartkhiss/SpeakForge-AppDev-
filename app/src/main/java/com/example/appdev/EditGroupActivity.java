@@ -23,6 +23,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -48,6 +49,8 @@ public class EditGroupActivity extends AppCompatActivity {
     
     private StorageReference storageReference;
     private DatabaseReference databaseReference;
+    private ValueEventListener adminStatusListener;
+    private DatabaseReference userMemberRef;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +68,7 @@ public class EditGroupActivity extends AppCompatActivity {
         // Initialize Firebase
         storageReference = FirebaseStorage.getInstance().getReference();
         databaseReference = FirebaseDatabase.getInstance().getReference("groups").child(groupId);
+        userMemberRef = FirebaseDatabase.getInstance().getReference("groups").child(groupId).child("members").child(FirebaseAuth.getInstance().getCurrentUser().getUid());
         
         // Initialize views
         editTextGroupName = findViewById(R.id.editTextGroupName);
@@ -89,6 +93,33 @@ public class EditGroupActivity extends AppCompatActivity {
         
         // Load current group data
         loadGroupData();
+        
+        // Add listener for admin status
+        adminStatusListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // If user no longer exists in members or is no longer an admin
+                if (!snapshot.exists()) {
+                    CustomNotification.showNotification(EditGroupActivity.this, 
+                        "You are no longer a member of this group", false);
+                    finish();
+                    return;
+                }
+                
+                Boolean isAdmin = snapshot.getValue(Boolean.class);
+                if (isAdmin == null || !isAdmin) {
+                    CustomNotification.showNotification(EditGroupActivity.this, 
+                        "You no longer have admin privileges for this group", false);
+                    finish();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error
+            }
+        };
+        userMemberRef.addValueEventListener(adminStatusListener);
     }
     
     private void loadGroupData() {
@@ -227,5 +258,14 @@ public class EditGroupActivity extends AppCompatActivity {
                 CustomNotification.showNotification(EditGroupActivity.this, 
                     "Failed to update group: " + e.getMessage(), false);
             });
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up listener
+        if (userMemberRef != null && adminStatusListener != null) {
+            userMemberRef.removeEventListener(adminStatusListener);
+        }
     }
 }
