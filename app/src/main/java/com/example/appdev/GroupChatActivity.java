@@ -49,15 +49,22 @@ public class GroupChatActivity extends AppCompatActivity {
     private ImageButton buttonSend;
     private GroupChatAdapter groupChatAdapter;
     private DatabaseReference groupMessagesRef;
-    private String groupId;
-    private Group currentGroup;
-    private static final int SPEECH_REQUEST_CODE = 1;
-    private int previousMessageCount = 0;
-    private String currentUserName;
-    private String currentUserProfileUrl;
-    private ValueEventListener membershipListener;
+    private DatabaseReference groupRef;
     private DatabaseReference userMemberRef;
     
+    private ValueEventListener groupDetailsListener;
+    private ValueEventListener messagesListener;
+    private ValueEventListener membershipListener;
+    
+    private Group currentGroup;
+    private String groupId;
+    private String currentUserName;
+    private String currentUserProfileUrl;
+    private boolean isAdmin = false;
+    private int previousMessageCount = 0;
+    
+    private static final int SPEECH_REQUEST_CODE = 100;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +88,7 @@ public class GroupChatActivity extends AppCompatActivity {
         // Initialize Firebase Database
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         groupMessagesRef = database.getReference("group_messages");
+        groupRef = database.getReference("groups").child(groupId);
         
         // Get current user's profile information
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -103,10 +111,14 @@ public class GroupChatActivity extends AppCompatActivity {
         });
         
         // Load group details
-        DatabaseReference groupRef = database.getReference("groups").child(groupId);
-        groupRef.addValueEventListener(new ValueEventListener() {
+        groupDetailsListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // Check if activity is still active
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                
                 currentGroup = snapshot.getValue(Group.class);
                 if (currentGroup == null) {
                     CustomNotification.showNotification(GroupChatActivity.this, 
@@ -134,10 +146,13 @@ public class GroupChatActivity extends AppCompatActivity {
                     headerView.findViewById(R.id.imageViewGroupPicture);
                 
                 if (currentGroup.getGroupImageUrl() != null && !currentGroup.getGroupImageUrl().isEmpty()) {
-                    Glide.with(GroupChatActivity.this)
-                        .load(currentGroup.getGroupImageUrl())
-                        .placeholder(R.drawable.group_default_icon)
-                        .into(imageViewGroupPicture);
+                    // Check again if activity is still active before loading image
+                    if (!isFinishing() && !isDestroyed()) {
+                        Glide.with(GroupChatActivity.this)
+                            .load(currentGroup.getGroupImageUrl())
+                            .placeholder(R.drawable.group_default_icon)
+                            .into(imageViewGroupPicture);
+                    }
                 } else {
                     imageViewGroupPicture.setImageResource(R.drawable.group_default_icon);
                 }
@@ -148,8 +163,9 @@ public class GroupChatActivity extends AppCompatActivity {
                 CustomNotification.showNotification(GroupChatActivity.this, 
                     "Failed to load group details", false);
             }
-        });
-
+        };
+        groupRef.addValueEventListener(groupDetailsListener);
+        
         // Initialize views
         recyclerViewGroupChat = findViewById(R.id.recyclerViewGroupChat);
         chatBox = findViewById(R.id.chatBox);
@@ -369,32 +385,37 @@ public class GroupChatActivity extends AppCompatActivity {
     
     private void loadGroupMessages() {
         if (groupId != null) {
-            groupMessagesRef.child(groupId).orderByChild("timestamp")
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        List<GroupMessage> messages = new ArrayList<>();
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            GroupMessage message = snapshot.getValue(GroupMessage.class);
-                            if (message != null) {
-                                messages.add(message);
-                            }
-                        }
-                        groupChatAdapter.setMessages(messages);
-                        
-                        // Only scroll if new messages are added
-                        int newSize = messages.size();
-                        if (newSize > previousMessageCount) {
-                            recyclerViewGroupChat.scrollToPosition(groupChatAdapter.getItemCount() - 1);
-                        }
-                        previousMessageCount = newSize;
+            messagesListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    // Check if activity is still active
+                    if (isFinishing() || isDestroyed()) {
+                        return;
                     }
                     
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        Log.e("GroupChatActivity", "Error loading messages: " + databaseError.getMessage());
+                    List<GroupMessage> messages = new ArrayList<>();
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        GroupMessage message = snapshot.getValue(GroupMessage.class);
+                        if (message != null) {
+                            messages.add(message);
+                        }
                     }
-                });
+                    groupChatAdapter.setMessages(messages);
+                    
+                    // Only scroll if new messages are added
+                    int newSize = messages.size();
+                    if (newSize > previousMessageCount) {
+                        recyclerViewGroupChat.scrollToPosition(groupChatAdapter.getItemCount() - 1);
+                    }
+                    previousMessageCount = newSize;
+                }
+                
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.e("GroupChatActivity", "Error loading messages: " + databaseError.getMessage());
+                }
+            };
+            groupMessagesRef.child(groupId).orderByChild("timestamp").addValueEventListener(messagesListener);
         }
     }
     
@@ -423,8 +444,17 @@ public class GroupChatActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // Clean up all listeners to prevent memory leaks and crashes
         if (membershipListener != null && userMemberRef != null) {
             userMemberRef.removeEventListener(membershipListener);
+        }
+        
+        if (groupDetailsListener != null && groupRef != null) {
+            groupRef.removeEventListener(groupDetailsListener);
+        }
+        
+        if (messagesListener != null && groupMessagesRef != null && groupId != null) {
+            groupMessagesRef.child(groupId).removeEventListener(messagesListener);
         }
     }
 }
