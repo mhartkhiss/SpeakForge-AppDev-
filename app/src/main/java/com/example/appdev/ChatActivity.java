@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
@@ -19,15 +18,8 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
 import com.example.appdev.adapters.ChatAdapter;
-import com.example.appdev.translators.Translation_GoogleTranslate;
-import com.example.appdev.translators.Translation_OpenAI;
-import com.example.appdev.translators.Translation_DeepSeekV3;
-import com.example.appdev.translators.Translation_GPT4;
-import com.example.appdev.translators.Translation_Gemini;
-import com.example.appdev.translators.Translation_Claude;
 import com.example.appdev.models.Message;
 import com.example.appdev.utils.CustomNotification;
 import com.google.firebase.auth.FirebaseAuth;
@@ -44,15 +36,13 @@ import java.util.List;
 import java.util.Locale;
 
 import android.os.AsyncTask;
-import com.example.appdev.translators.TranslatorFactory;
-import com.example.appdev.translators.TranslatorType;
 
 import org.json.JSONObject;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.OutputStream;
 
-public class ConversationModeActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewChat;
     private EditText chatBox;
@@ -207,7 +197,7 @@ public class ConversationModeActivity extends AppCompatActivity {
                     String recipientEmail = snapshot.child("email").getValue(String.class);
                     
                     // Launch ContactSettingsActivity with all user info
-                    Intent intent = new Intent(ConversationModeActivity.this, ContactSettingsActivity.class);
+                    Intent intent = new Intent(ChatActivity.this, ContactSettingsActivity.class);
                     intent.putExtra("username", recipientName);
                     intent.putExtra("email", recipientEmail);
                     intent.putExtra("language", recipientLanguage);
@@ -220,7 +210,7 @@ public class ConversationModeActivity extends AppCompatActivity {
                 public void onCancelled(@NonNull DatabaseError error) {
                     // Only show notification if the user is still logged in
                     if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-                        CustomNotification.showNotification(ConversationModeActivity.this, 
+                        CustomNotification.showNotification(ChatActivity.this,
                             "Failed to load user information", false);
                     }
                 }
@@ -264,7 +254,7 @@ public class ConversationModeActivity extends AppCompatActivity {
 
     public void sendMessage(String message, String targetLanguage) {
         String messageTextOG = message;
-        String roomId = ConversationModeActivity.this.roomId;
+        String roomId = ChatActivity.this.roomId;
 
         // Get the current user ID (sender ID)
         String senderId = FirebaseAuth.getInstance().getCurrentUser().getUid();

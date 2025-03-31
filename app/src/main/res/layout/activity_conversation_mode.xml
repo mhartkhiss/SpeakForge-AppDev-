@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="#E0E0E0"
     android:fitsSystemWindows="true"
-    tools:context=".ConversationModeActivity">
+    tools:context=".ChatActivity">
 
   <include
       android:id="@+id/includeUser"

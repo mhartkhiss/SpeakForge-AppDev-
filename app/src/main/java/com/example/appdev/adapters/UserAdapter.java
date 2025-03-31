@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -16,17 +15,14 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.appdev.ConversationModeActivity;
-import com.example.appdev.ContactSettingsActivity;
+import com.example.appdev.ChatActivity;
 import com.example.appdev.R;
-import com.example.appdev.Variables;
 import com.example.appdev.models.User;
 import com.example.appdev.utils.CustomNotification;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -100,7 +96,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         }
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, ConversationModeActivity.class);
+            Intent intent = new Intent(context, ChatActivity.class);
             intent.putExtra("userId", user.getUserId());
             intent.putExtra("username", user.getUsername());
             intent.putExtra("recipientLanguage", user.getLanguage());
