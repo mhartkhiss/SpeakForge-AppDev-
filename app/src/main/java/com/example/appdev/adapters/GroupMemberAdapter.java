@@ -33,6 +33,7 @@ public class GroupMemberAdapter extends RecyclerView.Adapter<GroupMemberAdapter.
     private String groupId;
     private String currentUserId;
     private boolean isCurrentUserAdmin = false;
+    private String groupCreatorId; // Store the creator ID
 
     public GroupMemberAdapter(Context context, List<User> members, String groupId) {
         this.context = context;
@@ -40,14 +41,20 @@ public class GroupMemberAdapter extends RecyclerView.Adapter<GroupMemberAdapter.
         this.groupId = groupId;
         this.currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         
-        // Check if current user is admin
+        // Get group details including creator
         DatabaseReference groupRef = FirebaseDatabase.getInstance().getReference("groups")
-                .child(groupId).child("members").child(currentUserId);
+                .child(groupId);
         groupRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    Boolean isAdmin = snapshot.getValue(Boolean.class);
+                // Get group creator
+                if (snapshot.child("createdBy").exists()) {
+                    groupCreatorId = snapshot.child("createdBy").getValue(String.class);
+                }
+                
+                // Check if current user is admin
+                if (snapshot.child("members").child(currentUserId).exists()) {
+                    Boolean isAdmin = snapshot.child("members").child(currentUserId).getValue(Boolean.class);
                     isCurrentUserAdmin = isAdmin != null && isAdmin;
                     notifyDataSetChanged();
                 }
@@ -115,6 +122,15 @@ public class GroupMemberAdapter extends RecyclerView.Adapter<GroupMemberAdapter.
         PopupMenu popupMenu = new PopupMenu(context, view);
         popupMenu.inflate(R.menu.group_member_menu);
         
+        // Check if this member is the group creator
+        boolean isGroupCreator = member.getUserId().equals(groupCreatorId);
+        
+        // Disable options for group creator if current user is not the creator
+        if (isGroupCreator && !currentUserId.equals(groupCreatorId)) {
+            popupMenu.getMenu().findItem(R.id.action_make_admin).setEnabled(false);
+            popupMenu.getMenu().findItem(R.id.action_remove_member).setEnabled(false);
+        }
+        
         // Check if member is already admin and update menu item text
         if (member.isAdmin()) {
             popupMenu.getMenu().findItem(R.id.action_make_admin).setTitle("Remove as Admin");
@@ -138,6 +154,12 @@ public class GroupMemberAdapter extends RecyclerView.Adapter<GroupMemberAdapter.
     }
     
     private void toggleAdminStatus(User member) {
+        // Check if this member is the group creator - prevent other admins from changing creator's status
+        if (member.getUserId().equals(groupCreatorId) && !currentUserId.equals(groupCreatorId)) {
+            CustomNotification.showNotification(context, "Cannot change the group owner's admin status", false);
+            return;
+        }
+        
         DatabaseReference memberRef = FirebaseDatabase.getInstance().getReference("groups")
                 .child(groupId).child("members").child(member.getUserId());
         
@@ -159,6 +181,12 @@ public class GroupMemberAdapter extends RecyclerView.Adapter<GroupMemberAdapter.
     }
     
     private void removeMember(User member) {
+        // Check if this member is the group creator - prevent removal of the creator by other admins
+        if (member.getUserId().equals(groupCreatorId) && !currentUserId.equals(groupCreatorId)) {
+            CustomNotification.showNotification(context, "Cannot remove the group owner", false);
+            return;
+        }
+        
         DatabaseReference memberRef = FirebaseDatabase.getInstance().getReference("groups")
                 .child(groupId).child("members").child(member.getUserId());
         
