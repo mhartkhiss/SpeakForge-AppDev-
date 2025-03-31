@@ -16,7 +16,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.appdev.R;
-import com.example.appdev.adapters.UserAdapter;
+import com.example.appdev.adapters.ChatItemAdapter;
+import com.example.appdev.models.ChatItem;
+import com.example.appdev.models.Group;
 import com.example.appdev.models.User;
 import com.example.appdev.utils.CustomNotification;
 import com.google.firebase.auth.FirebaseAuth;
@@ -41,19 +43,22 @@ import androidx.appcompat.widget.PopupMenu;
 public class ChatFragment extends Fragment {
 
     private RecyclerView recyclerViewUsers;
-    private UserAdapter userAdapter;
-    private List<User> userList;
+    private ChatItemAdapter chatItemAdapter;
+    private List<ChatItem> chatItemList;
     private TextView emptyStateText;
     private DatabaseReference messagesRef;
     private DatabaseReference usersRef;
+    private DatabaseReference groupsRef;
+    private DatabaseReference groupMessagesRef;
     private ValueEventListener messagesValueEventListener;
     private ValueEventListener usersValueEventListener;
+    private ValueEventListener groupsValueEventListener;
+    private ValueEventListener groupMessagesValueEventListener;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chat, container, false);
-
         
         return view;
     }
@@ -62,21 +67,21 @@ public class ChatFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize userList and userAdapter
-        userList = new ArrayList<>();
+        // Initialize chat list and adapter
+        chatItemList = new ArrayList<>();
         
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
-            userAdapter = new UserAdapter(userList, requireContext(), currentUser.getUid(), 
-                (view, user) -> {
+            chatItemAdapter = new ChatItemAdapter(chatItemList, requireContext(), currentUser.getUid(), 
+                (view, chatItem) -> {
                     // Show popup menu when three dots is clicked
-                    showPopupMenu(view, user);
+                    showPopupMenu(view, chatItem);
                 });
         } else {
-            userAdapter = new UserAdapter(userList, requireContext(), "", 
-                (view, user) -> {
+            chatItemAdapter = new ChatItemAdapter(chatItemList, requireContext(), "", 
+                (view, chatItem) -> {
                     // Show popup menu when three dots is clicked
-                    showPopupMenu(view, user);
+                    showPopupMenu(view, chatItem);
                 });
         }
     }
@@ -92,10 +97,10 @@ public class ChatFragment extends Fragment {
 
         // Initialize RecyclerView
         recyclerViewUsers.setLayoutManager(new LinearLayoutManager(requireContext()));
-        recyclerViewUsers.setAdapter(userAdapter);
+        recyclerViewUsers.setAdapter(chatItemAdapter);
         
         // Customize SearchView
-        searchViewUsers.setQueryHint("Search users...");
+        searchViewUsers.setQueryHint("Search chats...");
         
         // Add listener to SearchView
         searchViewUsers.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
@@ -107,11 +112,11 @@ public class ChatFragment extends Fragment {
             @Override
             public boolean onQueryTextChange(String newText) {
                 if (newText.trim().isEmpty()) {
-                    // If search is empty, show only users with message history
-                    getUsersFromFirebase();
+                    // If search is empty, show all chats
+                    loadAllChats();
                 } else {
                     // Search in database
-                    searchUsers(newText.toLowerCase());
+                    searchChats(newText.toLowerCase());
                 }
                 return false;
             }
@@ -134,21 +139,11 @@ public class ChatFragment extends Fragment {
             startActivity(new Intent(requireContext(), com.example.appdev.GroupListActivity.class));
         });
 
-        // Get users from Firebase
-        getUsersFromFirebase();
+        // Get chats from Firebase
+        loadAllChats();
     }
 
-    private static class UserWithTimestamp {
-        User user;
-        long lastMessageTime;
-
-        UserWithTimestamp(User user, long lastMessageTime) {
-            this.user = user;
-            this.lastMessageTime = lastMessageTime;
-        }
-    }
-
-    private void getUsersFromFirebase() {
+    private void loadAllChats() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
             // Handle case when user is not authenticated
@@ -165,7 +160,21 @@ public class ChatFragment extends Fragment {
         String currentUserId = currentUser.getUid();
         messagesRef = FirebaseDatabase.getInstance().getReference("messages");
         usersRef = FirebaseDatabase.getInstance().getReference("users");
+        groupsRef = FirebaseDatabase.getInstance().getReference("groups");
+        groupMessagesRef = FirebaseDatabase.getInstance().getReference("group_messages");
 
+        // Clear the existing list
+        chatItemList.clear();
+        
+        // Load direct chats
+        loadDirectChats(currentUserId);
+        
+        // Load group chats
+        loadGroupChats(currentUserId);
+    }
+    
+    private void loadDirectChats(String currentUserId) {
+        // Handle direct chats (one-on-one)
         messagesValueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -204,11 +213,11 @@ public class ChatFragment extends Fragment {
                     }
                 }
 
-                // Now get user details and sort by timestamp
+                // Now get user details and create chat items
                 usersValueEventListener = new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        List<UserWithTimestamp> usersWithTimestamp = new ArrayList<>();
+                        List<ChatItem> directChats = new ArrayList<>();
                         
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                             User user = snapshot.getValue(User.class);
@@ -221,31 +230,23 @@ public class ChatFragment extends Fragment {
                                 user.setLastMessage(messageInfo.first);
                                 user.setLastMessageTime(messageInfo.second);
                                 
-                                usersWithTimestamp.add(new UserWithTimestamp(
-                                    user, messageInfo.second
-                                ));
+                                // Create chat item from user
+                                ChatItem chatItem = new ChatItem(user);
+                                directChats.add(chatItem);
                             }
                         }
 
-                        // Sort by timestamp (newest first)
-                        Collections.sort(usersWithTimestamp, (u1, u2) -> 
-                            Long.compare(u2.lastMessageTime, u1.lastMessageTime));
-
-                        // Update userList
-                        userList.clear();
-                        for (UserWithTimestamp uwt : usersWithTimestamp) {
-                            userList.add(uwt.user);
+                        // Add direct chats to the chatItemList
+                        synchronized (chatItemList) {
+                            // Remove existing direct chats to avoid duplicates
+                            chatItemList.removeIf(item -> !item.isGroup());
+                            
+                            // Add the direct chats
+                            chatItemList.addAll(directChats);
+                            
+                            // Sort by timestamp (newest first)
+                            sortAndUpdateList();
                         }
-
-                        // Update UI
-                        emptyStateText.setVisibility(userList.isEmpty() ? View.VISIBLE : View.GONE);
-                        recyclerViewUsers.setVisibility(userList.isEmpty() ? View.GONE : View.VISIBLE);
-                        
-                        if (userList.isEmpty()) {
-                            emptyStateText.setText("No conversations yet\nStart chatting with someone!");
-                        }
-                        
-                        userAdapter.notifyDataSetChanged();
                     }
 
                     @Override
@@ -271,8 +272,137 @@ public class ChatFragment extends Fragment {
         };
         messagesRef.addValueEventListener(messagesValueEventListener);
     }
+    
+    private void loadGroupChats(String currentUserId) {
+        // Create persistent value event listener for group messages
+        groupMessagesValueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                // Map to store group IDs to their last message info
+                Map<String, GroupLastMessageInfo> groupLastMessageMap = new HashMap<>();
+                
+                // Process all group messages to find the latest one for each group
+                for (DataSnapshot groupSnapshot : dataSnapshot.getChildren()) {
+                    String groupId = groupSnapshot.getKey();
+                    if (groupId != null) {
+                        long latestTimestamp = 0;
+                        String lastMessage = "";
+                        String lastMessageSenderId = "";
+                        
+                        // Loop through all messages in the group
+                        for (DataSnapshot messageSnapshot : groupSnapshot.getChildren()) {
+                            Long timestamp = messageSnapshot.child("timestamp").getValue(Long.class);
+                            if (timestamp != null && timestamp > latestTimestamp) {
+                                latestTimestamp = timestamp;
+                                lastMessage = messageSnapshot.child("message").getValue(String.class);
+                                lastMessageSenderId = messageSnapshot.child("senderId").getValue(String.class);
+                            }
+                        }
+                        
+                        // If we found messages, store the info
+                        if (latestTimestamp > 0) {
+                            groupLastMessageMap.put(groupId, new GroupLastMessageInfo(
+                                lastMessage,
+                                lastMessageSenderId,
+                                latestTimestamp
+                            ));
+                        }
+                    }
+                }
+                
+                // Now get group details and create chat items with the last message info
+                groupsValueEventListener = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        List<ChatItem> groupChats = new ArrayList<>();
+                        
+                        for (DataSnapshot groupSnapshot : dataSnapshot.getChildren()) {
+                            Group group = groupSnapshot.getValue(Group.class);
+                            String groupId = groupSnapshot.getKey();
+                            
+                            // Check if current user is a member of this group
+                            if (group != null && groupId != null && group.getMembers() != null && 
+                                    group.getMembers().containsKey(currentUserId)) {
+                                
+                                // Update the group with last message info if available
+                                GroupLastMessageInfo lastMessageInfo = groupLastMessageMap.get(groupId);
+                                if (lastMessageInfo != null) {
+                                    group.setLastMessage(lastMessageInfo.getMessage());
+                                    group.setLastMessageSenderId(lastMessageInfo.getSenderId());
+                                    group.setLastMessageTime(lastMessageInfo.getTimestamp());
+                                } else {
+                                    // No messages yet
+                                    group.setLastMessage("No messages yet");
+                                    group.setLastMessageSenderId("");
+                                    group.setLastMessageTime(group.getCreatedAt()); // Use creation time for sorting
+                                }
+                                
+                                // Create chat item from group
+                                ChatItem chatItem = new ChatItem(group);
+                                groupChats.add(chatItem);
+                            }
+                        }
+                        
+                        // Add group chats to the chatItemList
+                        synchronized (chatItemList) {
+                            // Remove existing group chats to avoid duplicates
+                            chatItemList.removeIf(ChatItem::isGroup);
+                            
+                            // Add the group chats
+                            chatItemList.addAll(groupChats);
+                            
+                            // Sort by timestamp (newest first)
+                            sortAndUpdateList();
+                        }
+                    }
 
-    private void searchUsers(String searchText) {
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        if (isAdded() && getActivity() != null && 
+                            FirebaseAuth.getInstance().getCurrentUser() != null) {
+                            CustomNotification.showNotification(requireActivity(), 
+                                "Failed to load group chats", false);
+                        }
+                    }
+                };
+                groupsRef.addValueEventListener(groupsValueEventListener);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                if (isAdded() && getActivity() != null && 
+                    FirebaseAuth.getInstance().getCurrentUser() != null) {
+                    CustomNotification.showNotification(requireActivity(), 
+                        "Failed to load group messages", false);
+                }
+            }
+        };
+        
+        // Add persistent listener for group messages that will update when new messages arrive
+        groupMessagesRef.addValueEventListener(groupMessagesValueEventListener);
+    }
+    
+    private void sortAndUpdateList() {
+        // Sort chats by last message time (newest first)
+        Collections.sort(chatItemList, (item1, item2) -> 
+            Long.compare(item2.getLastMessageTime(), item1.getLastMessageTime()));
+        
+        // Update UI
+        if (isAdded() && getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                emptyStateText.setVisibility(chatItemList.isEmpty() ? View.VISIBLE : View.GONE);
+                recyclerViewUsers.setVisibility(chatItemList.isEmpty() ? View.GONE : View.VISIBLE);
+                
+                if (chatItemList.isEmpty()) {
+                    emptyStateText.setText("No conversations yet\nStart chatting with someone!");
+                }
+                
+                chatItemAdapter.notifyDataSetChanged();
+            });
+        }
+    }
+
+    private void searchChats(String searchText) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
             // Handle case when user is not authenticated
@@ -296,6 +426,10 @@ public class ChatFragment extends Fragment {
         if (usersRef == null) {
             usersRef = FirebaseDatabase.getInstance().getReference("users");
         }
+        
+        if (groupsRef == null) {
+            groupsRef = FirebaseDatabase.getInstance().getReference("groups");
+        }
 
         // First get users with message history
         messagesRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -303,6 +437,7 @@ public class ChatFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 Set<String> userIdsWithMessages = new HashSet<>();
                 
+                // Get all user IDs with message history
                 for (DataSnapshot chatSnapshot : dataSnapshot.getChildren()) {
                     String roomId = chatSnapshot.getKey();
                     if (roomId != null) {
@@ -321,10 +456,11 @@ public class ChatFragment extends Fragment {
                 usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        userList.clear();
-                        List<User> searchResults = new ArrayList<>();
-                        List<User> messageHistoryResults = new ArrayList<>();
+                        chatItemList.clear();
+                        List<ChatItem> userSearchResults = new ArrayList<>();
+                        List<ChatItem> userMessageHistoryResults = new ArrayList<>();
 
+                        // Search users
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                             User user = snapshot.getValue(User.class);
                             if (user != null && user.getUserId() != null && 
@@ -336,36 +472,71 @@ public class ChatFragment extends Fragment {
                                     user.getEmail().toLowerCase().contains(searchText);
                                 
                                 if (matchesSearch) {
+                                    // Create chat item
+                                    ChatItem chatItem = new ChatItem(user);
+                                    
                                     if (userIdsWithMessages.contains(user.getUserId())) {
                                         // Users with message history appear first
-                                        messageHistoryResults.add(user);
+                                        userMessageHistoryResults.add(chatItem);
                                     } else {
-                                        // Users without message history appear last
-                                        searchResults.add(user);
+                                        // Users without message history appear later
+                                        userSearchResults.add(chatItem);
                                     }
                                 }
                             }
                         }
-
-                        // Combine results with message history users first
-                        userList.addAll(messageHistoryResults);
-                        userList.addAll(searchResults);
-
-                        // Update UI
-                        emptyStateText.setVisibility(userList.isEmpty() ? View.VISIBLE : View.GONE);
-                        recyclerViewUsers.setVisibility(userList.isEmpty() ? View.GONE : View.VISIBLE);
                         
-                        if (userList.isEmpty()) {
-                            emptyStateText.setText("No users found");
-                        }
-                        
-                        userAdapter.notifyDataSetChanged();
+                        // Search groups
+                        groupsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                List<ChatItem> groupSearchResults = new ArrayList<>();
+                                
+                                for (DataSnapshot groupSnapshot : dataSnapshot.getChildren()) {
+                                    Group group = groupSnapshot.getValue(Group.class);
+                                    
+                                    // Check if current user is a member and name matches search
+                                    if (group != null && group.getMembers() != null && 
+                                            group.getMembers().containsKey(currentUserId) &&
+                                            group.getName() != null &&
+                                            group.getName().toLowerCase().contains(searchText)) {
+                                        
+                                        // Create chat item from group
+                                        ChatItem chatItem = new ChatItem(group);
+                                        groupSearchResults.add(chatItem);
+                                    }
+                                }
+                                
+                                // Combine results: message history users, groups, then other users
+                                chatItemList.addAll(userMessageHistoryResults);
+                                chatItemList.addAll(groupSearchResults);
+                                chatItemList.addAll(userSearchResults);
+                                
+                                // Update UI
+                                emptyStateText.setVisibility(chatItemList.isEmpty() ? View.VISIBLE : View.GONE);
+                                recyclerViewUsers.setVisibility(chatItemList.isEmpty() ? View.GONE : View.VISIBLE);
+                                
+                                if (chatItemList.isEmpty()) {
+                                    emptyStateText.setText("No chats found");
+                                }
+                                
+                                chatItemAdapter.notifyDataSetChanged();
+                            }
+                            
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+                                // Handle error
+                                if (isAdded() && getActivity() != null) {
+                                    CustomNotification.showNotification(requireActivity(), 
+                                        "Failed to search groups", false);
+                                }
+                            }
+                        });
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
-                        if (isAdded() && getActivity() != null && 
-                            FirebaseAuth.getInstance().getCurrentUser() != null) {
+                        if (isAdded() && getActivity() != null) {
                             CustomNotification.showNotification(requireActivity(), 
                                 "Failed to search users", false);
                         }
@@ -375,52 +546,172 @@ public class ChatFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                if (isAdded() && getActivity() != null && 
-                    FirebaseAuth.getInstance().getCurrentUser() != null) {
+                if (isAdded() && getActivity() != null) {
                     CustomNotification.showNotification(requireActivity(), 
-                        "Failed to load chat rooms", false);
+                        "Failed to search messages", false);
                 }
             }
         });
     }
 
-    private void showPopupMenu(View view, User user) {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            CustomNotification.showNotification(requireActivity(), 
-                "Please log in to perform this action", false);
-            return;
+    private void showPopupMenu(View view, ChatItem chatItem) {
+        PopupMenu popup = new PopupMenu(requireContext(), view);
+        
+        if (chatItem.isGroup()) {
+            // Group chat options
+            popup.inflate(R.menu.chat_group_context_menu);
+            
+            popup.setOnMenuItemClickListener(item -> {
+                int itemId = item.getItemId();
+                if (itemId == R.id.action_view_group_info) {
+                    // Open group info
+                    Intent intent = new Intent(requireContext(), com.example.appdev.GroupInfoActivity.class);
+                    intent.putExtra("groupId", chatItem.getId());
+                    startActivity(intent);
+                    return true;
+                }
+                return false;
+            });
+        } else {
+            // Direct chat options
+            popup.inflate(R.menu.chat_user_context_menu);
+            
+            popup.setOnMenuItemClickListener(item -> {
+                int itemId = item.getItemId();
+                if (itemId == R.id.action_view_profile) {
+                    // Show user profile
+                    showUserProfile(chatItem);
+                    return true;
+                } else if (itemId == R.id.action_delete_chat) {
+                    // Delete conversation
+                    deleteConversation(chatItem);
+                    return true;
+                }
+                return false;
+            });
         }
         
-        PopupMenu popup = new PopupMenu(requireContext(), view);
-        popup.getMenuInflater().inflate(R.menu.chat_user_context_menu, popup.getMenu());
-
-        popup.setOnMenuItemClickListener(item -> {
-            int itemId = item.getItemId();
-            if (itemId == R.id.action_view_profile) {
-                // Handle view profile action
-                return true;
-            } else if (itemId == R.id.action_delete_chat) {
-                // Handle delete conversation action
-                return true;
-            }
-            return false;
-        });
-
         popup.show();
+    }
+
+    private void showUserProfile(ChatItem chatItem) {
+        // Create a bottom sheet dialog to show user profile
+        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheetDialog = 
+            new com.google.android.material.bottomsheet.BottomSheetDialog(requireContext());
+        View bottomSheetView = LayoutInflater.from(requireContext()).inflate(
+            R.layout.user_profile_bottom_sheet, null);
+        
+        // Initialize views
+        de.hdodenhof.circleimageview.CircleImageView profileImage = bottomSheetView.findViewById(R.id.profileImage);
+        TextView username = bottomSheetView.findViewById(R.id.username);
+        TextView email = bottomSheetView.findViewById(R.id.email);
+        TextView language = bottomSheetView.findViewById(R.id.language);
+        
+        // Set user data (need to fetch full user data from Firebase)
+        usersRef.child(chatItem.getId()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User user = snapshot.getValue(User.class);
+                if (user != null) {
+                    username.setText(user.getUsername());
+                    email.setText(user.getEmail());
+                    language.setText("Language: " + user.getLanguage());
+                    
+                    if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().equals("none")) {
+                        com.bumptech.glide.Glide.with(requireContext())
+                            .load(user.getProfileImageUrl())
+                            .placeholder(R.drawable.default_userpic)
+                            .into(profileImage);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                CustomNotification.showNotification(requireContext(), 
+                    "Failed to load user profile", false);
+            }
+        });
+        
+        bottomSheetDialog.setContentView(bottomSheetView);
+        bottomSheetDialog.show();
+    }
+
+    private void deleteConversation(ChatItem chatItem) {
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Delete Conversation")
+            .setMessage("Are you sure you want to delete this conversation? This action cannot be undone.")
+            .setPositiveButton("Delete", (dialog, which) -> {
+                // Get current user ID
+                String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                
+                // Create room ID
+                String[] ids = {currentUserId, chatItem.getId()};
+                java.util.Arrays.sort(ids);
+                String roomId = ids[0] + "_" + ids[1];
+                
+                // Delete conversation
+                FirebaseDatabase.getInstance().getReference("messages")
+                    .child(roomId)
+                    .removeValue()
+                    .addOnSuccessListener(aVoid -> {
+                        CustomNotification.showNotification(requireActivity(), 
+                            "Conversation deleted", true);
+                        loadAllChats(); // Reload the chat list
+                    })
+                    .addOnFailureListener(e -> {
+                        CustomNotification.showNotification(requireActivity(), 
+                            "Failed to delete conversation", false);
+                    });
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         
-        // Remove any Firebase listeners if they exist
-        if (messagesRef != null) {
+        // Clean up listeners
+        if (messagesRef != null && messagesValueEventListener != null) {
             messagesRef.removeEventListener(messagesValueEventListener);
         }
         
-        if (usersRef != null) {
+        if (usersRef != null && usersValueEventListener != null) {
             usersRef.removeEventListener(usersValueEventListener);
+        }
+        
+        if (groupsRef != null && groupsValueEventListener != null) {
+            groupsRef.removeEventListener(groupsValueEventListener);
+        }
+        
+        // Also store reference to group messages listener for cleanup
+        if (groupMessagesRef != null && groupMessagesValueEventListener != null) {
+            groupMessagesRef.removeEventListener(groupMessagesValueEventListener);
+        }
+    }
+
+    private static class GroupLastMessageInfo {
+        private final String message;
+        private final String senderId;
+        private final long timestamp;
+        
+        public GroupLastMessageInfo(String message, String senderId, long timestamp) {
+            this.message = message;
+            this.senderId = senderId;
+            this.timestamp = timestamp;
+        }
+        
+        public String getMessage() {
+            return message;
+        }
+        
+        public String getSenderId() {
+            return senderId;
+        }
+        
+        public long getTimestamp() {
+            return timestamp;
         }
     }
 }

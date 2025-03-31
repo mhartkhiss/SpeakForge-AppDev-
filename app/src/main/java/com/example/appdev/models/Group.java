@@ -12,6 +12,9 @@ public class Group {
     private Map<String, Boolean> members;  // Map of userId to boolean (true means admin)
     private String groupImageUrl;
     private String defaultLanguage;
+    private String lastMessage;
+    private long lastMessageTime;
+    private String lastMessageSenderId;
 
     public Group() {
         // Default constructor required for Firebase
@@ -121,5 +124,29 @@ public class Group {
 
     public void setDefaultLanguage(String defaultLanguage) {
         this.defaultLanguage = defaultLanguage;
+    }
+    
+    public String getLastMessage() {
+        return lastMessage;
+    }
+
+    public void setLastMessage(String lastMessage) {
+        this.lastMessage = lastMessage;
+    }
+
+    public long getLastMessageTime() {
+        return lastMessageTime;
+    }
+
+    public void setLastMessageTime(long lastMessageTime) {
+        this.lastMessageTime = lastMessageTime;
+    }
+
+    public String getLastMessageSenderId() {
+        return lastMessageSenderId;
+    }
+
+    public void setLastMessageSenderId(String lastMessageSenderId) {
+        this.lastMessageSenderId = lastMessageSenderId;
     }
 }
