@@ -45,6 +45,8 @@ public class AddGroupMembersActivity extends AppCompatActivity {
     private HashMap<String, Boolean> selectedUsers;
     private String groupId;
     private List<String> currentMemberIds;
+    private ValueEventListener membershipListener;
+    private DatabaseReference groupMemberRef;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +103,43 @@ public class AddGroupMembersActivity extends AppCompatActivity {
         
         // Load current members first, then load potential contacts to add
         loadCurrentMembers();
+        
+        // Set up real-time listener to check if user is still a group member
+        setupMembershipListener();
+    }
+    
+    private void setupMembershipListener() {
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        groupMemberRef = FirebaseDatabase.getInstance().getReference("groups")
+                .child(groupId).child("members").child(currentUserId);
+                
+        membershipListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // If the user's entry is removed from the members list, close the activity
+                if (!snapshot.exists()) {
+                    CustomNotification.showNotification(AddGroupMembersActivity.this, 
+                        "You are no longer a member of this group", false);
+                    finish();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error if needed
+            }
+        };
+        
+        groupMemberRef.addValueEventListener(membershipListener);
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up listener when activity is destroyed
+        if (groupMemberRef != null && membershipListener != null) {
+            groupMemberRef.removeEventListener(membershipListener);
+        }
     }
     
     private void loadCurrentMembers() {
