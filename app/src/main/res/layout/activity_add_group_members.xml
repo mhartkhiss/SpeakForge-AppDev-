@@ -124,14 +124,21 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonAdd"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_margin="8dp"
             android:text="Add Members"
             android:textColor="#FFFFFF"
-            android:backgroundTint="@color/primary"
-            app:cornerRadius="8dp"
+            android:textSize="14sp"
+            android:fontFamily="@font/poppins"
+            android:paddingHorizontal="16dp"
+            app:cornerRadius="24dp"
+            app:elevation="2dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:backgroundTint="#2196F3"
             app:icon="@drawable/ic_add_person"
             app:iconTint="#FFFFFF"
+            app:iconGravity="textStart"
             style="@style/Widget.MaterialComponents.Button" />
     </androidx.cardview.widget.CardView>
 

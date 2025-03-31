@@ -170,13 +170,19 @@
                 android:layout_height="36dp"
                 android:text="Add"
                 android:textSize="12sp"
+                android:fontFamily="@font/poppins"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:textAllCaps="false"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                app:backgroundTint="#2196F3"
                 app:icon="@drawable/ic_add_person"
                 app:iconSize="16dp"
                 app:iconGravity="textStart"
+                app:iconTint="#FFFFFF"
                 app:cornerRadius="18dp"
+                app:elevation="2dp"
                 style="@style/Widget.MaterialComponents.Button" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
