@@ -37,28 +37,33 @@ speakforge-appdev/
 │           ├── messageVar2: String (optional)
 │           └── messageVar3: String (optional)
 │
-└── groups/
-    └── {groupId}/
-        ├── groupId: String
-        ├── name: String
-        ├── description: String
-        ├── createdAt: Long (timestamp)
-        ├── createdBy: String (userId)
-        ├── groupImageUrl: String
-        ├── defaultLanguage: String
-        ├── members/
-        │   └── {userId}: Boolean (true means admin)
-        └── messages/
-            └── {messageId}/
-                ├── messageId: String
-                ├── message: String (translated message)
-                ├── messageOG: String (original message)
-                ├── timestamp: Long
-                ├── senderId: String
-                ├── senderName: String
-                ├── senderProfileUrl: String
-                ├── senderLanguage: String
-                └── sourceLanguage: String
+├── groups/
+│   └── {groupId}/
+│       ├── groupId: String
+│       ├── name: String
+│       ├── description: String
+│       ├── createdAt: Long
+│       ├── createdBy: String (userId of creator)
+│       ├── groupImageUrl: String
+│       ├── lastMessage: String
+│       ├── lastMessageTime: Long
+│       ├── lastMessageSenderId: String
+│       └── members/
+│           └── {userId}: Boolean (true if admin, false if regular member)
+│
+├── group_messages/
+│   └── {groupId}/
+│       └── {messageId}/
+│           ├── messageId: String
+│           ├── message: String (translated message)
+│           ├── messageOG: String (original message)
+│           ├── timestamp: Long
+│           ├── senderId: String
+│           ├── senderName: String
+│           ├── sourceLanguage: String
+│           └── translations/
+│               └── {language}: String (translated message in specific language)
+│
 ```
 
 ## Details of Key Nodes
@@ -98,28 +103,36 @@ The `messages` node organizes messages by conversation room:
 
 ### Groups
 
-The `groups` node stores information about group chats:
+The `groups` node stores information about group conversations:
 
 - **groupId**: Unique identifier for the group
 - **name**: Display name of the group
-- **description**: Group description text
+- **description**: Description of the group (optional)
 - **createdAt**: Timestamp of group creation
 - **createdBy**: User ID of the group creator
 - **groupImageUrl**: URL to the group's image (stored in Firebase Storage)
-- **defaultLanguage**: Default language for the group
-- **members**: Map of user IDs to boolean values (true indicates admin status)
-  - **{userId}**: Boolean (true means admin, false means regular member)
-- **messages**: Collection of messages in the group
-  - **messageId**: Unique identifier for each message in the group
-    - **messageId**: String identifier of the message
-    - **message**: The translated message content
-    - **messageOG**: The original message content before translation
-    - **timestamp**: When the message was sent
-    - **senderId**: User ID of the message sender
-    - **senderName**: Display name of the message sender
-    - **senderProfileUrl**: URL to the sender's profile image
-    - **senderLanguage**: Preferred language of the sender
-    - **sourceLanguage**: The language of the original message
+- **lastMessage**: Last message sent in the group
+- **lastMessageTime**: Timestamp of the last message
+- **lastMessageSenderId**: User ID of the last message sender
+- **members**: Map of user IDs to boolean values
+  - **{userId}**: Boolean value indicating admin status (true = admin, false = regular member)
+
+### Group Messages
+
+The `group_messages` node organizes messages by group conversation:
+
+- **groupId**: Unique identifier for a group
+- **messageId**: Unique identifier for each message in the group
+  - **messageId**: String identifier of the message
+  - **message**: The translated message content
+  - **messageOG**: The original message content before translation
+  - **timestamp**: When the message was sent
+  - **senderId**: User ID of the message sender
+  - **senderName**: Display name of the message sender
+  - **sourceLanguage**: The language of the original message
+  - **translations**: Map of language codes to translated message strings
+    - **{language}**: String of the message translated into the specific language
+
 
 ## Local Application Data
 
