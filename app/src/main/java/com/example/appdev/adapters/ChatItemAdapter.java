@@ -53,6 +53,9 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ChatIt
         // Show group icon indicator for group chats
         holder.imageViewGroupIndicator.setVisibility(chatItem.isGroup() ? View.VISIBLE : View.GONE);
         
+        // Show "Group" label for group chats
+        holder.textViewGroupLabel.setVisibility(chatItem.isGroup() ? View.VISIBLE : View.GONE);
+        
         // Format last message
         if (chatItem.getLastMessage() != null && !chatItem.getLastMessage().isEmpty()) {
             String displayMessage;
@@ -129,6 +132,7 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ChatIt
     static class ChatItemViewHolder extends RecyclerView.ViewHolder {
         private final TextView textViewUsername;
         private final TextView textViewEmail;
+        private final TextView textViewGroupLabel;
         private final ImageView imageViewProfilePic;
         private final ImageView buttonMore;
         private final ImageView imageViewGroupIndicator;
@@ -137,27 +141,10 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ChatIt
             super(itemView);
             textViewUsername = itemView.findViewById(R.id.textViewUsername);
             textViewEmail = itemView.findViewById(R.id.textViewEmail);
+            textViewGroupLabel = itemView.findViewById(R.id.textViewGroupLabel);
             imageViewProfilePic = itemView.findViewById(R.id.imageViewUserPicture);
             buttonMore = itemView.findViewById(R.id.buttonMore);
-            
-            // Add a group indicator icon
-            imageViewGroupIndicator = new ImageView(itemView.getContext());
-            imageViewGroupIndicator.setImageResource(R.drawable.ic_group);
-            imageViewGroupIndicator.setId(View.generateViewId());
-            
-            // Add the group indicator to the layout
-            ViewGroup parentLayout = itemView.findViewById(R.id.parentLayout);
-            if (parentLayout != null) {
-                ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT);
-                params.width = 24;
-                params.height = 24;
-                imageViewGroupIndicator.setLayoutParams(params);
-                
-                // Add to the layout
-                parentLayout.addView(imageViewGroupIndicator);
-            }
+            imageViewGroupIndicator = itemView.findViewById(R.id.imageViewGroupIndicator);
         }
     }
 }

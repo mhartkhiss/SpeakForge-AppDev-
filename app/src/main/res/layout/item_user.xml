@@ -37,6 +37,17 @@
                 android:layout_gravity="end|bottom"
                 android:background="@drawable/online_indicator_background"
                 android:visibility="gone" />
+                
+            <ImageView
+                android:id="@+id/imageViewGroupIndicator"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="end|top"
+                android:background="@drawable/circle_primary_background"
+                android:padding="3dp"
+                android:src="@drawable/ic_group"
+                android:visibility="gone"
+                app:tint="#FFFFFF" />
         </FrameLayout>
 
         <LinearLayout
@@ -47,15 +58,37 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/textViewUsername"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:fontFamily="@font/poppins_semibold"
-                android:maxLines="1"
-                android:textColor="#212121"
-                android:textSize="16sp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/textViewUsername"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:maxLines="1"
+                    android:textColor="#212121"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/textViewGroupLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/rounded_background_blue"
+                    android:fontFamily="@font/poppins"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:text="Group"
+                    android:textColor="#FFFFFF"
+                    android:textSize="10sp"
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/textViewEmail"
