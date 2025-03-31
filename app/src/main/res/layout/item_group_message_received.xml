@@ -1,77 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingStart="8dp"
-    android:paddingTop="4dp"
-    android:paddingEnd="8dp"
-    android:paddingBottom="4dp">
+    android:orientation="vertical"
+    android:padding="6dp">
 
-    <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/imageViewProfile"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@drawable/default_userpic"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/textViewSenderName"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="Sender Name"
-        android:textColor="@color/primary_text"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toEndOf="@id/imageViewProfile"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:gravity="start"
+        android:orientation="horizontal">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardMessage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="4dp"
-        app:cardBackgroundColor="@color/message_received_bg"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp"
-        app:layout_constraintStart_toEndOf="@id/imageViewProfile"
-        app:layout_constraintTop_toBottomOf="@id/textViewSenderName">
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/imageViewProfile"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
+            android:src="@drawable/default_userpic"
+            app:civ_border_width="0dp" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp">
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/textViewMessage"
+                android:id="@+id/textViewSenderName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:maxWidth="260dp"
-                android:text="Message text"
-                android:textColor="@color/white"
-                android:textSize="16sp" />
+                android:layout_marginStart="4dp"
+                android:layout_marginBottom="2dp"
+                android:text="Sender Name"
+                android:textColor="#616161"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="visible" />
 
-            <com.example.appdev.utils.LoadingDotsView
-                android:id="@+id/loadingDots"
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="gone" />
+                android:layout_marginEnd="80dp"
+                app:cardBackgroundColor="#03A9F4"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
 
-            <TextView
-                android:id="@+id/textViewOriginalMessage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxWidth="260dp"
-                android:text="Original message"
-                android:visibility="gone"
-                android:textColor="@color/text_gray"
-                android:textSize="14sp"
-                android:layout_marginTop="4dp" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/textViewMessage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins"
+                        android:maxWidth="260dp"
+                        android:paddingStart="16dp"
+                        android:paddingTop="10dp"
+                        android:paddingEnd="16dp"
+                        android:paddingBottom="10dp"
+                        android:text="Message text"
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp" />
+
+                    <com.example.appdev.utils.LoadingDotsView
+                        android:id="@+id/loadingDots"
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:paddingVertical="8dp"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:visibility="gone"
+                        app:dotColor="#FFFFFF"
+                        app:dotSize="8sp"
+                        app:animationDuration="400"
+                        app:animationDelay="300"
+                        app:scaleMultiplier="2.0"/>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:id="@+id/textViewOriginalMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="52dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="80dp"
+        android:fontFamily="@font/poppins"
+        android:text="Original message"
+        android:textColor="@color/text_gray"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+</LinearLayout>

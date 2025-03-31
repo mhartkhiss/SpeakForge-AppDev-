@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/parentLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="@drawable/background"
+    app:cardBackgroundColor="#F5F5F5"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:background="@drawable/contact_bg"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Back button container with rounded background -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="12dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#EEEEEE">
+
+            <ImageView
+                android:id="@+id/imageViewBack"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_back"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Group Picture -->
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/imageViewGroupPicture"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/group_default_icon"
+            app:civ_border_width="2dp"
+            app:civ_border_color="@color/transparent"
+            android:layout_marginEnd="12dp"/>
+
+        <!-- Group Info (Name and Participants) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textViewGroupName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/poppins"
+                android:maxLines="1"
+                android:text="Group Name"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/textViewParticipants"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/poppins"
+                android:maxLines="1"
+                android:text="Tap to see participants"
+                android:textColor="@color/grey"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Info button -->
+        <ImageView
+            android:id="@+id/buttonInfo"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="4dp"
+            android:src="@drawable/ic_info"
+            android:padding="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            app:tint="#757575" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
