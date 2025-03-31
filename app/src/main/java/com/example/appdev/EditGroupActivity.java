@@ -18,11 +18,11 @@ import android.widget.ProgressBar;
 import com.bumptech.glide.Glide;
 import com.example.appdev.models.Group;
 import com.example.appdev.utils.CustomNotification;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -103,6 +103,15 @@ public class EditGroupActivity extends AppCompatActivity {
                 if (currentGroup == null) {
                     CustomNotification.showNotification(EditGroupActivity.this, 
                         "Group not found", false);
+                    finish();
+                    return;
+                }
+                
+                // Check if current user is still a member of the group
+                String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                if (currentGroup.getMembers() == null || !currentGroup.getMembers().containsKey(currentUserId)) {
+                    CustomNotification.showNotification(EditGroupActivity.this, 
+                        "You are no longer a member of this group", false);
                     finish();
                     return;
                 }

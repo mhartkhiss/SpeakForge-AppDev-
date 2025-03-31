@@ -108,14 +108,34 @@ public class AddGroupMembersActivity extends AppCompatActivity {
         
         // Get current members of the group
         DatabaseReference groupRef = FirebaseDatabase.getInstance().getReference("groups")
-                .child(groupId).child("members");
+                .child(groupId);
                 
         groupRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // Check if current user is still a member of the group
+                String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                Map<String, Boolean> members = null;
+                
+                if (snapshot.child("members").exists()) {
+                    for (DataSnapshot memberSnapshot : snapshot.child("members").getChildren()) {
+                        if (members == null) {
+                            members = new HashMap<>();
+                        }
+                        members.put(memberSnapshot.getKey(), memberSnapshot.getValue(Boolean.class));
+                    }
+                }
+                
+                if (members == null || !members.containsKey(currentUserId)) {
+                    CustomNotification.showNotification(AddGroupMembersActivity.this, 
+                        "You are no longer a member of this group", false);
+                    finish();
+                    return;
+                }
+                
                 currentMemberIds.clear();
                 
-                for (DataSnapshot memberSnapshot : snapshot.getChildren()) {
+                for (DataSnapshot memberSnapshot : snapshot.child("members").getChildren()) {
                     currentMemberIds.add(memberSnapshot.getKey());
                 }
                 
