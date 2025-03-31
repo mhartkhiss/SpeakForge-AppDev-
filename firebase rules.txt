@@ -1,0 +1,177 @@
+{
+  "rules": {
+    "apikeys": {
+      "$apikeyId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+
+     "messages": {
+      // Allow listing of rooms
+      ".read": "auth !== null",
+      
+      "$roomId": {
+        // Allow read/write if authenticated
+        ".read": "auth !== null",
+        ".write": "auth !== null",
+        
+        "$messageId": {
+          // Basic validation for new messages
+          ".validate": "newData.hasChildren(['message', 'senderId', 'timestamp'])",
+          
+          "senderId": {
+            ".validate": "newData.isString() && newData.val() === auth.uid"
+          },
+          
+          "message": {
+            ".validate": "newData.isString()"
+          },
+          
+          "messageOG": {
+            ".validate": "newData.isString()"
+          },
+          
+          "timestamp": {
+            ".validate": "newData.isNumber()"
+          }
+        }
+      }
+    },
+
+    // Group chat rules
+    "groups": {
+      // Allow authenticated users to read group list
+      ".read": "auth !== null",
+      
+      "$groupId": {
+        // Allow read access if user is a member of the group
+        ".read": "auth !== null && (root.child('groups').child($groupId).child('members').child(auth.uid).exists())",
+        
+        // Allow write if creating a new group (data doesn't exist yet) or if the user is an admin
+        ".write": "auth !== null && (!data.exists() || root.child('groups').child($groupId).child('members').child(auth.uid).val() === true)",
+        
+        // Validate group structure
+        ".validate": "newData.hasChildren(['groupId', 'name', 'createdBy', 'createdAt', 'members'])",
+        
+        "groupId": {
+          ".validate": "newData.isString() && newData.val() === $groupId"
+        },
+        
+        "name": {
+          ".validate": "newData.isString()"
+        },
+        
+        "description": {
+          ".validate": "newData.isString()"
+        },
+        
+        "createdBy": {
+          ".validate": "newData.isString() && (newData.val() === auth.uid || data.val() === newData.val())"
+        },
+        
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        
+        "members": {
+          "$userId": {
+            // Members are stored as userId: boolean pairs (true means admin)
+            ".validate": "newData.isBoolean()",
+            // Only admins can modify member list or current user can remove themselves
+            ".write": "auth !== null && (root.child('groups').child($groupId).child('members').child(auth.uid).val() === true || $userId === auth.uid)"
+          }
+        }
+      }
+    },
+    
+    "group_messages": {
+      // Allow authenticated users to read all group messages
+      ".read": "auth !== null",
+      // Allow authenticated users to write to group messages
+      ".write": "auth !== null",
+      
+      "$groupId": {
+        // More specific rules for group messages can be added here if needed
+        // But for now, we'll use a simpler approach to get it working
+        ".read": "auth !== null",
+        ".write": "auth !== null",
+        
+        "$messageId": {
+          // Basic validation for group messages
+          ".validate": "newData.hasChildren(['message', 'senderId', 'timestamp'])",
+          
+          "senderId": {
+            ".validate": "newData.isString() && newData.val() === auth.uid"
+          },
+          
+          "senderName": {
+            ".validate": "newData.isString()"
+          },
+          
+          "senderProfileUrl": {
+            ".validate": "newData.isString()"
+          },
+          
+          "message": {
+            ".validate": "newData.isString()"
+          },
+          
+          "messageOG": {
+            ".validate": "newData.isString()"
+          },
+          
+          "timestamp": {
+            ".validate": "newData.isNumber()"
+          }
+        }
+      }
+    },
+
+    "status": {
+      
+      ".read": "auth !== null",
+      "$uid": {
+        ".write": "$uid === auth.uid"
+      }
+    },
+
+    "users": {
+      // Allow authenticated users to read all users
+      ".read": "auth !== null",
+      
+      "$uid": {
+        // Only allow users to modify their own data
+        ".write": "$uid === auth.uid",
+        
+        // Validate user data structure
+        ".validate": "newData.hasChildren(['userId', 'email'])",
+        
+        "userId": {
+          ".validate": "newData.isString() && newData.val() === $uid"
+        },
+        
+        "email": {
+          ".validate": "newData.isString()"
+        },
+        
+        "username": {
+          ".validate": "newData.isString()"
+        },
+        
+        "language": {
+          ".validate": "newData.isString()"
+        },
+        
+        "translator": {
+          ".validate": "newData.isString()"
+        },
+        
+        "profileImageUrl": {
+          ".validate": "newData.isString()"
+        }
+      }
+    }
+  }
+}

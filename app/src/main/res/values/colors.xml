@@ -26,4 +26,14 @@
     <color name="user2_color_dark">#1976D2</color>
     <color name="formal_mode_bg">#3F51B5</color>
     <color name="casual_mode_bg">#FF9800</color>
+    
+    <!-- Added missing colors for group chat feature -->
+    <color name="primary">#FF6200EE</color>
+    <color name="primary_dark">#FF3700B3</color>
+    <color name="primary_light">#E9D8FD</color>
+    <color name="background">#F9F9F9</color>
+    <color name="primary_text">#333333</color>
+    <color name="secondary_text">#757575</color>
+    <color name="text_gray">#888888</color>
+    <color name="message_sent_bg">#E3F2FD</color>
 </resources>

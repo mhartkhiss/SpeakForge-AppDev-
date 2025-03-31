@@ -1,6 +1,6 @@
 package com.example.appdev.utils;
 
-import android.app.Activity;
+import android.content.Context;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,10 +13,9 @@ import com.example.appdev.R;
 
 public class CustomNotification {
     
-    public static void showNotification(Activity activity, String message, boolean isSuccess) {
+    public static void showNotification(Context context, String message, boolean isSuccess) {
         // Inflate the custom layout
-        View layout = LayoutInflater.from(activity).inflate(R.layout.custom_notification, 
-            (ViewGroup) activity.findViewById(android.R.id.content).getRootView(), false);
+        View layout = LayoutInflater.from(context).inflate(R.layout.custom_notification, null);
 
         // Get views
         ImageView icon = layout.findViewById(R.id.notificationIcon);
@@ -27,10 +26,10 @@ public class CustomNotification {
         text.setText(message);
 
         // Create and show toast
-        Toast toast = new Toast(activity);
+        Toast toast = new Toast(context);
         toast.setGravity(Gravity.TOP | Gravity.FILL_HORIZONTAL, 0, 100);
         toast.setDuration(Toast.LENGTH_SHORT);
         toast.setView(layout);
         toast.show();
     }
-} 
+}

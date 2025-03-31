@@ -1,5 +1,6 @@
 package com.example.appdev.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -87,6 +88,7 @@ public class ChatFragment extends Fragment {
         recyclerViewUsers = view.findViewById(R.id.recyclerViewUsers);
         androidx.appcompat.widget.SearchView searchViewUsers = view.findViewById(R.id.searchViewUsers);
         emptyStateText = view.findViewById(R.id.emptyStateText);
+        View buttonGroupChat = view.findViewById(R.id.buttonGroupChat);
 
         // Initialize RecyclerView
         recyclerViewUsers.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -113,6 +115,23 @@ public class ChatFragment extends Fragment {
                 }
                 return false;
             }
+        });
+
+        // Set up group chat button click listener
+        buttonGroupChat.setOnClickListener(v -> {
+            // Make sure user is not a guest user
+            String currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+                    FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+            boolean isGuestUser = "guest".equals(currentUserId);
+            
+            if (isGuestUser) {
+                CustomNotification.showNotification(requireContext(), 
+                        "You need to be logged in to use group chats", false);
+                return;
+            }
+            
+            // Navigate to GroupListActivity
+            startActivity(new Intent(requireContext(), com.example.appdev.GroupListActivity.class));
         });
 
         // Get users from Firebase

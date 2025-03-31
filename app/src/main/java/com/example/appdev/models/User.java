@@ -12,6 +12,7 @@ public class User {
     private String translator;
     private String lastMessage;
     private long lastMessageTime;
+    private boolean isAdmin; // Added for group chat functionality
 
     public User() {
         // Default constructor required for Firebase
@@ -28,6 +29,7 @@ public class User {
         this.createdAt = createdAt;
         this.lastLoginDate = lastLoginDate;
         this.translator = translator;
+        this.isAdmin = false;
     }
 
     public String getUserId() {
@@ -60,6 +62,11 @@ public class User {
 
     public void setProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
+    }
+
+    // Added to maintain compatibility with code that uses getProfilePictureUrl()
+    public String getProfilePictureUrl() {
+        return profileImageUrl;
     }
 
     public void setLanguage(String language) {
@@ -117,5 +124,13 @@ public class User {
     public void setLastMessageTime(long lastMessageTime) {
         this.lastMessageTime = lastMessageTime;
     }
+    
+    // Added for group chat functionality
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+    
+    public void setAdmin(boolean isAdmin) {
+        this.isAdmin = isAdmin;
+    }
 }
-
