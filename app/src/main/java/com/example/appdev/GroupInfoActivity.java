@@ -119,7 +119,6 @@ public class GroupInfoActivity extends AppCompatActivity {
         // Set up add members button
         fabAddMembers.setOnClickListener(v -> {
             if (currentGroup != null) {
-                String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                 if (currentGroup.isAdmin(currentUserId)) {
                     // Open add members activity
                     Intent intent = new Intent(GroupInfoActivity.this, AddGroupMembersActivity.class);
