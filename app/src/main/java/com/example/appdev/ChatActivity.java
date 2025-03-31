@@ -66,7 +66,7 @@ public class ChatActivity extends AppCompatActivity {
         // Add this line to adjust resize mode
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         
-        setContentView(R.layout.activity_conversation_mode);
+        setContentView(R.layout.activity_chat);
 
         // Retrieve recipient information from intent extras
         String recipientName = getIntent().getStringExtra("username");
