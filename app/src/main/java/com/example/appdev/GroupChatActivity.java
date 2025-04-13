@@ -20,6 +20,7 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -234,6 +235,12 @@ public class GroupChatActivity extends AppCompatActivity {
             Intent intent = new Intent(GroupChatActivity.this, GroupInfoActivity.class);
             intent.putExtra("groupId", groupId);
             startActivity(intent);
+        });
+        
+        // Set up the menu button
+        ImageView buttonMenu = headerView.findViewById(R.id.buttonMenu);
+        buttonMenu.setOnClickListener(v -> {
+            showPopupMenu(buttonMenu);
         });
         
         // Load messages
@@ -530,6 +537,45 @@ public class GroupChatActivity extends AppCompatActivity {
         if (messagesListener != null && groupMessagesRef != null && groupId != null) {
             groupMessagesRef.child(groupId).removeEventListener(messagesListener);
         }
+    }
+
+    /**
+     * Show popup menu with options for translation mode and context settings
+     */
+    private void showPopupMenu(View view) {
+        PopupMenu popupMenu = new PopupMenu(this, view);
+        popupMenu.inflate(R.menu.menu_group_chat);
+        
+        // Handle menu item clicks
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            
+            if (id == R.id.action_group_info) {
+                // Launch group info activity
+                Intent intent = new Intent(this, GroupInfoActivity.class);
+                intent.putExtra("GROUP_ID", groupId);
+                startActivity(intent);
+                return true;
+            } else if (id == R.id.action_translation_mode) {
+                // Show translation mode dialog
+                TranslationModeManager.showTranslationModeDialog(this, (isFormalMode) -> {
+                    // Translation mode changed
+                    TranslationModeManager.saveToPreferences(this, isFormalMode);
+                });
+                return true;
+            } else if (id == R.id.action_context_settings) {
+                // Show context settings dialog
+                TranslationContextManager.showContextSettingsDialog(this, (isEnabled, contextDepth) -> {
+                    // Context settings changed
+                    TranslationContextManager.saveToPreferences(this, isEnabled, contextDepth);
+                });
+                return true;
+            }
+            
+            return false;
+        });
+        
+        popupMenu.show();
     }
 
     @Override

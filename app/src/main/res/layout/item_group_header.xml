@@ -95,5 +95,18 @@
             android:focusable="true"
             app:tint="#757575" />
 
+        <!-- Menu button -->
+        <ImageView
+            android:id="@+id/buttonMenu"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="4dp"
+            android:src="@drawable/ic_more_vert"
+            android:padding="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            app:tint="#757575" />
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>
