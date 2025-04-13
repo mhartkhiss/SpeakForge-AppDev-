@@ -130,6 +130,7 @@ The `group_messages` node organizes messages by group conversation:
   - **senderId**: User ID of the message sender
   - **senderName**: Display name of the message sender
   - **sourceLanguage**: The language of the original message
+  - **translationMode**: Formal or casual
   - **translations**: Map of language codes to translated message strings
     - **{language}**: String of the message translated into the specific language
 

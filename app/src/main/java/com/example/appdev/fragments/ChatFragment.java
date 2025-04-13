@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.appdev.R;
+import com.example.appdev.Variables;
 import com.example.appdev.adapters.ChatItemAdapter;
 import com.example.appdev.models.ChatItem;
 import com.example.appdev.models.Group;
@@ -288,6 +289,8 @@ public class ChatFragment extends Fragment {
                         long latestTimestamp = 0;
                         String lastMessage = "";
                         String lastMessageSenderId = "";
+                        String lastMessageOG = "";
+                        Map<String, String> lastMessageTranslations = new HashMap<>();
                         
                         // Loop through all messages in the group
                         for (DataSnapshot messageSnapshot : groupSnapshot.getChildren()) {
@@ -296,6 +299,19 @@ public class ChatFragment extends Fragment {
                                 latestTimestamp = timestamp;
                                 lastMessage = messageSnapshot.child("message").getValue(String.class);
                                 lastMessageSenderId = messageSnapshot.child("senderId").getValue(String.class);
+                                lastMessageOG = messageSnapshot.child("messageOG").getValue(String.class);
+                                
+                                // Get translations if available
+                                DataSnapshot translationsSnapshot = messageSnapshot.child("translations");
+                                if (translationsSnapshot.exists()) {
+                                    for (DataSnapshot translationSnapshot : translationsSnapshot.getChildren()) {
+                                        String language = translationSnapshot.getKey();
+                                        String translatedText = translationSnapshot.getValue(String.class);
+                                        if (language != null && translatedText != null) {
+                                            lastMessageTranslations.put(language, translatedText);
+                                        }
+                                    }
+                                }
                             }
                         }
                         
@@ -304,7 +320,9 @@ public class ChatFragment extends Fragment {
                             groupLastMessageMap.put(groupId, new GroupLastMessageInfo(
                                 lastMessage,
                                 lastMessageSenderId,
-                                latestTimestamp
+                                latestTimestamp,
+                                lastMessageOG,
+                                lastMessageTranslations
                             ));
                         }
                     }
@@ -327,14 +345,27 @@ public class ChatFragment extends Fragment {
                                 // Update the group with last message info if available
                                 GroupLastMessageInfo lastMessageInfo = groupLastMessageMap.get(groupId);
                                 if (lastMessageInfo != null) {
-                                    group.setLastMessage(lastMessageInfo.getMessage());
+                                    // Check if there's a translation for user's language
+                                    String userLanguage = Variables.userLanguage;
+                                    String displayMessage = lastMessageInfo.getMessage();
+                                    
+                                    // Get translation for user's language if the message is not from current user
+                                    if (!currentUserId.equals(lastMessageInfo.getSenderId()) && 
+                                        lastMessageInfo.getTranslations() != null && 
+                                        lastMessageInfo.getTranslations().containsKey(userLanguage)) {
+                                        displayMessage = lastMessageInfo.getTranslations().get(userLanguage);
+                                    }
+                                    
+                                    group.setLastMessage(displayMessage);
                                     group.setLastMessageSenderId(lastMessageInfo.getSenderId());
                                     group.setLastMessageTime(lastMessageInfo.getTimestamp());
+                                    group.setLastMessageOG(lastMessageInfo.getMessageOG());
                                 } else {
                                     // No messages yet
                                     group.setLastMessage("No messages yet");
                                     group.setLastMessageSenderId("");
                                     group.setLastMessageTime(group.getCreatedAt()); // Use creation time for sorting
+                                    group.setLastMessageOG("");
                                 }
                                 
                                 // Create chat item from group
@@ -695,23 +726,40 @@ public class ChatFragment extends Fragment {
         private final String message;
         private final String senderId;
         private final long timestamp;
-        
+        private final String messageOG;
+        private final Map<String, String> translations;
+
         public GroupLastMessageInfo(String message, String senderId, long timestamp) {
+            this(message, senderId, timestamp, null, null);
+        }
+        
+        public GroupLastMessageInfo(String message, String senderId, long timestamp, 
+                                    String messageOG, Map<String, String> translations) {
             this.message = message;
             this.senderId = senderId;
             this.timestamp = timestamp;
+            this.messageOG = messageOG;
+            this.translations = translations;
         }
-        
+
         public String getMessage() {
             return message;
         }
-        
+
         public String getSenderId() {
             return senderId;
         }
-        
+
         public long getTimestamp() {
             return timestamp;
+        }
+        
+        public String getMessageOG() {
+            return messageOG;
+        }
+        
+        public Map<String, String> getTranslations() {
+            return translations;
         }
     }
 }

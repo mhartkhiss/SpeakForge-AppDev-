@@ -5,7 +5,11 @@ import java.util.List;
 
 public class Variables {
     // Constant variables
-    public static final String API_TRANSLATE_DB_URL = "https://speakforge-a52586b8a3f8.herokuapp.com/api/translate-db/";
+    public static final String API_BASE_URL = "https://n7mgqpz5-8000.asse.devtunnels.ms/api/";
+    public static final String API_TRANSLATE_DB_URL = API_BASE_URL + "translate-db/";
+    public static final String API_TRANSLATE_BATCH_URL = API_BASE_URL + "translate-batch/";
+    public static final String API_TRANSLATE_GROUP_URL = API_BASE_URL + "translate-group/";
+    public static final String API_REGENERATE_TRANSLATION_URL = API_BASE_URL + "regenerate-translation/";
 
     // SharedPreferences constants
     public static final String PREFS_NAME = "SpeakForgePrefs";

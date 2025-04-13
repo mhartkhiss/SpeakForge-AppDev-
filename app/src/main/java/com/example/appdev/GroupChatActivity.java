@@ -17,6 +17,7 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -31,16 +32,22 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import org.json.JSONObject;
+import java.util.Set;
 
 public class GroupChatActivity extends AppCompatActivity {
 
@@ -62,6 +69,7 @@ public class GroupChatActivity extends AppCompatActivity {
     private String currentUserProfileUrl;
     private boolean isAdmin = false;
     private int previousMessageCount = 0;
+    private boolean translateEnabled = true;
     
     private static final int SPEECH_REQUEST_CODE = 100;
 
@@ -261,7 +269,10 @@ public class GroupChatActivity extends AppCompatActivity {
         // Create a HashMap to represent the message data
         HashMap<String, Object> messageData = new HashMap<>();
         messageData.put("messageId", messageId);
-        messageData.put("message", messageText);
+        
+        // Always show loading indicator while translating
+        messageData.put("message", "......");
+        
         messageData.put("messageOG", messageText);
         messageData.put("timestamp", timestamp);
         messageData.put("senderId", currentUserId);
@@ -269,62 +280,14 @@ public class GroupChatActivity extends AppCompatActivity {
         messageData.put("senderLanguage", Variables.userLanguage);
         messageData.put("senderProfileUrl", currentUserProfileUrl);
         messageData.put("sourceLanguage", Variables.userLanguage);
+        messageData.put("translationMode", Variables.isFormalTranslationMode ? "formal" : "casual");
         
         // Save message to Firebase Database
         groupMessagesRef.child(groupId).child(messageId).setValue(messageData)
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    // For each group member, translate the message to their language if needed
-                    if (currentGroup != null && currentGroup.getMembers() != null) {
-                        for (Map.Entry<String, Boolean> member : currentGroup.getMembers().entrySet()) {
-                            String memberId = member.getKey();
-                            
-                            // Skip translation for the sender
-                            if (memberId.equals(currentUserId)) {
-                                continue;
-                            }
-                            
-                            // Get member's language preference
-                            DatabaseReference memberRef = FirebaseDatabase.getInstance()
-                                .getReference("users")
-                                .child(memberId);
-                                
-                            memberRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    String memberLanguage = snapshot.child("language").getValue(String.class);
-                                    String memberTranslator = snapshot.child("translator").getValue(String.class);
-                                    
-                                    // Check if translation is needed
-                                    if (memberLanguage != null && 
-                                        !memberLanguage.equals(Variables.userLanguage)) {
-                                        
-                                        // Handle translator preference, default to "google"
-                                        if (memberTranslator == null) {
-                                            memberTranslator = "google";
-                                        }
-                                        
-                                        // Store the original message text with quotes for API
-                                        String messageTextQuoted = "\"" + messageText + "\"";
-                                        
-                                        // Translate the message for this member
-                                        translateGroupMessage(
-                                            memberLanguage, 
-                                            messageTextQuoted, 
-                                            messageId, 
-                                            memberId,
-                                            memberTranslator
-                                        );
-                                    }
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError error) {
-                                    Log.e("GroupChatActivity", "Failed to get member language: " + error.getMessage());
-                                }
-                            });
-                        }
-                    }
+                    // Always translate group messages
+                    translateGroupMessage(messageText, messageId);
                 } else {
                     Log.e("GroupChatActivity", "Failed to send message: " + task.getException());
                     CustomNotification.showNotification(this, "Failed to send message", false);
@@ -335,22 +298,85 @@ public class GroupChatActivity extends AppCompatActivity {
         chatBox.setText("");
     }
     
-    private void translateGroupMessage(String targetLanguage, String messageTextOG, 
-                                     String messageId, String memberId, String translatorModel) {
+    private void translateGroupMessage(String messageText, String messageId) {
         new AsyncTask<Void, Void, Boolean>() {
             @Override
             protected Boolean doInBackground(Void... voids) {
                 try {
                     // Prepare the request body
                     JSONObject requestBody = new JSONObject();
-                    requestBody.put("text", messageTextOG);
+                    String messageTextQuoted = "\"" + messageText + "\"";
+                    requestBody.put("text", messageTextQuoted);
                     requestBody.put("source_language", Variables.userLanguage);
-                    requestBody.put("target_language", targetLanguage);
-                    requestBody.put("mode", "group");
-                    requestBody.put("model", translatorModel.toLowerCase());
+                    requestBody.put("model", Variables.userTranslator.toLowerCase());
                     requestBody.put("group_id", groupId);
                     requestBody.put("message_id", messageId);
-                    requestBody.put("member_id", memberId);
+                    requestBody.put("translation_mode", Variables.isFormalTranslationMode ? "formal" : "casual");
+
+                    // Make the API request
+                    URL url = new URL(Variables.API_TRANSLATE_GROUP_URL);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json");
+                    conn.setDoOutput(true);
+
+                    // Send request body
+                    try (OutputStream os = conn.getOutputStream()) {
+                        byte[] input = requestBody.toString().getBytes("utf-8");
+                        os.write(input, 0, input.length);
+                    }
+                    
+                    return conn.getResponseCode() == HttpURLConnection.HTTP_OK;
+                    
+                } catch (Exception e) {
+                    Log.e("GroupChatActivity", "Group translation error: " + e.getMessage());
+                    return false;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Boolean success) {
+                if (!success) {
+                    // If translation failed, update the message to use original text
+                    groupMessagesRef.child(groupId).child(messageId)
+                        .child("message").setValue(messageText);
+                }
+            }
+        }.execute();
+    }
+    
+    // Keep this method for individual language translation (used for regeneration)
+    private void translateMessageToLanguage(String messageText, String messageId, String targetLanguage) {
+        // Skip translation if target language is the same as source language
+        if (targetLanguage.equals(Variables.userLanguage)) {
+            // If language is the same, just use the original message without translation
+            groupMessagesRef.child(groupId).child(messageId).child("message").setValue(messageText);
+            
+            // Also add it to the translations map for consistency
+            groupMessagesRef.child(groupId).child(messageId)
+                .child("translations")
+                .child(targetLanguage)
+                .setValue(messageText);
+                
+            return;
+        }
+        
+        new AsyncTask<Void, Void, Boolean>() {
+            @Override
+            protected Boolean doInBackground(Void... voids) {
+                try {
+                    // Prepare the request body
+                    JSONObject requestBody = new JSONObject();
+                    String messageTextQuoted = "\"" + messageText + "\"";
+                    requestBody.put("text", messageTextQuoted);
+                    requestBody.put("source_language", Variables.userLanguage);
+                    requestBody.put("target_language", targetLanguage);
+                    requestBody.put("mode", "single");
+                    requestBody.put("model", Variables.userTranslator.toLowerCase());
+                    requestBody.put("group_id", groupId);
+                    requestBody.put("message_id", messageId);
+                    requestBody.put("is_group", true);
+                    requestBody.put("translation_mode", Variables.isFormalTranslationMode ? "formal" : "casual");
 
                     // Make the API request
                     URL url = new URL(Variables.API_TRANSLATE_DB_URL);
@@ -376,8 +402,9 @@ public class GroupChatActivity extends AppCompatActivity {
             @Override
             protected void onPostExecute(Boolean success) {
                 if (!success) {
-                    // If translation fails, log the error
-                    Log.e("GroupChatActivity", "Failed to translate message for member: " + memberId);
+                    // If translation failed, update the message to use original text
+                    groupMessagesRef.child(groupId).child(messageId)
+                        .child("message").setValue(messageText);
                 }
             }
         }.execute();

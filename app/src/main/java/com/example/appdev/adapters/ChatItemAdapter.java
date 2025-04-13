@@ -63,8 +63,12 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ChatIt
             if (chatItem.isGroup()) {
                 // For group chats, handle the last message display
                 boolean isOwnMessage = chatItem.getLastMessageSenderId() != null && 
-                                        chatItem.getLastMessageSenderId().equals(currentUserId);
-                displayMessage = isOwnMessage ? "You: " + chatItem.getLastMessage() : chatItem.getLastMessage();
+                                      chatItem.getLastMessageSenderId().equals(currentUserId);
+                
+                // Use messageOG for own messages, translated message for others
+                displayMessage = isOwnMessage ? 
+                    "You: " + (chatItem.getLastMessageOG() != null ? chatItem.getLastMessageOG() : chatItem.getLastMessage()) : 
+                    chatItem.getLastMessage();
                 
                 holder.textViewEmail.setText(displayMessage);
                 holder.textViewEmail.setTextColor(context.getResources().getColor(R.color.grey));

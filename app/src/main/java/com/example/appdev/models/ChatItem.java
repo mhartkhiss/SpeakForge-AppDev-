@@ -43,6 +43,7 @@ public class ChatItem {
         this.lastMessage = group.getLastMessage();
         this.lastMessageTime = group.getLastMessageTime();
         this.lastMessageSenderId = group.getLastMessageSenderId();
+        this.lastMessageOG = group.getLastMessageOG();
         this.isGroup = true;
     }
 

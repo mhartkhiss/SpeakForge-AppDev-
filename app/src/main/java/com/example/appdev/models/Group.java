@@ -15,6 +15,7 @@ public class Group {
     private String lastMessage;
     private long lastMessageTime;
     private String lastMessageSenderId;
+    private String lastMessageOG;
 
     public Group() {
         // Default constructor required for Firebase
@@ -148,5 +149,13 @@ public class Group {
 
     public void setLastMessageSenderId(String lastMessageSenderId) {
         this.lastMessageSenderId = lastMessageSenderId;
+    }
+
+    public String getLastMessageOG() {
+        return lastMessageOG;
+    }
+
+    public void setLastMessageOG(String lastMessageOG) {
+        this.lastMessageOG = lastMessageOG;
     }
 }
