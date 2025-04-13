@@ -38,6 +38,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,16 +49,44 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
     private DatabaseReference messagesRef;
     private String groupId;
     private Context context;
+    private Map<String, String> usernameCache = new HashMap<>();
+    private DatabaseReference usersRef;
 
     public GroupChatAdapter() {
         this.messages = new ArrayList<>();
+        this.usersRef = FirebaseDatabase.getInstance().getReference("users");
+        setupUsernameCacheListener();
     }
 
     public GroupChatAdapter(DatabaseReference messagesRef, String groupId, Context context) {
         this.messagesRef = messagesRef;
         this.groupId = groupId;
         this.context = context;
+        this.usersRef = FirebaseDatabase.getInstance().getReference("users");
         messages = new ArrayList<>();
+        setupUsernameCacheListener();
+    }
+
+    private void setupUsernameCacheListener() {
+        usersRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                    String userId = userSnapshot.getKey();
+                    String username = userSnapshot.child("username").getValue(String.class);
+                    if (username != null && !username.isEmpty()) {
+                        usernameCache.put(userId, username);
+                    }
+                }
+                // Refresh the view to update usernames
+                notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("GroupChatAdapter", "Error loading usernames: " + error.getMessage());
+            }
+        });
     }
 
     public void setMessages(List<GroupMessage> messages) {
@@ -94,7 +123,7 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
             }
         }
         
-        holder.bind(message, showSenderInfo);
+        holder.bind(message, showSenderInfo, usernameCache);
     }
 
     @Override
@@ -124,6 +153,7 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
         private DatabaseReference messagesRef;
         private List<TextView> visibleOriginalMessages = new ArrayList<>();
         private String groupId;
+        private Map<String, String> usernameCache;
 
         public GroupChatViewHolder(@NonNull View itemView, Context context, String groupId) {
             super(itemView);
@@ -154,7 +184,8 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
             }
         }
 
-        public void bind(GroupMessage message, boolean showSenderInfo) {
+        public void bind(GroupMessage message, boolean showSenderInfo, Map<String, String> usernameCache) {
+            this.usernameCache = usernameCache;
             FirebaseAuth auth = FirebaseAuth.getInstance();
             FirebaseUser currentUser = auth.getCurrentUser();
 
@@ -188,33 +219,15 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
             if (textViewSenderName != null) {
                 textViewSenderName.setVisibility(showSenderInfo ? View.VISIBLE : View.GONE);
                 if (showSenderInfo) {
-                    // Use a loading placeholder until we load the real name
-                    textViewSenderName.setText("Loading...");
-                    
-                    // Get the sender's name from Firebase users database
                     String senderId = message.getSenderId();
                     if (senderId != null && !senderId.isEmpty()) {
-                        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(senderId);
-                        userRef.child("username").addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                if (snapshot.exists()) {
-                                    String username = snapshot.getValue(String.class);
-                                    if (username != null && !username.isEmpty()) {
-                                        textViewSenderName.setText(username);
-                                    } else {
-                                        textViewSenderName.setText("User");
-                                    }
-                                } else {
-                                    textViewSenderName.setText("User");
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-                                textViewSenderName.setText("User");
-                            }
-                        });
+                        // Use cached username
+                        String username = usernameCache.get(senderId);
+                        if (username != null && !username.isEmpty()) {
+                            textViewSenderName.setText(username);
+                        } else {
+                            textViewSenderName.setText("User");
+                        }
                     } else {
                         textViewSenderName.setText("User");
                     }
