@@ -250,74 +250,60 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
             } else {
                 // Received messages
                 // Handle loading state for messages being translated
-                // Check if translations exists yet - if not, show loading indicator
-                if (translations == null || translations.isEmpty()) {
+                // Show loading state if:
+                // 1. Message is recent (within last 5 seconds) AND translations is empty, OR
+                // 2. Translations map is null
+                long currentTime = System.currentTimeMillis();
+                boolean isRecentMessage = (currentTime - message.getTimestamp()) < 5000; // 5 seconds
+                boolean isTranslating = (translations == null) || (translations.isEmpty() && isRecentMessage);
+
+                if (isTranslating) {
+                    // Show loading state while translations are being generated
                     textViewMessage.setVisibility(View.GONE);
                     if (loadingDots != null) {
                         loadingDots.setVisibility(View.VISIBLE);
                         loadingDots.startAnimation();
                     }
                 } else {
+                    // Translations exist or message is old enough to show original
                     textViewMessage.setVisibility(View.VISIBLE);
                     if (loadingDots != null) {
                         loadingDots.setVisibility(View.GONE);
                         loadingDots.stopAnimation();
                     }
-                    
-                    // Check if this message has translations and if there's one for this user's language
+
+                    // If we have a translation in user's language, show it
                     if (translations.containsKey(userLanguage)) {
-                        // Show message in user's language
-                        String translatedText = translations.get(userLanguage);
-                        textViewMessage.setText(translatedText);
+                        textViewMessage.setText(translations.get(userLanguage));
                     } else {
-                        // No translation available, show the message as is
+                        // No translation in user's language, show original message
                         textViewMessage.setText(message.getMessage());
                     }
-
-                    // Set click listener for received messages to show original
-                    textViewMessage.setOnClickListener(v -> {
-                        String originalText = null;
-                        
-                        if (translations != null && originalLanguage != null && translations.containsKey(originalLanguage)) {
-                            originalText = translations.get(originalLanguage);
-                        } else {
-                            // Fallback to message field if sender's language is not in translations
-                            originalText = message.getMessage();
-                        }
-                        
-                        if (originalText != null && !textViewMessage.getText().toString().equals(originalText)) {
-                            // Toggle between translation and original
-                            if (textViewOriginalMessage != null) {
-                                if (textViewOriginalMessage.getVisibility() == View.VISIBLE) {
-                                    textViewOriginalMessage.setVisibility(View.GONE);
-                                } else {
-                                    textViewOriginalMessage.setVisibility(View.VISIBLE);
-                                    textViewOriginalMessage.setText(originalText);
-                                }
-                            }
-                        }
-                    });
                 }
 
-                // Set original message text visibility (hidden by default)
-                if (textViewOriginalMessage != null) {
-                    // Prepare the original text but keep it hidden
+                // Set click listener for received messages to show original
+                textViewMessage.setOnClickListener(v -> {
                     String originalText = null;
+                    
                     if (translations != null && originalLanguage != null && translations.containsKey(originalLanguage)) {
                         originalText = translations.get(originalLanguage);
                     } else {
-                        // Fallback to message field
+                        // Fallback to message field if sender's language is not in translations
                         originalText = message.getMessage();
                     }
                     
-                    if (originalText != null) {
-                        // Set the text but keep it hidden
-                        textViewOriginalMessage.setVisibility(View.GONE);
-                        textViewOriginalMessage.setText(originalText);
-                        textViewOriginalMessage.setTextColor(itemView.getResources().getColor(R.color.grey));
-                        // Don't add to visible messages list since it's not visible
+                    if (originalText != null && !textViewMessage.getText().toString().equals(originalText)) {
+                        // Toggle between translation and original
+                        if (textViewOriginalMessage != null) {
+                            if (textViewOriginalMessage.getVisibility() == View.VISIBLE) {
+                                textViewOriginalMessage.setVisibility(View.GONE);
+                            } else {
+                                textViewOriginalMessage.setVisibility(View.VISIBLE);
+                                textViewOriginalMessage.setText(originalText);
+                            }
+                        }
                     }
-                }
+                });
             }
         }
 

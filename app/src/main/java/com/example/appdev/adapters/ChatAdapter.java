@@ -176,8 +176,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 // This is a received message (from other user)
                 loadProfileImage(message.getSenderId());
                 
-                // Handle loading state
-                if (message.getMessage() != null && message.getMessage().equals("......")) {
+                // Handle loading state for received messages
+                Map<String, String> translations = message.getTranslations();
+                boolean isLoading = translations == null || translations.isEmpty();
+                
+                if (isLoading) {
                     textViewMessage.setVisibility(View.GONE);
                     loadingDots.setVisibility(View.VISIBLE);
                     loadingDots.startAnimation();
@@ -187,8 +190,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                     loadingDots.stopAnimation();
                     
                     // For received messages, show the translation
-                    Map<String, String> translations = message.getTranslations();
-                    if (translations != null && translations.containsKey("translation1")) {
+                    if (translations.containsKey("translation1")) {
                         // Display translation1 by default
                         textViewMessage.setText(translations.get("translation1"));
                     } else {

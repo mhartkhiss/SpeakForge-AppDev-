@@ -291,10 +291,8 @@ public class GroupChatActivity extends AppCompatActivity {
         messageData.put("senderId", senderId);
         messageData.put("senderLanguage", Variables.userLanguage);
         
-        // Initialize translations map with original message in user's language
-        Map<String, String> translations = new HashMap<>();
-        translations.put(Variables.userLanguage, messageText);
-        messageData.put("translations", translations);
+        // Initialize empty translations map to show loading state
+        messageData.put("translations", new HashMap<>());
         
         // Add profile image URL if available
         if (currentUserProfileUrl != null) {
@@ -303,7 +301,7 @@ public class GroupChatActivity extends AppCompatActivity {
         
         Log.d("GroupChatActivity", "Sending message: " + messageId);
         
-        // Save message to Firebase with placeholder
+        // Save message to Firebase with empty translations
         groupMessagesRef.child(groupId).child(messageId).setValue(messageData)
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
