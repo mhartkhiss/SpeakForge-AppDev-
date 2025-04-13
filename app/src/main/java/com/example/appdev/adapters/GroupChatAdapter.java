@@ -209,7 +209,7 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
                     if (position != RecyclerView.NO_POSITION) {
                         GroupMessage message = (GroupMessage) textViewMessage.getTag();
                         if (message != null) {
-                            showPopupMenu(v, message);
+                            showContextMenu(v, message);
                             return true;
                         }
                     }
@@ -371,81 +371,115 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
             }
         }
 
-        private void showPopupMenu(View view, GroupMessage message) {
-            PopupMenu popupMenu = new PopupMenu(context, view);
-            popupMenu.inflate(R.menu.chat_message_menu);
+        private void showContextMenu(View anchorView, GroupMessage message) {
+            View popupView = LayoutInflater.from(context)
+                    .inflate(R.layout.message_context_menu, null);
 
+            PopupWindow popupWindow = new PopupWindow(
+                    popupView,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    true // Focusable
+            );
+
+            popupWindow.setElevation(10); // Add shadow
+
+            // Find the TextView items in the custom layout
+            TextView regenerateItem = popupView.findViewById(R.id.menuItemRegenerate);
+            TextView toggleOriginalItem = popupView.findViewById(R.id.menuItemToggleOriginal);
+            TextView removeTranslationItem = popupView.findViewById(R.id.menuItemRemoveTranslation);
+
+            // --- Configure items based on GroupMessage state --- 
             String userLanguage = Variables.userLanguage;
             String senderLanguage = message.getSenderLanguage();
             Map<String, String> translations = message.getTranslations();
             
+            // Determine if the message is essentially untranslated for the current user
             boolean isUntranslated = senderLanguage != null && 
                                    userLanguage != null && 
                                    senderLanguage.equals(userLanguage);
+            // Check if translations map is empty or null as another indicator
+            boolean hasNoTranslations = translations == null || translations.isEmpty();
+            // Refined check: Untranslated if languages match OR if there are simply no translations yet
+            boolean showAsTranslate = isUntranslated || hasNoTranslations; 
 
             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
             boolean isUserMessage = currentUser != null && 
                                   message.getSenderId().equals(currentUser.getUid());
 
+            // --- Visibility Logic --- 
             if (!isUserMessage) {
-                popupMenu.getMenu().findItem(R.id.action_remove_translation).setVisible(false);
+                // Hide remove option if it's not the user's own message
+                removeTranslationItem.setVisibility(View.GONE);
             }
 
-            if (isUntranslated) {
-                popupMenu.getMenu().findItem(R.id.action_regenerate).setTitle("Translate");
-                popupMenu.getMenu().findItem(R.id.action_toggle_original).setVisible(false);
-                popupMenu.getMenu().findItem(R.id.action_remove_translation).setVisible(false);
+            if (showAsTranslate) {
+                regenerateItem.setText("Translate");
+                toggleOriginalItem.setVisibility(View.GONE); 
+                // Also hide remove translation if it's untranslated
+                removeTranslationItem.setVisibility(View.GONE); 
             } else {
-                popupMenu.getMenu().findItem(R.id.action_regenerate).setTitle("Regenerate Translation");
-                popupMenu.getMenu().findItem(R.id.action_toggle_original).setVisible(true);
+                regenerateItem.setText("Regenerate Translation");
+                toggleOriginalItem.setVisibility(View.VISIBLE);
+                 removeTranslationItem.setVisibility(isUserMessage ? View.VISIBLE : View.GONE); // Show only if user's message
                 
+                // Update toggle text based on current state
                 if (message.getMessageId() != null &&
                     message.getMessageId().equals(adapter.getVisibleOriginalMessageId())) {
-                    popupMenu.getMenu().findItem(R.id.action_toggle_original).setTitle("Hide Original Message");
+                    toggleOriginalItem.setText("Hide Original Message");
                 } else {
-                    popupMenu.getMenu().findItem(R.id.action_toggle_original).setTitle("Show Original Message");
+                    toggleOriginalItem.setText("Show Original Message");
                 }
             }
 
-            popupMenu.setOnMenuItemClickListener(item -> {
-                int itemId = item.getItemId();
-                
-                if (itemId == R.id.action_regenerate) {
-                    handleMessageTranslationClick(message);
-                    return true;
-                } else if (itemId == R.id.action_toggle_original) {
-                    handleOriginalMessageClick(message);
-                    return true;
-                } else if (itemId == R.id.action_remove_translation) {
-                    if (message.getMessageId() != null) {
-                        String originalLanguage = message.getSenderLanguage();
-                        String originalMessage = null;
-                        
-                        if (translations != null && originalLanguage != null && translations.containsKey(originalLanguage)) {
-                            originalMessage = translations.get(originalLanguage);
-                        } else {
-                            originalMessage = message.getMessage();
-                        }
-                        
-                        if (originalMessage != null) {
-                            DatabaseReference messageRef = messagesRef.child(groupId)
-                                    .child(message.getMessageId());
-                            messageRef.child("message").setValue(originalMessage);
-                            
-                            for (String lang : translations.keySet()) {
-                                if (!lang.equals(originalLanguage)) {
-                                    messageRef.child("translations").child(lang).removeValue();
-                                }
-                            }
-                        }
-                    }
-                    return true;
-                }
-                
-                return false;
+            // --- Set Click Listeners --- 
+            regenerateItem.setOnClickListener(v -> {
+                handleMessageTranslationClick(message);
+                popupWindow.dismiss();
             });
 
-            popupMenu.show();
+            toggleOriginalItem.setOnClickListener(v -> {
+                handleOriginalMessageClick(message);
+                popupWindow.dismiss();
+            });
+
+            removeTranslationItem.setOnClickListener(v -> {
+                if (message.getMessageId() != null) {
+                    String originalLanguage = message.getSenderLanguage();
+                    String originalMessage = null;
+                    
+                    // Prioritize getting original text from the translations map if available
+                    if (translations != null && originalLanguage != null && translations.containsKey(originalLanguage)) {
+                        originalMessage = translations.get(originalLanguage);
+                    } else {
+                         // Fallback to the main message field if needed
+                         // This might happen if translation failed or wasn't requested initially
+                         originalMessage = message.getMessage(); 
+                    }
+                    
+                    if (originalMessage != null) {
+                        DatabaseReference messageRef = messagesRef.child(groupId)
+                                .child(message.getMessageId());
+                        
+                        // Create map for multi-path update
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("message", originalMessage); // Set main message to original
+                        updates.put("translations", null); // Remove entire translations node
+                        
+                        messageRef.updateChildren(updates).addOnCompleteListener(task -> {
+                            if (!task.isSuccessful()) {
+                                Log.e("GroupChatAdapter", "Failed to remove translations.", task.getException());
+                                Toast.makeText(context, "Failed to remove translation", Toast.LENGTH_SHORT).show();
+                            }
+                            // UI will update via the main listener
+                        });
+                    }
+                }
+                popupWindow.dismiss();
+            });
+
+            // --- Show the popup --- 
+            popupWindow.showAsDropDown(anchorView, 0, -anchorView.getHeight());
         }
 
         private void handleMessageTranslationClick(GroupMessage message) {
