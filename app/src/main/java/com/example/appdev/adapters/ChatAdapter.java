@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.HashMap;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder> {
 
@@ -50,10 +51,15 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     private String roomId;
     private String visibleOriginalMessageId = null;
     private String regeneratingMessageId = null;
+    private String cyclingMessageId = null;
     private Context context;
+    private DatabaseReference usersRef;
+    private Map<String, String> profileImageUrlCache = new HashMap<>();
 
     public ChatAdapter() {
         this.messages = new ArrayList<>();
+        this.usersRef = FirebaseDatabase.getInstance().getReference("users");
+        setupProfileImageCacheListener();
     }
 
     public void setMessages(List<Message> messages) {
@@ -73,6 +79,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         this.roomId = roomId;
         this.context = context;
         messages = new ArrayList<>();
+        this.usersRef = FirebaseDatabase.getInstance().getReference("users");
+        setupProfileImageCacheListener();
     }
 
     public void setVisibleOriginalMessageId(String messageId) {
@@ -98,6 +106,10 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     
     public String getRegeneratingMessageId() {
         return regeneratingMessageId;
+    }
+
+    public String getCyclingMessageId() {
+        return cyclingMessageId;
     }
 
     @NonNull
@@ -153,6 +165,28 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         return -1;
     }
 
+    private void setupProfileImageCacheListener() {
+        usersRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                profileImageUrlCache.clear();
+                for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                    String userId = userSnapshot.getKey();
+                    String profileUrl = userSnapshot.child("profileImageUrl").getValue(String.class);
+                    if (userId != null && profileUrl != null && !profileUrl.isEmpty()) {
+                        profileImageUrlCache.put(userId, profileUrl);
+                    }
+                }
+                notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("ChatAdapter", "Error loading profile image URLs: " + error.getMessage());
+            }
+        });
+    }
+
     public static class ChatViewHolder extends RecyclerView.ViewHolder {
 
         private TextView textViewMessage, textViewOriginalMessage;
@@ -161,7 +195,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         private String roomId;
         private ChatAdapter adapter;
         private de.hdodenhof.circleimageview.CircleImageView imageViewProfile;
-        private DatabaseReference usersRef;
         private Context context;
 
         public ChatViewHolder(@NonNull View itemView, DatabaseReference messagesRef, String roomId, 
@@ -174,8 +207,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             this.roomId = roomId;
             this.adapter = adapter;
             this.context = context;
-            imageViewProfile = itemView.findViewById(R.id.imageViewProfile);
-            usersRef = FirebaseDatabase.getInstance().getReference("users");
+            this.imageViewProfile = itemView.findViewById(R.id.imageViewProfile);
         }
 
         public void bind(Message message, boolean showAvatar) {
@@ -197,10 +229,14 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
              // Only consider initial translation state for *received* messages
              boolean isInitialTranslation = !isSentMessage && "TRANSLATING".equals(translationState); 
 
+             // Check cycling state from adapter
+             boolean isCycling = message.getMessageId() != null && 
+                                message.getMessageId().equals(adapter.getCyclingMessageId());
+
             // --- UI Setup based on State --- 
             
-            // Determine if loading should be shown based on message type
-            boolean showLoading = isRegenerating || isInitialTranslation; // Simplified: regeneration applies to both, initial only to received (handled by isInitialTranslation logic)
+            // Determine if loading should be shown based on message type and adapter states
+            boolean showLoading = isRegenerating || isInitialTranslation || isCycling; 
 
             // Handle Loading Indicator 
             if (loadingDots != null) {
@@ -223,15 +259,12 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                     if (isSentMessage) {
                         // --- Sent message logic ---
                         // Sent messages always show original text
-                        loadProfileImage(currentUser.getUid()); // Still load profile pic if needed by design
                         textViewMessage.setText(message.getMessage());
                         textViewMessage.setOnClickListener(null); 
                         textViewMessage.setOnLongClickListener(null);
 
                     } else {
                         // --- Received message logic ---
-                        loadProfileImage(message.getSenderId());
-
                         // Display translation or original based on availability
                         Map<String, String> translations = message.getTranslations();
                         // String translationState = message.getTranslationState(); // Already fetched above
@@ -265,7 +298,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
             // Handle Original Message View
             if (textViewOriginalMessage != null) { 
-                 // Show original only if requested state is true AND not loading (initial or regenerating)
+                 // Show original only if requested state is true AND not loading (initial, regenerating, or cycling)
                 if (shouldShowOriginal && !showLoading) { 
                     // Show original message text
                     textViewOriginalMessage.setText(message.getMessage());
@@ -281,8 +314,19 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 int layoutType = getItemViewType();
                 if (layoutType == 1) {
                     imageViewProfile.setVisibility(showAvatar ? View.VISIBLE : View.INVISIBLE);
-                    if (showAvatar && message.getSenderId() != null) {
-                        loadProfileImage(message.getSenderId());
+                    if (showAvatar) {
+                        String senderId = message.getSenderId();
+                        String profileImageUrl = adapter.profileImageUrlCache.get(senderId);
+
+                        if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                            Glide.with(context)
+                                    .load(profileImageUrl)
+                                    .placeholder(R.drawable.default_userpic)
+                                    .error(R.drawable.default_userpic)
+                                    .into(imageViewProfile);
+                        } else {
+                            imageViewProfile.setImageResource(R.drawable.default_userpic);
+                        }
                     } else if (!showAvatar) {
                         Glide.with(context).clear(imageViewProfile); 
                         imageViewProfile.setImageDrawable(null);
@@ -341,45 +385,68 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                                        translation3 != null && !translation3.isEmpty();
 
             if (hasAllVariations) {
-                 // Cycle through existing variations locally
-                String currentText = textViewMessage.getText().toString();
-                final String nextTranslationText; // Make final for use in Runnable
-                
-                if (currentText.equals(translation1)) {
-                    nextTranslationText = translation2;
-                } else if (currentText.equals(translation2)) {
-                    nextTranslationText = translation3;
-                } else {
-                    // If current text is translation3 or something unexpected, cycle back to 1
-                    nextTranslationText = translation1; 
-                }
-                
-                // --- Add Loading Animation for Cycling ---
-                if (textViewMessage != null && loadingDots != null) {
-                    textViewMessage.setVisibility(View.GONE); // Hide text
-                    loadingDots.setVisibility(View.VISIBLE); // Show loading
-                    loadingDots.startAnimation();
+                 // Perform rotational swap of translation values in Firebase
+                String currentVal1 = translations.get("translation1");
+                String currentVal2 = translations.get("translation2");
+                String currentVal3 = translations.get("translation3");
 
-                    // Schedule hiding loading and showing text after 1 second
-                    itemView.postDelayed(() -> {
-                         // Check if the view holder is still valid 
-                         // (e.g., hasn't been recycled)
-                         if (getAdapterPosition() == currentPosition) { 
-                             loadingDots.stopAnimation();
-                             loadingDots.setVisibility(View.GONE);
-                             textViewMessage.setText(nextTranslationText);
-                             textViewMessage.setVisibility(View.VISIBLE);
-                         } else {
-                              Log.w("ChatAdapter", "ViewHolder recycled during cycle animation delay.");
-                         }
-                    }, 1000); // 1000 milliseconds = 1 second
-                } else {
-                     // Fallback if views are null: just set the text directly
-                     textViewMessage.setText(nextTranslationText);
-                }
-                // --- End Loading Animation ---
+                 // --- Update Firebase with rotated values --- 
+                 DatabaseReference translationsRef = adapter.messagesRef.child(adapter.roomId).child(messageId).child("translations");
                 
-                // No API call needed, just updated the UI locally (or scheduled update)
+                 // Set adapter state and notify to show loading via bind()
+                 adapter.cyclingMessageId = messageId;
+                 adapter.notifyItemChanged(currentPosition);
+                 
+                 // Record start time for minimum duration calculation
+                 long startTime = System.currentTimeMillis();
+
+                // Prepare map for the rotational update
+                Map<String, Object> updatesMap = new HashMap<>();
+                updatesMap.put("translation1", currentVal2); // T1 gets old T2
+                updatesMap.put("translation2", currentVal3); // T2 gets old T3
+                updatesMap.put("translation3", currentVal1); // T3 gets old T1
+
+                translationsRef.updateChildren(updatesMap)
+                    .addOnCompleteListener(task -> {
+                         // Calculate duration
+                         long endTime = System.currentTimeMillis();
+                         long duration = endTime - startTime;
+                         long delayNeeded = 1000 - duration; // Delay needed to reach 1 second total
+                         
+                         // Define the final UI update action
+                         Runnable finalUiUpdateRunnable = () -> {
+                            // Check if still cycling this message before clearing state
+                            if (messageId.equals(adapter.cyclingMessageId)) { 
+                                adapter.cyclingMessageId = null; // Clear state
+                            }
+                            // Notify item changed to reflect final state (loading hidden)
+                            // Find position again in case it changed
+                            int finalPosition = adapter.findPositionById(messageId);
+                            if (finalPosition != RecyclerView.NO_POSITION) {
+                                 adapter.notifyItemChanged(finalPosition); 
+                            } else {
+                                 Log.w("ChatAdapter", "Item position not found after cycle completion for messageId: " + messageId);
+                                 // May need notifyDataSetChanged() as fallback if positions change frequently
+                            }
+                         };
+
+                         // Schedule or run the final update
+                         if (delayNeeded > 0) {
+                             itemView.postDelayed(finalUiUpdateRunnable, delayNeeded);
+                         } else {
+                             finalUiUpdateRunnable.run(); // Run immediately if >= 1 second passed
+                         }
+                         
+                         if (!task.isSuccessful()) {
+                             Log.e("ChatAdapter", "Failed to rotate translation variations.", task.getException());
+                             if (context != null) {
+                                 Toast.makeText(context, "Failed to cycle variation", Toast.LENGTH_SHORT).show();
+                             }
+                         }
+                    });
+                // --- End Firebase Update ---
+                
+                // Return: No API call needed, Firebase update initiated
                 return; 
             }
             // --- End variation cycling check ---
@@ -435,38 +502,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             });
             
             regenerator.regenerate(originalMessage, message.getMessageId(), targetLanguage);
-        }
-
-        private void loadProfileImage(String senderId) {
-            usersRef.child(senderId).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        String profileImageUrl = snapshot.child("profileImageUrl").getValue(String.class);
-                        if (imageViewProfile != null && imageViewProfile.getVisibility() == View.VISIBLE) { 
-                            if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
-                                Glide.with(itemView.getContext())
-                                        .load(profileImageUrl)
-                                        .placeholder(R.drawable.default_userpic)
-                                        .into(imageViewProfile);
-                            } else {
-                                imageViewProfile.setImageResource(R.drawable.default_userpic);
-                            }
-                        }
-                    } else {
-                         if (imageViewProfile != null && imageViewProfile.getVisibility() == View.VISIBLE) {
-                             imageViewProfile.setImageResource(R.drawable.default_userpic);
-                         }
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                     if (imageViewProfile != null && imageViewProfile.getVisibility() == View.VISIBLE) {
-                        imageViewProfile.setImageResource(R.drawable.default_userpic);
-                     }
-                }
-            });
         }
 
         private void showContextMenu(View anchor, Message message) {
