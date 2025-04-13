@@ -1,18 +1,7 @@
 <resources>
     <string name="app_name">SpeakForge</string>
-    <string name="no_account_sign_up">No account? Sign up</string>
-    <string name="login">Login</string>
-    <string name="sign_up">Sign up</string>
     <string name="already_have_an_account_login_here">Already have an account? Login here.</string>
-    <string name="start_speaking">Start Speaking</string>
-    <string name="translate_button">Translate</string>
-    <string name="title_activity_tab_layout">TabLayoutActivity</string>
-    <string name="tab_text_1">Tab 1</string>
-    <string name="tab_text_2">Tab 2</string>
     <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="contact_language_label">%1$s\'S LANGUAGE</string>
-    <string name="formal_mode">Formal</string>
-    <string name="casual_mode">Casual</string>
     <string name="translation_mode_toggle_description">Toggle between formal and casual translation modes</string>
 </resources>

@@ -29,7 +29,6 @@
 
             <!-- Back button container with rounded background -->
             <androidx.cardview.widget.CardView
-                android:id="@+id/cardViewBack"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 app:cardCornerRadius="12dp"
@@ -51,7 +50,6 @@
             </androidx.cardview.widget.CardView>
 
             <TextView
-                android:id="@+id/textViewTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Select Members"

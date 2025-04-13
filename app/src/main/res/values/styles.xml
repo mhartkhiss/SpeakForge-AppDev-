@@ -1,13 +1,5 @@
 <resources>
-    <style name="FullScreenDialog" parent="Theme.AppCompat.Dialog">
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowIsTranslucent">false</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:backgroundDimEnabled">true</item>
-    </style>
-    <style name="MyButtonStyle" parent="Widget.AppCompat.Button">
-        <item name="android:background">@drawable/buttons_bg</item>
-    </style>
+
     <style name="ModalBottomSheetDialog" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/ModalBottomSheetStyle</item>
     </style>

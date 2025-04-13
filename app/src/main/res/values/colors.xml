@@ -1,41 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="grey">#FF808080</color>
-    <color name="orange">#F4AE7B</color>
     <color name="lightGrey">#DFDFDF</color>
-    <color name="selectedCardColor">#FF4081</color>
     <color name="transparent">#00000000</color>
-    <color name="light_gray">#84CCCCCC</color>
     <color name="message_received_bg">#50FF9800</color>
     <color name="success_green">#4CAF50</color>
     <color name="error_red">#FF5252</color>
-    <color name="grey_500">#9E9E9E</color>
     <color name="blue">#2196F3</color>
     <color name="light_blue">#3DB8EF</color>
-    <color name="output_background">#F5F5F5</color>
     <color name="user1_color">#FF5722</color>
-    <color name="user1_color_dark">#D84315</color>
     <color name="user2_color">#2196F3</color>
-    <color name="user2_color_dark">#1976D2</color>
-    <color name="formal_mode_bg">#3F51B5</color>
     <color name="casual_mode_bg">#FF9800</color>
     <color name="formal_mode_background">#3F51B5</color>
     <color name="casual_mode_background">#FF9800</color>
     
     <!-- Added missing colors for group chat feature -->
     <color name="primary">#FF6200EE</color>
-    <color name="primary_dark">#FF3700B3</color>
-    <color name="primary_light">#E9D8FD</color>
     <color name="background">#F9F9F9</color>
     <color name="primary_text">#333333</color>
     <color name="secondary_text">#757575</color>
     <color name="text_gray">#888888</color>
-    <color name="message_sent_bg">#E3F2FD</color>
 </resources>

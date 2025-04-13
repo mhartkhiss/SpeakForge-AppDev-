@@ -38,7 +38,6 @@
 
         <!-- Group Chat Button -->
         <androidx.cardview.widget.CardView
-            android:id="@+id/cardViewGroupChat"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:layout_marginStart="8dp"

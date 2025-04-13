@@ -8,7 +8,6 @@
 
     <!-- Main Profile Content -->
     <RelativeLayout
-        android:id="@+id/mainContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -383,7 +382,6 @@
 
                 <!-- Separate Logout Card -->
                 <androidx.cardview.widget.CardView
-                    android:id="@+id/cardViewLogout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/cardViewProfileOptions"
@@ -415,7 +413,6 @@
 
                 <!-- Change Username Card -->
                 <androidx.cardview.widget.CardView
-                    android:id="@+id/cardViewChangeUsername"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/imageViewUserPicture"
@@ -442,7 +439,6 @@
                             android:layout_marginBottom="16dp"/>
 
                         <com.google.android.material.textfield.TextInputLayout
-                            android:id="@+id/textInputLayoutUsername"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="24dp"
@@ -474,14 +470,12 @@
 
     <!-- Sub-layouts Container (on top of main content) -->
     <RelativeLayout
-        android:id="@+id/subLayoutsContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#F5F7FA"
         android:visibility="gone">
 
         <include
-            android:id="@+id/includeChangePassword"
             layout="@layout/fragment_profile_sub_changepass"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -490,7 +484,6 @@
             android:visibility="gone" />
 
         <include
-            android:id="@+id/includeLanguageSelection"
             layout="@layout/fragment_profile_sub_changelanguage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -499,7 +492,6 @@
             android:visibility="gone" />
 
         <include
-            android:id="@+id/includeTranslatorSelection"
             layout="@layout/fragment_profile_sub_changetranslator"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -508,7 +500,6 @@
             android:visibility="gone" />
 
         <include
-            android:id="@+id/includeChangeUsername"
             layout="@layout/fragment_profile_sub_changeusername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

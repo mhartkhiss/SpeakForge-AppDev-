@@ -237,7 +237,6 @@
 
     <!-- Members List Card with Scrollable RecyclerView -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardViewMembersList"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginStart="8dp"

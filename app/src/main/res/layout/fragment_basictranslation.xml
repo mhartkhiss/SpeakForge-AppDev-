@@ -197,7 +197,6 @@
                 android:layout_height="match_parent">
 
                 <FrameLayout
-                    android:id="@+id/resultContainer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:padding="16dp">
@@ -248,7 +247,6 @@
 
         <!-- Input Card -->
         <androidx.cardview.widget.CardView
-            android:id="@+id/inputCard"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.5"
