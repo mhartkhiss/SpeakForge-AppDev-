@@ -286,12 +286,15 @@ public class GroupChatActivity extends AppCompatActivity {
         // Create message data with loading placeholder
         Map<String, Object> messageData = new HashMap<>();
         messageData.put("messageId", messageId);
-        messageData.put("message", "......"); // Placeholder for translation
-        messageData.put("messageOG", messageText); // Original message
+        messageData.put("message", messageText);
         messageData.put("timestamp", timestamp);
         messageData.put("senderId", senderId);
-        messageData.put("senderName", currentUserName);
-        messageData.put("sourceLanguage", Variables.userLanguage);
+        messageData.put("senderLanguage", Variables.userLanguage);
+        
+        // Initialize translations map with original message in user's language
+        Map<String, String> translations = new HashMap<>();
+        translations.put(Variables.userLanguage, messageText);
+        messageData.put("translations", translations);
         
         // Add profile image URL if available
         if (currentUserProfileUrl != null) {
@@ -390,8 +393,16 @@ public class GroupChatActivity extends AppCompatActivity {
                 if (!success) {
                     // If translation failed, update the message to use original text
                     Log.e("GroupChatActivity", "Translation failed, setting original text");
-                    groupMessagesRef.child(groupId).child(messageId)
-                        .child("message").setValue(messageText);
+                    
+                    // Instead of just setting the message field, make sure translations map has the original language
+                    // so the original message in sender's language is shown correctly
+                    DatabaseReference messageRef = groupMessagesRef.child(groupId).child(messageId);
+                    
+                    // Update message field to original text
+                    messageRef.child("message").setValue(messageText);
+                    
+                    // Make sure original text is in translations map
+                    messageRef.child("translations").child(Variables.userLanguage).setValue(messageText);
                 } else {
                     Log.d("GroupChatActivity", "Translation completed successfully");
                 }
@@ -457,8 +468,11 @@ public class GroupChatActivity extends AppCompatActivity {
             protected void onPostExecute(Boolean success) {
                 if (!success) {
                     // If translation failed, update the message to use original text
-                    groupMessagesRef.child(groupId).child(messageId)
-                        .child("message").setValue(messageText);
+                    DatabaseReference messageRef = groupMessagesRef.child(groupId).child(messageId);
+                    messageRef.child("message").setValue(messageText);
+                    
+                    // Make sure original text is in translations map
+                    messageRef.child("translations").child(Variables.userLanguage).setValue(messageText);
                 }
             }
         }.execute();

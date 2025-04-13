@@ -65,10 +65,10 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ChatIt
                 boolean isOwnMessage = chatItem.getLastMessageSenderId() != null && 
                                       chatItem.getLastMessageSenderId().equals(currentUserId);
                 
-                // Use messageOG for own messages, translated message for others
+                // Just use the message text directly, without trying to use messageOG
                 displayMessage = isOwnMessage ? 
-                    "You: " + (chatItem.getLastMessageOG() != null ? chatItem.getLastMessageOG() : chatItem.getLastMessage()) : 
-                    chatItem.getLastMessage();
+                    "You: " + (chatItem.getLastMessage() != null ? chatItem.getLastMessage() : "") : 
+                    chatItem.getLastMessage() != null ? chatItem.getLastMessage() : "";
                 
                 holder.textViewEmail.setText(displayMessage);
                 holder.textViewEmail.setTextColor(context.getResources().getColor(R.color.grey));
@@ -78,10 +78,10 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ChatIt
                 boolean isOwnMessage = chatItem.getLastMessageSenderId() != null && 
                                         chatItem.getLastMessageSenderId().equals(currentUserId);
                 
-                // Use messageOG for own messages, translated message for others
+                // Just use the message text directly, without trying to use messageOG
                 displayMessage = isOwnMessage ? 
-                    "You: " + (chatItem.getLastMessageOG() != null ? chatItem.getLastMessageOG() : chatItem.getLastMessage()) : 
-                    chatItem.getLastMessage();
+                    "You: " + (chatItem.getLastMessage() != null ? chatItem.getLastMessage() : "") : 
+                    chatItem.getLastMessage() != null ? chatItem.getLastMessage() : "";
                 
                 holder.textViewEmail.setText(displayMessage);
                 holder.textViewEmail.setTextColor(context.getResources().getColor(R.color.grey));

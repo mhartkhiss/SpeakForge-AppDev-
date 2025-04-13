@@ -23,12 +23,25 @@ public class ChatItem {
         this.id = user.getUserId();
         this.name = user.getUsername();
         this.imageUrl = user.getProfileImageUrl();
+        
+        // Initialize with empty strings to avoid null values
+        this.lastMessageSenderId = "";
+        this.lastMessage = "";
+        this.lastMessageOG = "";
+        
         if (user.getLastMessage() != null && !user.getLastMessage().isEmpty()) {
             String[] messageParts = user.getLastMessage().split("\\|", 3);
             if (messageParts.length == 3) {
                 this.lastMessageSenderId = messageParts[0];
                 this.lastMessage = messageParts[1];
                 this.lastMessageOG = messageParts[2];
+            } else if (messageParts.length == 2) {
+                this.lastMessageSenderId = messageParts[0];
+                this.lastMessage = messageParts[1];
+                this.lastMessageOG = messageParts[1]; // Use the message as original if no OG available
+            } else if (messageParts.length == 1) {
+                this.lastMessage = messageParts[0];
+                this.lastMessageOG = messageParts[0]; // Use the message as original
             }
         }
         this.lastMessageTime = user.getLastMessageTime();
@@ -40,10 +53,10 @@ public class ChatItem {
         this.id = group.getGroupId();
         this.name = group.getName();
         this.imageUrl = group.getGroupImageUrl();
-        this.lastMessage = group.getLastMessage();
+        this.lastMessage = group.getLastMessage() != null ? group.getLastMessage() : "";
         this.lastMessageTime = group.getLastMessageTime();
-        this.lastMessageSenderId = group.getLastMessageSenderId();
-        this.lastMessageOG = group.getLastMessageOG();
+        this.lastMessageSenderId = group.getLastMessageSenderId() != null ? group.getLastMessageSenderId() : "";
+        this.lastMessageOG = group.getLastMessageOG() != null ? group.getLastMessageOG() : "";
         this.isGroup = true;
     }
 

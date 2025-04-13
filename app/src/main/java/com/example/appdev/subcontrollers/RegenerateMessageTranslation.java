@@ -18,7 +18,13 @@ import com.example.appdev.translators.TranslatorFactory;
 import com.example.appdev.translators.TranslatorType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.OutputStream;
+import org.json.JSONObject;
 
 public class RegenerateMessageTranslation {
     private static final String TAG = "RegenerateTranslation";
@@ -43,42 +49,98 @@ public class RegenerateMessageTranslation {
         // Always set to variation mode for regeneration
         Variables.openAiPrompt = 2;
 
-        TranslatorType translatorType = TranslatorType.fromId(Variables.userTranslator);
-        
-        if (translatorType == TranslatorType.GOOGLE) {
-            Log.e(TAG, "Regeneration not supported for Google Translate");
-            CustomDialog.showDialog(
-                context,
-                "Feature Not Available",
-                "Translation variations are not available with Google Translate. Please switch to an AI-powered translator to use this feature."
-            );
-            return;
-        }
-
-        // Get the source language for this message
-        messagesRef.child(Variables.roomId).child(messageId).child("sourceLanguage")
+        // Get the sender language for this message
+        messagesRef.child(Variables.roomId).child(messageId).child("senderLanguage")
             .get().addOnCompleteListener(task -> {
-                String sourceLanguage;
+                String senderLanguage;
                 if (task.isSuccessful() && task.getResult() != null && task.getResult().getValue() != null) {
-                    sourceLanguage = task.getResult().getValue(String.class);
+                    senderLanguage = task.getResult().getValue(String.class);
                 } else {
-                    // Fallback to current user language if sourceLanguage not found
-                    sourceLanguage = Variables.userLanguage;
+                    // Fallback to current user language if senderLanguage not found
+                    senderLanguage = Variables.userLanguage;
                 }
 
-                AsyncTask<String, Void, String> translator = TranslatorFactory.createTranslator(
-                    translatorType,
-                    targetLanguage,
-                    translatedMessage -> {
-                        if (!TextUtils.isEmpty(translatedMessage)) {
-                            // Split and store variations
-                            String[] variations = translatedMessage.split("\n");
-                            storeTranslationVariations(variations, messageId);
+                // Use the server endpoint for regeneration instead of client-side translators
+                try {
+                    // Prepare the request body
+                    JSONObject requestBody = new JSONObject();
+                    requestBody.put("text", message);
+                    requestBody.put("source_language", senderLanguage);
+                    requestBody.put("target_language", targetLanguage);
+                    requestBody.put("variants", "multiple"); // Always get multiple variants
+                    requestBody.put("model", Variables.userTranslator.toLowerCase());
+                    requestBody.put("translation_mode", Variables.isFormalTranslationMode ? "formal" : "casual");
+                    requestBody.put("room_id", Variables.roomId);
+                    requestBody.put("message_id", messageId);
+                    requestBody.put("is_group", false); // This is for direct messages
+
+                    String apiUrl = Variables.API_REGENERATE_TRANSLATION_URL;
+                    
+                    // Make API request in background
+                    new AsyncTask<Void, Void, Boolean>() {
+                        @Override
+                        protected Boolean doInBackground(Void... voids) {
+                            try {
+                                URL url = new URL(apiUrl);
+                                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                                conn.setRequestMethod("POST");
+                                conn.setRequestProperty("Content-Type", "application/json");
+                                conn.setDoOutput(true);
+
+                                // Send request body
+                                try (OutputStream os = conn.getOutputStream()) {
+                                    byte[] input = requestBody.toString().getBytes("utf-8");
+                                    os.write(input, 0, input.length);
+                                }
+
+                                // Check if request was successful
+                                if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                                    // Read the response but we don't need to parse it
+                                    // The server updates Firebase directly
+                                    return true;
+                                }
+                                
+                                return false;
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error making API request: " + e.getMessage());
+                                return false;
+                            }
                         }
-                    },
-                    context
-                );
-                translator.execute(message);
+
+                        @Override
+                        protected void onPostExecute(Boolean success) {
+                            if (success) {
+                                // On success, get the updated translation to display
+                                messagesRef.child(Variables.roomId).child(messageId)
+                                    .child("translations").child("translation1")
+                                    .get().addOnCompleteListener(task -> {
+                                        if (task.isSuccessful() && task.getResult() != null && 
+                                            task.getResult().getValue() != null) {
+                                            String newTranslation = task.getResult().getValue(String.class);
+                                            if (listener != null) {
+                                                listener.onTranslationRegenerated(newTranslation);
+                                            }
+                                        } else {
+                                            // If we can't get the new translation, inform the user
+                                            if (listener != null) {
+                                                listener.onTranslationRegenerated("Translation regeneration failed");
+                                            }
+                                        }
+                                    });
+                            } else {
+                                if (listener != null) {
+                                    listener.onTranslationRegenerated("Translation regeneration failed");
+                                }
+                            }
+                        }
+                    }.execute();
+                    
+                } catch (Exception e) {
+                    Log.e(TAG, "Error preparing regeneration request: " + e.getMessage());
+                    if (listener != null) {
+                        listener.onTranslationRegenerated("Failed to regenerate translation");
+                    }
+                }
             });
     }
 
@@ -113,31 +175,47 @@ public class RegenerateMessageTranslation {
             return;
         }
 
+        // Create a map for the translations
+        Map<String, Object> translationsMap = new HashMap<>();
+        
         // Store variations in Firebase
         if (cleanVariations.size() >= 3) {
-            messagesRef.child(Variables.roomId).child(messageId).child("messageVar1")
-                .setValue(cleanVariations.get(0));
-            messagesRef.child(Variables.roomId).child(messageId).child("messageVar2")
-                .setValue(cleanVariations.get(1));
-            messagesRef.child(Variables.roomId).child(messageId).child("messageVar3")
-                .setValue(cleanVariations.get(2));
-            // Set the main message to var2 (middle variation)
-            messagesRef.child(Variables.roomId).child(messageId).child("message")
-                .setValue(cleanVariations.get(1));
-
+            // Only create translation2 and translation3 if we have multiple variations
+            translationsMap.put("translation1", cleanVariations.get(0));
+            translationsMap.put("translation2", cleanVariations.get(1));
+            translationsMap.put("translation3", cleanVariations.get(2));
+            
+            // Update the translations node in Firebase
+            messagesRef.child(Variables.roomId).child(messageId).child("translations")
+                .updateChildren(translationsMap);
+            
+            // Use the first variation as the main translation
             if (listener != null) {
-                listener.onTranslationRegenerated(cleanVariations.get(1));
+                listener.onTranslationRegenerated(cleanVariations.get(0));
             }
         } else {
-            // If we don't have 3 variations, just use the first one
-            String translation = cleanVariations.get(0);
-            storeTranslatedText(translation, messageId);
+            // If we have fewer than 3 variations, just update translation1
+            translationsMap.put("translation1", cleanVariations.get(0));
+            
+            // Update the translations node in Firebase
+            messagesRef.child(Variables.roomId).child(messageId).child("translations")
+                .updateChildren(translationsMap);
+            
+            if (listener != null) {
+                listener.onTranslationRegenerated(cleanVariations.get(0));
+            }
         }
     }
 
     private void storeTranslatedText(String translatedText, String messageId) {
         String cleanText = cleanVariation(translatedText);
-        messagesRef.child(Variables.roomId).child(messageId).child("message").setValue(cleanText);
+        
+        // Store as translation1 in the translations map
+        Map<String, Object> translationsMap = new HashMap<>();
+        translationsMap.put("translation1", cleanText);
+        
+        messagesRef.child(Variables.roomId).child(messageId).child("translations")
+            .updateChildren(translationsMap);
         
         if (listener != null) {
             listener.onTranslationRegenerated(cleanText);

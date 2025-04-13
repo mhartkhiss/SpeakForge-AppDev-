@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GroupMessage extends Message {
-    private String senderName;
     private String senderLanguage;
     private String senderProfileUrl;
     private Map<String, String> translations;
@@ -15,21 +14,12 @@ public class GroupMessage extends Message {
         translations = new HashMap<>();
     }
 
-    public GroupMessage(String messageId, String message, String messageOG, long timestamp, String senderId,
-                       String senderName, String senderLanguage, String senderProfileUrl) {
-        super(messageId, message, messageOG, timestamp, senderId);
-        this.senderName = senderName;
+    public GroupMessage(String messageId, String message, long timestamp, String senderId,
+                       String senderLanguage, String senderProfileUrl) {
+        super(messageId, message, timestamp, senderId);
         this.senderLanguage = senderLanguage;
         this.senderProfileUrl = senderProfileUrl;
         this.translations = new HashMap<>();
-    }
-
-    public String getSenderName() {
-        return senderName;
-    }
-
-    public void setSenderName(String senderName) {
-        this.senderName = senderName;
     }
 
     public String getSenderLanguage() {

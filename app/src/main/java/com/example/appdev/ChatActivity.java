@@ -41,6 +41,9 @@ import org.json.JSONObject;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.OutputStream;
+import java.util.Map;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -253,108 +256,101 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     public void sendMessage(String message, String targetLanguage) {
-        String messageTextOG = message;
-        String roomId = ChatActivity.this.roomId;
+        if (message.trim().isEmpty()) {
+            return;
+        }
 
-        // Get the current user ID (sender ID)
         String senderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String messageId = messagesRef.child(roomId).push().getKey();
+        long timestamp = System.currentTimeMillis();
 
-        // Check if senderId and roomId are not null
-        if (senderId != null && roomId != null) {
-            // Create a unique key for the message
-            String messageId = messagesRef.child(roomId).push().getKey();
-
-            // Get current timestamp
-            long timestamp = System.currentTimeMillis();
-
-            // Create a HashMap to represent the message data
-            HashMap<String, Object> messageData = new HashMap<>();
-            
-            // Set initial message value based on translation setting
-            if (targetLanguage == null || !translateEnabled) {
-                messageData.put("message", messageTextOG);
-            } else {
-                messageData.put("message", "......");
-            }
-            
-            messageData.put("messageOG", messageTextOG);
+        // Save message data to Firebase
+        if (messageId != null) {
+            // Create a map for the initial message data without translations
+            Map<String, Object> messageData = new HashMap<>();
+            messageData.put("messageId", messageId);
+            messageData.put("message", message); // Original message text
             messageData.put("timestamp", timestamp);
             messageData.put("senderId", senderId);
-            messageData.put("messageId", messageId);
-            messageData.put("sourceLanguage", Variables.userLanguage);
+            messageData.put("senderLanguage", Variables.userLanguage); // Store sender's language
+            messageData.put("translationMode", Variables.isFormalTranslationMode ? "formal" : "casual"); // Store translation mode (formal/casual)
 
-            // Save message to Firebase Database
+            // Save the message to Firebase
             messagesRef.child(roomId).child(messageId).setValue(messageData)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            String messageTextOG2 = "\"" + messageTextOG + "\"";
-                            // Only translate if translation is enabled and target language exists
-                            if (targetLanguage != null && translateEnabled) {
-                                translateMessage(targetLanguage, messageTextOG2, messageId);
-                            } else {
-                                // If translation is disabled, use original message
-                                messagesRef.child(roomId).child(messageId)
-                                    .child("message").setValue(messageTextOG);
-                            }
-                        } else {
-                            Log.e("ConversationModeActivity", 
-                                "Failed to send message: " + task.getException());
-                        }
-                    });
-
-            // Clear the input field
-            chatBox.setText("");
-        } else {
-            Log.e("ConversationModeActivity", "Sender ID or Room ID is null");
+                .addOnSuccessListener(aVoid -> {
+                    // Message saved successfully, now translate it
+                    translateMessage(targetLanguage, message, messageId);
+                    chatBox.setText("");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ChatActivity", "Failed to save message: " + e.getMessage());
+                });
         }
     }
 
     private void translateMessage(String targetLanguage, String messageTextOG, String messageId) {
-        new AsyncTask<Void, Void, Boolean>() {
-            @Override
-            protected Boolean doInBackground(Void... voids) {
-                try {
-                    // Prepare the request body
-                    JSONObject requestBody = new JSONObject();
-                    requestBody.put("text", messageTextOG);
-                    requestBody.put("source_language", Variables.userLanguage);
-                    requestBody.put("target_language", targetLanguage);
-                    requestBody.put("mode", "single");
-                    requestBody.put("model", recipientTranslator.toLowerCase());
-                    requestBody.put("room_id", roomId);
-                    requestBody.put("message_id", messageId);
+        Variables.openAiPrompt = 1; // Use standard translation setting for initial messages
 
-                    // Make the API request
-                    URL url = new URL(Variables.API_TRANSLATE_DB_URL);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("POST");
-                    conn.setRequestProperty("Content-Type", "application/json");
-                    conn.setDoOutput(true);
+        // Prepare the request body
+        JSONObject requestBody = new JSONObject();
+        try {
+            requestBody.put("text", messageTextOG);
+            requestBody.put("source_language", Variables.userLanguage);
+            requestBody.put("target_language", targetLanguage);
+            requestBody.put("mode", Variables.isFormalTranslationMode ? "formal" : "casual");
+            requestBody.put("variants", "single"); // Add variants parameter explicitly
+            requestBody.put("translator", recipientTranslator);
+            requestBody.put("room_id", roomId);
+            requestBody.put("message_id", messageId);
+            
+            String apiUrl = Variables.API_TRANSLATE_DB_URL;
+            
+            new AsyncTask<Void, Void, Boolean>() {
+                @Override
+                protected Boolean doInBackground(Void... voids) {
+                    try {
+                        URL url = new URL(apiUrl);
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.setRequestMethod("POST");
+                        conn.setRequestProperty("Content-Type", "application/json");
+                        conn.setDoOutput(true);
 
-                    // Send request body
-                    try (OutputStream os = conn.getOutputStream()) {
-                        byte[] input = requestBody.toString().getBytes("utf-8");
-                        os.write(input, 0, input.length);
+                        try (OutputStream os = conn.getOutputStream()) {
+                            byte[] input = requestBody.toString().getBytes("utf-8");
+                            os.write(input, 0, input.length);
+                        }
+
+                        if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                            StringBuilder response = new StringBuilder();
+                            try (BufferedReader br = new BufferedReader(
+                                    new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+                                String responseLine;
+                                while ((responseLine = br.readLine()) != null) {
+                                    response.append(responseLine.trim());
+                                }
+                                
+                                // With API_TRANSLATE_DB_URL, Firebase is updated directly by the server
+                                // No need to update Firebase here again
+                                return true;
+                            }
+                        }
+                        return false;
+                    } catch (Exception e) {
+                        Log.e("ChatActivity", "Error translating message: " + e.getMessage());
+                        return false;
                     }
-
-                    return conn.getResponseCode() == HttpURLConnection.HTTP_OK;
-
-                } catch (Exception e) {
-                    Log.e("ConversationModeActivity", "Translation error: " + e.getMessage());
-                    return false;
                 }
-            }
 
-            @Override
-            protected void onPostExecute(Boolean success) {
-                if (!success) {
-                    // If translation fails, set message to original text
-                    messagesRef.child(roomId).child(messageId)
-                        .child("message").setValue(messageTextOG.replace("\"", ""));
-                    Log.e("ConversationModeActivity", "Failed to translate message");
+                @Override
+                protected void onPostExecute(Boolean success) {
+                    if (!success) {
+                        Log.e("ChatActivity", "Failed to translate message");
+                    }
                 }
-            }
-        }.execute();
+            }.execute();
+        } catch (Exception e) {
+            Log.e("ChatActivity", "Error creating JSON request: " + e.getMessage());
+        }
     }
 
     private String removeQuotationMarks(String text) {

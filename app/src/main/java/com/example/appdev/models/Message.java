@@ -1,26 +1,28 @@
 package com.example.appdev.models;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Message {
     private String messageId;
     private String message;
-    private String messageOG;
     private long timestamp;
     private String senderId;
-    private String messageVar1;
-    private String messageVar2;
-    private String messageVar3;
-
+    private String senderLanguage;
+    private String translationMode;
+    private Map<String, String> translations;
 
     public Message() {
         // Default constructor required for Firebase
+        translations = new HashMap<>();
     }
 
-    public Message(String messageId, String message, String messageOG, long timestamp, String senderId) {
+    public Message(String messageId, String message, long timestamp, String senderId) {
         this.messageId = messageId;
         this.message = message;
-        this.messageOG = messageOG;
         this.timestamp = timestamp;
         this.senderId = senderId;
+        this.translations = new HashMap<>();
     }
 
     public String getMessageId() {
@@ -33,14 +35,6 @@ public class Message {
 
     public String getMessage() {
         return message;
-    }
-
-    public String getMessageOG() {
-        return messageOG;
-    }
-
-    public void setMessageOG(String messageOG) {
-        this.messageOG = messageOG;
     }
 
     public void setMessage(String message) {
@@ -59,34 +53,68 @@ public class Message {
         return senderId;
     }
 
-
     public void setSenderId(String senderId) {
         this.senderId = senderId;
     }
-    public String getMessageVar1() {
-        return messageVar1;
+    
+    public String getSenderLanguage() {
+        return senderLanguage;
     }
 
-    public void setMessageVar1(String messageVar1) {
-        this.messageVar1 = messageVar1;
+    public void setSenderLanguage(String senderLanguage) {
+        this.senderLanguage = senderLanguage;
     }
 
-    public String getMessageVar2() {
-        return messageVar2;
+    public String getTranslationMode() {
+        return translationMode;
     }
 
-    public void setMessageVar2(String messageVar2) {
-        this.messageVar2 = messageVar2;
+    public void setTranslationMode(String translationMode) {
+        this.translationMode = translationMode;
+    }
+    
+    public Map<String, String> getTranslations() {
+        return translations;
     }
 
-    public String getMessageVar3() {
-        return messageVar3;
+    public void setTranslations(Map<String, String> translations) {
+        this.translations = translations != null ? translations : new HashMap<>();
     }
-
-    public void setMessageVar3(String messageVar3) {
-        this.messageVar3 = messageVar3;
+    
+    // Helper methods to get specific translations
+    public String getTranslation1() {
+        return translations != null ? translations.get("translation1") : null;
     }
-
+    
+    public String getTranslation2() {
+        return translations != null ? translations.get("translation2") : null;
+    }
+    
+    public String getTranslation3() {
+        return translations != null ? translations.get("translation3") : null;
+    }
+    
+    // Helper methods to set specific translations
+    public void setTranslation1(String translation) {
+        if (translations == null) {
+            translations = new HashMap<>();
+        }
+        translations.put("translation1", translation);
+    }
+    
+    public void setTranslation2(String translation) {
+        if (translations == null) {
+            translations = new HashMap<>();
+        }
+        translations.put("translation2", translation);
+    }
+    
+    public void setTranslation3(String translation) {
+        if (translations == null) {
+            translations = new HashMap<>();
+        }
+        translations.put("translation3", translation);
+    }
 }
 
 
