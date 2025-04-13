@@ -11,7 +11,10 @@ import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -25,6 +28,8 @@ import com.example.appdev.adapters.GroupChatAdapter;
 import com.example.appdev.models.Group;
 import com.example.appdev.models.GroupMessage;
 import com.example.appdev.utils.CustomNotification;
+import com.example.appdev.utils.TranslationContextManager;
+import com.example.appdev.utils.TranslationModeManager;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -251,42 +256,49 @@ public class GroupChatActivity extends AppCompatActivity {
             }
         };
         userMemberRef.addValueEventListener(membershipListener);
+
+        // Initialize translation mode and context settings
+        TranslationModeManager.initializeFromPreferences(this);
+        TranslationContextManager.initializeFromPreferences(this);
     }
     
     private void sendGroupMessage(String messageText) {
-        if (messageText.isEmpty() || groupId == null || currentUserName == null) {
+        if (TextUtils.isEmpty(messageText)) {
             return;
         }
         
-        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        
-        // Create a unique key for the message
+        // Generate a unique ID for the message
         String messageId = groupMessagesRef.child(groupId).push().getKey();
         
-        // Get current timestamp
+        // Create a timestamp for the message
         long timestamp = System.currentTimeMillis();
         
-        // Create a HashMap to represent the message data
-        HashMap<String, Object> messageData = new HashMap<>();
+        // Get current user ID
+        String senderId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        
+        // Create message data with loading placeholder
+        Map<String, Object> messageData = new HashMap<>();
         messageData.put("messageId", messageId);
-        
-        // Always show loading indicator while translating
-        messageData.put("message", "......");
-        
-        messageData.put("messageOG", messageText);
+        messageData.put("message", "......"); // Placeholder for translation
+        messageData.put("messageOG", messageText); // Original message
         messageData.put("timestamp", timestamp);
-        messageData.put("senderId", currentUserId);
+        messageData.put("senderId", senderId);
         messageData.put("senderName", currentUserName);
-        messageData.put("senderLanguage", Variables.userLanguage);
-        messageData.put("senderProfileUrl", currentUserProfileUrl);
         messageData.put("sourceLanguage", Variables.userLanguage);
-        messageData.put("translationMode", Variables.isFormalTranslationMode ? "formal" : "casual");
         
-        // Save message to Firebase Database
+        // Add profile image URL if available
+        if (currentUserProfileUrl != null) {
+            messageData.put("senderProfileUrl", currentUserProfileUrl);
+        }
+        
+        Log.d("GroupChatActivity", "Sending message: " + messageId);
+        
+        // Save message to Firebase with placeholder
         groupMessagesRef.child(groupId).child(messageId).setValue(messageData)
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     // Always translate group messages
+                    Log.d("GroupChatActivity", "Message saved, now translating: " + messageId);
                     translateGroupMessage(messageText, messageId);
                 } else {
                     Log.e("GroupChatActivity", "Failed to send message: " + task.getException());
@@ -299,6 +311,8 @@ public class GroupChatActivity extends AppCompatActivity {
     }
     
     private void translateGroupMessage(String messageText, String messageId) {
+        Log.d("GroupChatActivity", "Starting translation for message: " + messageId);
+        
         new AsyncTask<Void, Void, Boolean>() {
             @Override
             protected Boolean doInBackground(Void... voids) {
@@ -312,13 +326,26 @@ public class GroupChatActivity extends AppCompatActivity {
                     requestBody.put("group_id", groupId);
                     requestBody.put("message_id", messageId);
                     requestBody.put("translation_mode", Variables.isFormalTranslationMode ? "formal" : "casual");
+                    
+                    // Add context-aware translation parameters
+                    requestBody.put("use_context", Variables.isContextAwareTranslation);
+                    requestBody.put("context_depth", Variables.contextDepth);
 
-                    // Make the API request
-                    URL url = new URL(Variables.API_TRANSLATE_GROUP_URL);
+                    // Make the API request to the appropriate endpoint
+                    String apiUrl = Variables.isContextAwareTranslation ? 
+                            Variables.API_TRANSLATE_GROUP_CONTEXT_URL : 
+                            Variables.API_TRANSLATE_GROUP_URL;
+                    
+                    Log.d("GroupChatActivity", "Using API URL: " + apiUrl);
+                    Log.d("GroupChatActivity", "Request body: " + requestBody.toString());
+                    
+                    URL url = new URL(apiUrl);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("POST");
                     conn.setRequestProperty("Content-Type", "application/json");
                     conn.setDoOutput(true);
+                    conn.setConnectTimeout(30000); // 30 seconds
+                    conn.setReadTimeout(30000); // 30 seconds
 
                     // Send request body
                     try (OutputStream os = conn.getOutputStream()) {
@@ -326,10 +353,27 @@ public class GroupChatActivity extends AppCompatActivity {
                         os.write(input, 0, input.length);
                     }
                     
-                    return conn.getResponseCode() == HttpURLConnection.HTTP_OK;
+                    int responseCode = conn.getResponseCode();
+                    Log.d("GroupChatActivity", "Response code: " + responseCode);
+                    
+                    // Read response for debugging
+                    if (responseCode != HttpURLConnection.HTTP_OK) {
+                        StringBuilder response = new StringBuilder();
+                        try (BufferedReader br = new BufferedReader(
+                                new InputStreamReader(conn.getErrorStream(), "utf-8"))) {
+                            String responseLine;
+                            while ((responseLine = br.readLine()) != null) {
+                                response.append(responseLine.trim());
+                            }
+                        }
+                        Log.e("GroupChatActivity", "Error response: " + response.toString());
+                        return false;
+                    }
+                    
+                    return true;
                     
                 } catch (Exception e) {
-                    Log.e("GroupChatActivity", "Group translation error: " + e.getMessage());
+                    Log.e("GroupChatActivity", "Group translation error: " + e.getMessage(), e);
                     return false;
                 }
             }
@@ -338,8 +382,11 @@ public class GroupChatActivity extends AppCompatActivity {
             protected void onPostExecute(Boolean success) {
                 if (!success) {
                     // If translation failed, update the message to use original text
+                    Log.e("GroupChatActivity", "Translation failed, setting original text");
                     groupMessagesRef.child(groupId).child(messageId)
                         .child("message").setValue(messageText);
+                } else {
+                    Log.d("GroupChatActivity", "Translation completed successfully");
                 }
             }
         }.execute();
@@ -483,5 +530,40 @@ public class GroupChatActivity extends AppCompatActivity {
         if (messagesListener != null && groupMessagesRef != null && groupId != null) {
             groupMessagesRef.child(groupId).removeEventListener(messagesListener);
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_group_chat, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        
+        if (id == R.id.action_group_info) {
+            // Launch group info activity
+            Intent intent = new Intent(this, GroupInfoActivity.class);
+            intent.putExtra("GROUP_ID", groupId);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.action_translation_mode) {
+            // Show translation mode dialog
+            TranslationModeManager.showTranslationModeDialog(this, (isFormalMode) -> {
+                // Translation mode changed
+                TranslationModeManager.saveToPreferences(this, isFormalMode);
+            });
+            return true;
+        } else if (id == R.id.action_context_settings) {
+            // Show context settings dialog
+            TranslationContextManager.showContextSettingsDialog(this, (isEnabled, contextDepth) -> {
+                // Context settings changed
+                TranslationContextManager.saveToPreferences(this, isEnabled, contextDepth);
+            });
+            return true;
+        }
+        
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import androidx.cardview.widget.CardView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import androidx.appcompat.app.AlertDialog;
 
 import com.example.appdev.R;
 import com.example.appdev.Variables;
@@ -42,6 +43,36 @@ public class TranslationModeManager {
         editor.putBoolean(Variables.PREF_FORMAL_TRANSLATION_MODE, isFormalMode);
         editor.apply();
         Variables.isFormalTranslationMode = isFormalMode;
+    }
+    
+    /**
+     * Shows a dialog to select translation mode (formal or casual)
+     * @param context The context
+     * @param listener Listener to handle translation mode changes
+     */
+    public static void showTranslationModeDialog(Context context, TranslationModeChangeListener listener) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Translation Mode");
+        
+        // Set up the options
+        String[] modes = {"Casual Translation", "Formal Translation"};
+        int checkedItem = Variables.isFormalTranslationMode ? 1 : 0;
+        
+        builder.setSingleChoiceItems(modes, checkedItem, (dialog, which) -> {
+            boolean isFormalMode = (which == 1);
+            
+            // Notify listener
+            if (listener != null) {
+                listener.onTranslationModeChanged(isFormalMode);
+            }
+            
+            dialog.dismiss();
+        });
+        
+        builder.setNegativeButton("Cancel", null);
+        
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
     
     /**
@@ -80,17 +111,15 @@ public class TranslationModeManager {
     /**
      * Updates the toggle button appearance based on the current mode
      */
-    private static void updateToggleAppearance(Context context, CardView toggleCard, 
-                                              ImageView modeIcon, TextView modeLabel, 
-                                              boolean isFormalMode) {
+    private static void updateToggleAppearance(Context context, CardView card, ImageView icon, TextView label, boolean isFormalMode) {
         if (isFormalMode) {
-            toggleCard.setCardBackgroundColor(context.getResources().getColor(R.color.formal_mode_bg));
-            modeIcon.setImageResource(R.drawable.ic_formal_mode);
-            modeLabel.setText(R.string.formal_mode);
+            card.setCardBackgroundColor(context.getResources().getColor(R.color.formal_mode_background));
+            icon.setImageResource(R.drawable.translation_mode_formal);
+            label.setText("Formal");
         } else {
-            toggleCard.setCardBackgroundColor(context.getResources().getColor(R.color.casual_mode_bg));
-            modeIcon.setImageResource(R.drawable.ic_casual_mode);
-            modeLabel.setText(R.string.casual_mode);
+            card.setCardBackgroundColor(context.getResources().getColor(R.color.casual_mode_background));
+            icon.setImageResource(R.drawable.translation_mode_casual);
+            label.setText("Casual");
         }
     }
 } 

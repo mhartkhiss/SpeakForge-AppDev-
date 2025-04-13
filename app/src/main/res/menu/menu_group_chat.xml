@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <item
+        android:id="@+id/action_group_info"
+        android:title="Group Info"
+        android:icon="@android:drawable/ic_menu_info_details"
+        app:showAsAction="ifRoom" />
+    
+    <item
+        android:id="@+id/action_translation_mode"
+        android:title="Translation Mode" 
+        app:showAsAction="never" />
+        
+    <item
+        android:id="@+id/action_context_settings"
+        android:title="Context Settings"
+        app:showAsAction="never" />
+</menu> 

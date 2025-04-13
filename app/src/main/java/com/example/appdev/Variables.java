@@ -9,12 +9,15 @@ public class Variables {
     public static final String API_TRANSLATE_DB_URL = API_BASE_URL + "translate-db/";
     public static final String API_TRANSLATE_BATCH_URL = API_BASE_URL + "translate-batch/";
     public static final String API_TRANSLATE_GROUP_URL = API_BASE_URL + "translate-group/";
+    public static final String API_TRANSLATE_GROUP_CONTEXT_URL = API_BASE_URL + "translate-group-context/";
     public static final String API_REGENERATE_TRANSLATION_URL = API_BASE_URL + "regenerate-translation/";
 
     // SharedPreferences constants
     public static final String PREFS_NAME = "SpeakForgePrefs";
     public static final String PREF_IS_GUEST_USER = "isGuestUser";
     public static final String PREF_FORMAL_TRANSLATION_MODE = "formalTranslationMode";
+    public static final String PREF_CONTEXT_AWARE_TRANSLATION = "contextAwareTranslation";
+    public static final String PREF_CONTEXT_DEPTH = "contextDepth";
 
     // Public variables
     public static String userUID = "";
@@ -26,6 +29,8 @@ public class Variables {
     public static String roomId = "";
     public static int openAiPrompt = 1;
     public static boolean isFormalTranslationMode = false;
+    public static boolean isContextAwareTranslation = true; // Default to enabled
+    public static int contextDepth = 5; // Default context depth
 
     // API Keys
     public static List<String> klusterAiKeys = new ArrayList<>();

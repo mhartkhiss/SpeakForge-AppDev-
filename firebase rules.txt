@@ -93,6 +93,8 @@
       ".write": "auth !== null",
       
       "$groupId": {
+        // Add index on timestamp field for message ordering and context retrieval
+        ".indexOn": ["timestamp"],
         // More specific rules for group messages can be added here if needed
         // But for now, we'll use a simpler approach to get it working
         ".read": "auth !== null",
