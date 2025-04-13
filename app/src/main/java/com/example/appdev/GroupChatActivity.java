@@ -185,6 +185,9 @@ public class GroupChatActivity extends AppCompatActivity {
         chatBox = findViewById(R.id.chatBox);
         buttonSend = findViewById(R.id.buttonSend);
         
+        // Set chatbox hint with user's language
+        chatBox.setHint("Type a message in " + Variables.userLanguage + "...");
+        
         // Initialize RecyclerView with adapter
         groupChatAdapter = new GroupChatAdapter(groupMessagesRef, groupId, this);
         

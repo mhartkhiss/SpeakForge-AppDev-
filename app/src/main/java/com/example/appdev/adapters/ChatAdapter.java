@@ -178,7 +178,10 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 
                 // Handle loading state for received messages
                 Map<String, String> translations = message.getTranslations();
-                boolean isLoading = translations == null || translations.isEmpty();
+                String translationState = message.getTranslationState();
+                
+                // Check if message is in loading state (being translated)
+                boolean isLoading = "TRANSLATING".equals(translationState);
                 
                 if (isLoading) {
                     textViewMessage.setVisibility(View.GONE);
@@ -189,12 +192,13 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                     loadingDots.setVisibility(View.GONE);
                     loadingDots.stopAnimation();
                     
-                    // For received messages, show the translation
-                    if (translations.containsKey("translation1")) {
+                    // For received messages, show the translation if available and not removed
+                    if (translations != null && translations.containsKey("translation1") && 
+                        !"REMOVED".equals(translationState)) {
                         // Display translation1 by default
                         textViewMessage.setText(translations.get("translation1"));
                     } else {
-                        // Fallback to original message if no translation available
+                        // Show original message if no translation is available or translations were removed
                         textViewMessage.setText(message.getMessage());
                     }
                 }
@@ -235,17 +239,35 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 textViewOriginalMessage.setVisibility(View.VISIBLE);
                 textViewOriginalMessage.setText("You can view the original message by upgrading to a premium account.");
                 textViewOriginalMessage.setTextColor(itemView.getResources().getColor(R.color.purple_200));
+                // Don't add to visibleOriginalMessages list for the premium message
                 return;
             }
             
-            // For premium users, show the original message
+            // Check if the current original message view is visible
+            boolean wasVisible = textViewOriginalMessage.getVisibility() == View.VISIBLE;
+
+            // Hide any other currently visible original messages
+            // Use a copy to avoid ConcurrentModificationException if list is modified elsewhere
+            List<TextView> currentlyVisible = new ArrayList<>(visibleOriginalMessages); 
+            for (TextView visibleTextView : currentlyVisible) {
+                if (visibleTextView != textViewOriginalMessage) { // Don't hide self yet
+                   visibleTextView.setVisibility(View.GONE);
+                }
+            }
+            visibleOriginalMessages.clear(); // Clear the main list
+
+            // For premium users, toggle the original message display
             if (message.getMessage() != null) {
-                if (textViewOriginalMessage.getVisibility() == View.VISIBLE) {
+                if (wasVisible) {
+                    // If it was visible, hide it
                     textViewOriginalMessage.setVisibility(View.GONE);
+                    // No need to add to visibleOriginalMessages as it's now hidden
                 } else {
+                    // If it was hidden, show it and add to the list
                     textViewOriginalMessage.setVisibility(View.VISIBLE);
                     textViewOriginalMessage.setText(message.getMessage());
                     textViewOriginalMessage.setTextColor(itemView.getResources().getColor(R.color.grey));
+                    visibleOriginalMessages.add(textViewOriginalMessage); // Track this as visible
                 }
             }
         }
@@ -287,14 +309,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             // Get target language (current user's language)
             String targetLanguage = Variables.userLanguage;
             
-            // Show loading indicator
-            textViewMessage.setText("Generating variations...");
-            
             // Create regeneration handler
             RegenerateMessageTranslation regenerator = new RegenerateMessageTranslation(context);
-            regenerator.setOnTranslationRegeneratedListener(newTranslation -> {
-                textViewMessage.setText(newTranslation);
-            });
             
             // Trigger regeneration
             regenerator.regenerate(originalMessage, message.getMessageId(), targetLanguage);
@@ -393,6 +409,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                         DatabaseReference messageRef = messagesRef.child(Variables.roomId)
                                 .child(message.getMessageId());
                         
+                        // Update translation state to REMOVED
+                        messageRef.child("translationState").setValue("REMOVED");
                         // Remove all translations
                         messageRef.child("translations").removeValue();
                     }

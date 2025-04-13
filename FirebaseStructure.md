@@ -33,6 +33,7 @@ speakforge-appdev/
 │           ├── senderId: String
 │           ├── senderLanguage: String (language of the sender)
 │           ├── translationMode: String (formal or casual)
+│           ├── translationState: String (TRANSLATING, TRANSLATED, REMOVED, or null)
 │           └── translations/
 │               ├── translation1: String (first translation of the message)
 │               ├── translation2: String (second translation of the message)
@@ -99,6 +100,11 @@ The `messages` node organizes messages by conversation room:
   - **senderId**: User ID of the message sender
   - **senderLanguage**: The language of the sender
   - **translationMode**: Formal or casual translation style
+  - **translationState**: Current state of message translation
+    - **TRANSLATING**: Message is currently being translated
+    - **TRANSLATED**: Message has been successfully translated
+    - **REMOVED**: Translations have been removed
+    - **null**: No translation or translation failed
   - **translations**: Map of translations for the message
     - **translation1**: First translation variant of the message
     - **translation2**: Second translation variant of the message

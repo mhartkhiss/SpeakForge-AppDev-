@@ -11,10 +11,12 @@ public class Message {
     private String senderLanguage;
     private String translationMode;
     private Map<String, String> translations;
+    private String translationState; // Can be "TRANSLATING", "TRANSLATED", "REMOVED", or null
 
     public Message() {
         // Default constructor required for Firebase
         translations = new HashMap<>();
+        translationState = null;
     }
 
     public Message(String messageId, String message, long timestamp, String senderId) {
@@ -23,6 +25,7 @@ public class Message {
         this.timestamp = timestamp;
         this.senderId = senderId;
         this.translations = new HashMap<>();
+        this.translationState = null;
     }
 
     public String getMessageId() {
@@ -114,6 +117,14 @@ public class Message {
             translations = new HashMap<>();
         }
         translations.put("translation3", translation);
+    }
+
+    public String getTranslationState() {
+        return translationState;
+    }
+
+    public void setTranslationState(String translationState) {
+        this.translationState = translationState;
     }
 }
 

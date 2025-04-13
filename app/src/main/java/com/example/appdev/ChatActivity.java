@@ -114,6 +114,9 @@ public class ChatActivity extends AppCompatActivity {
         chatBox = findViewById(R.id.chatBox);
         buttonSend = findViewById(R.id.buttonSend);
 
+        // Set chatbox hint with user's language
+        chatBox.setHint("Type a message in " + Variables.userLanguage + "...");
+
         // Initialize RecyclerView
         chatAdapter = new ChatAdapter(messagesRef, roomId, this);
 
@@ -274,6 +277,7 @@ public class ChatActivity extends AppCompatActivity {
             messageData.put("senderId", senderId);
             messageData.put("senderLanguage", Variables.userLanguage); // Store sender's language
             messageData.put("translationMode", Variables.isFormalTranslationMode ? "formal" : "casual"); // Store translation mode (formal/casual)
+            messageData.put("translationState", "TRANSLATING"); // Set initial state to TRANSLATING
 
             // Save the message to Firebase
             messagesRef.child(roomId).child(messageId).setValue(messageData)
@@ -302,6 +306,7 @@ public class ChatActivity extends AppCompatActivity {
             requestBody.put("translator", recipientTranslator);
             requestBody.put("room_id", roomId);
             requestBody.put("message_id", messageId);
+            requestBody.put("update_state", true); // Tell API to update translationState
             
             String apiUrl = Variables.API_TRANSLATE_DB_URL;
             
@@ -330,13 +335,19 @@ public class ChatActivity extends AppCompatActivity {
                                 }
                                 
                                 // With API_TRANSLATE_DB_URL, Firebase is updated directly by the server
-                                // No need to update Firebase here again
                                 return true;
                             }
+                        } else {
+                            // If translation fails, set state back to null
+                            DatabaseReference messageRef = messagesRef.child(roomId).child(messageId);
+                            messageRef.child("translationState").setValue(null);
+                            return false;
                         }
-                        return false;
                     } catch (Exception e) {
                         Log.e("ChatActivity", "Error translating message: " + e.getMessage());
+                        // If translation fails, set state back to null
+                        DatabaseReference messageRef = messagesRef.child(roomId).child(messageId);
+                        messageRef.child("translationState").setValue(null);
                         return false;
                     }
                 }
@@ -350,6 +361,9 @@ public class ChatActivity extends AppCompatActivity {
             }.execute();
         } catch (Exception e) {
             Log.e("ChatActivity", "Error creating JSON request: " + e.getMessage());
+            // If JSON creation fails, set state back to null
+            DatabaseReference messageRef = messagesRef.child(roomId).child(messageId);
+            messageRef.child("translationState").setValue(null);
         }
     }
 

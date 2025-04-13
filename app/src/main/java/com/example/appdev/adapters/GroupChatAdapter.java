@@ -51,10 +51,12 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
     private Context context;
     private Map<String, String> usernameCache = new HashMap<>();
     private DatabaseReference usersRef;
+    private List<TextView> visibleOriginalMessages;
 
     public GroupChatAdapter() {
         this.messages = new ArrayList<>();
         this.usersRef = FirebaseDatabase.getInstance().getReference("users");
+        this.visibleOriginalMessages = new ArrayList<>();
         setupUsernameCacheListener();
     }
 
@@ -64,6 +66,7 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
         this.context = context;
         this.usersRef = FirebaseDatabase.getInstance().getReference("users");
         messages = new ArrayList<>();
+        this.visibleOriginalMessages = new ArrayList<>();
         setupUsernameCacheListener();
     }
 
@@ -107,7 +110,7 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
         View view = LayoutInflater.from(parent.getContext()).inflate(
                 viewType == 0 ? R.layout.item_group_message_sent : R.layout.item_group_message_received,
                 parent, false);
-        return new GroupChatViewHolder(view, context, groupId);
+        return new GroupChatViewHolder(view, context, groupId, visibleOriginalMessages);
     }
 
     @Override
@@ -151,11 +154,11 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
         private Context context;
         private CardView messageCard;
         private DatabaseReference messagesRef;
-        private List<TextView> visibleOriginalMessages = new ArrayList<>();
+        private List<TextView> visibleOriginalMessages;
         private String groupId;
         private Map<String, String> usernameCache;
 
-        public GroupChatViewHolder(@NonNull View itemView, Context context, String groupId) {
+        public GroupChatViewHolder(@NonNull View itemView, Context context, String groupId, List<TextView> visibleOriginalMessages) {
             super(itemView);
             textViewMessage = itemView.findViewById(R.id.textViewMessage);
             textViewOriginalMessage = itemView.findViewById(R.id.textViewOriginalMessage);
@@ -164,6 +167,7 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
             imageViewProfile = itemView.findViewById(R.id.imageViewProfile);
             this.context = context;
             this.groupId = groupId;
+            this.visibleOriginalMessages = visibleOriginalMessages;
             messageCard = itemView.findViewById(R.id.cardMessage);
             messagesRef = FirebaseDatabase.getInstance().getReference("group_messages");
 
@@ -282,39 +286,25 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
                 }
 
                 // Set click listener for received messages to show original
-                textViewMessage.setOnClickListener(v -> {
-                    String originalText = null;
-                    
-                    if (translations != null && originalLanguage != null && translations.containsKey(originalLanguage)) {
-                        originalText = translations.get(originalLanguage);
-                    } else {
-                        // Fallback to message field if sender's language is not in translations
-                        originalText = message.getMessage();
-                    }
-                    
-                    if (originalText != null && !textViewMessage.getText().toString().equals(originalText)) {
-                        // Toggle between translation and original
-                        if (textViewOriginalMessage != null) {
-                            if (textViewOriginalMessage.getVisibility() == View.VISIBLE) {
-                                textViewOriginalMessage.setVisibility(View.GONE);
-                            } else {
-                                textViewOriginalMessage.setVisibility(View.VISIBLE);
-                                textViewOriginalMessage.setText(originalText);
-                            }
-                        }
-                    }
-                });
+                textViewMessage.setOnClickListener(v -> handleOriginalMessageClick(message));
             }
         }
 
         private void handleOriginalMessageClick(GroupMessage message) {
-            // Hide any visible original messages
-            for (TextView textView : visibleOriginalMessages) {
-                textView.setVisibility(View.GONE);
+            // Check if the current original message view is visible
+            boolean wasVisible = textViewOriginalMessage.getVisibility() == View.VISIBLE;
+            
+            // Hide any other currently visible original messages
+            // Use a copy to avoid ConcurrentModificationException
+            List<TextView> currentlyVisible = new ArrayList<>(visibleOriginalMessages);
+            for (TextView visibleTextView : currentlyVisible) {
+                if (visibleTextView != textViewOriginalMessage) { // Don't hide self yet
+                    visibleTextView.setVisibility(View.GONE);
+                }
             }
-            visibleOriginalMessages.clear();
+            visibleOriginalMessages.clear(); // Clear the main list
 
-            // Show this message's original text
+            // Show this message's original text if it wasn't visible, or hide if it was
             if (textViewOriginalMessage != null) {
                 String originalLanguage = message.getSenderLanguage();
                 Map<String, String> translations = message.getTranslations();
@@ -328,10 +318,17 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
                 }
                 
                 if (originalText != null) {
-                    textViewOriginalMessage.setVisibility(View.VISIBLE);
-                    textViewOriginalMessage.setText(originalText);
-                    textViewOriginalMessage.setTextColor(itemView.getResources().getColor(R.color.grey));
-                    visibleOriginalMessages.add(textViewOriginalMessage);
+                    if (wasVisible) {
+                        // If it was visible, hide it
+                        textViewOriginalMessage.setVisibility(View.GONE);
+                        // No need to add to list
+                    } else {
+                        // If it was hidden, show it and add to the list
+                        textViewOriginalMessage.setVisibility(View.VISIBLE);
+                        textViewOriginalMessage.setText(originalText);
+                        textViewOriginalMessage.setTextColor(itemView.getResources().getColor(R.color.grey));
+                        visibleOriginalMessages.add(textViewOriginalMessage); // Track this as visible
+                    }
                 }
             }
         }
@@ -569,22 +566,11 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
                                     }
                                     textViewMessage.setVisibility(View.VISIBLE);
                                     
-                                    if (success) {
-                                        // Get the new translation from Firebase after regeneration
-                                        messagesRef.child(groupId).child(messageId)
-                                            .child("translations").child(targetLanguage)
-                                            .get().addOnSuccessListener(dataSnapshot -> {
-                                                if (dataSnapshot.exists()) {
-                                                    String newTranslation = dataSnapshot.getValue(String.class);
-                                                    if (newTranslation != null) {
-                                                        // Update UI with the new translation
-                                                        textViewMessage.setText(newTranslation);
-                                                    }
-                                                }
-                                            });
-                                    } else {
+                                    if (!success) {
                                         Toast.makeText(itemView.getContext(), 
-                                            "Translation failed", Toast.LENGTH_SHORT).show();
+                                            "Translation regeneration failed", Toast.LENGTH_SHORT).show();
+                                        // Optional: Revert text to original/previous state if needed,
+                                        // but ideally bind() handles this based on data.
                                     }
                                 }
                             }.execute(requestBody);
