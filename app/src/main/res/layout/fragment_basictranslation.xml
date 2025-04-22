@@ -213,7 +213,7 @@
                             android:fontFamily="@font/poppins"
                             android:gravity="center"
                             android:textColor="#9E9E9E"
-                            android:textSize="18sp"
+                            android:textSize="22sp"
                             android:paddingBottom="16dp"/>
 
                     </ScrollView>
@@ -266,12 +266,12 @@
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputLayout"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@null"
-                        app:boxBackgroundMode="none"
-                        app:hintEnabled="false"
-                        app:endIconMode="none">
+                        app:endIconMode="clear_text"
+                        app:boxStrokeWidth="0dp"
+                        app:boxStrokeWidthFocused="0dp">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/textInputEditText"

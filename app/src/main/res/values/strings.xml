@@ -4,4 +4,6 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="contact_language_label">%1$s\'S LANGUAGE</string>
     <string name="translation_mode_toggle_description">Toggle between formal and casual translation modes</string>
+    <string name="change_password">Change Password</string>
+    <string name="enter_text_hint">Enter text here</string>
 </resources>
