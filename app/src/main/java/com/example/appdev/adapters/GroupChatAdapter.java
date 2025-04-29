@@ -50,6 +50,7 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
     private String groupId;
     private Context context;
     private Map<String, String> usernameCache = new HashMap<>();
+    private Map<String, String> profileImageUrlCache = new HashMap<>();
     private DatabaseReference usersRef;
     private String visibleOriginalMessageId = null;
     private String regeneratingMessageId = null;
@@ -100,8 +101,14 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
                 for (DataSnapshot userSnapshot : snapshot.getChildren()) {
                     String userId = userSnapshot.getKey();
                     String username = userSnapshot.child("username").getValue(String.class);
+                    String profileUrl = userSnapshot.child("profileImageUrl").getValue(String.class);
+                    
                     if (username != null && !username.isEmpty()) {
                         usernameCache.put(userId, username);
+                    }
+                    
+                    if (profileUrl != null && !profileUrl.isEmpty()) {
+                        profileImageUrlCache.put(userId, profileUrl);
                     }
                 }
                 notifyDataSetChanged();
@@ -109,7 +116,7 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("GroupChatAdapter", "Error loading usernames: " + error.getMessage());
+                Log.e("GroupChatAdapter", "Error loading user data: " + error.getMessage());
             }
         });
     }
@@ -321,20 +328,31 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
              } // end if(textViewMessage != null)
 
             // Handle sender's profile image
-            if (message.getSenderProfileUrl() != null && !message.getSenderProfileUrl().isEmpty()) {
-                if (imageViewProfile != null) {
-                    imageViewProfile.setVisibility(showSenderInfo ? View.VISIBLE : View.INVISIBLE);
-                    if (showSenderInfo) {
+            if (imageViewProfile != null) {
+                imageViewProfile.setVisibility(showSenderInfo ? View.VISIBLE : View.INVISIBLE);
+                if (showSenderInfo) {
+                    String senderId = message.getSenderId();
+                    String profileImageUrl = adapter.profileImageUrlCache.get(senderId);
+                    
+                    if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                        Glide.with(context)
+                                .load(profileImageUrl)
+                                .placeholder(R.drawable.default_userpic)
+                                .error(R.drawable.default_userpic)
+                                .into(imageViewProfile);
+                    } else if (message.getSenderProfileUrl() != null && !message.getSenderProfileUrl().isEmpty()) {
+                        // Fallback to message's sender profile URL if available
                         Glide.with(context)
                                 .load(message.getSenderProfileUrl())
                                 .placeholder(R.drawable.default_userpic)
+                                .error(R.drawable.default_userpic)
                                 .into(imageViewProfile);
+                    } else {
+                        imageViewProfile.setImageResource(R.drawable.default_userpic);
                     }
-                }
-            } else if (imageViewProfile != null) {
-                imageViewProfile.setVisibility(showSenderInfo ? View.VISIBLE : View.INVISIBLE);
-                if (showSenderInfo) {
-                    imageViewProfile.setImageResource(R.drawable.default_userpic);
+                } else if (!showSenderInfo) {
+                    Glide.with(context).clear(imageViewProfile);
+                    imageViewProfile.setImageDrawable(null);
                 }
             }
 
