@@ -52,6 +52,40 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
+                    
+                    <!-- Reply Preview Container -->
+                    <LinearLayout
+                        android:id="@+id/replyPreviewContainer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:background="@drawable/black_reply_background"
+                        android:elevation="2dp"
+                        android:padding="8dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginEnd="16dp"
+                        android:layout_marginTop="8dp">
+                        
+                        <TextView
+                            android:id="@+id/textViewReplySender"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="User"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF" />
+                        
+                        <TextView
+                            android:id="@+id/textViewReplyContent"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Original message"
+                            android:textSize="12sp"
+                            android:maxLines="2"
+                            android:ellipsize="end"
+                            android:textColor="#E0E0E0" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/textViewMessage"

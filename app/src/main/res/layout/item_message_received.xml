@@ -22,6 +22,7 @@
             app:civ_border_width="0dp" />
 
         <androidx.cardview.widget.CardView
+            android:id="@+id/cardMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
@@ -34,6 +35,52 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
+
+                <!-- Reply Preview Container -->
+                <LinearLayout
+                    android:id="@+id/replyPreviewContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:background="@drawable/reply_preview_background"
+                    android:elevation="2dp"
+                    android:padding="8dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginTop="8dp">
+
+                    <TextView
+                        android:id="@+id/textViewReplySender"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Original Sender"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#3F51B5"
+                        android:paddingStart="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/textViewReplyContent"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Original message content"
+                        android:textSize="12sp"
+                        android:textColor="#757575"
+                        android:maxLines="2"
+                        android:ellipsize="end"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="4dp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#E0E0E0" />
+
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/textViewMessage"

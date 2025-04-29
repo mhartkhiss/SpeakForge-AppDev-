@@ -17,6 +17,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.appdev.ChatActivity;
 import com.example.appdev.Variables;
 import com.example.appdev.models.Message;
 import com.example.appdev.R;
@@ -55,6 +56,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     private Context context;
     private DatabaseReference usersRef;
     private Map<String, String> profileImageUrlCache = new HashMap<>();
+    private Map<String, String> usernameCache = new HashMap<>();
+    private Message replyingToMessage = null;
 
     public ChatAdapter() {
         this.messages = new ArrayList<>();
@@ -170,11 +173,18 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 profileImageUrlCache.clear();
+                usernameCache.clear();
                 for (DataSnapshot userSnapshot : snapshot.getChildren()) {
                     String userId = userSnapshot.getKey();
                     String profileUrl = userSnapshot.child("profileImageUrl").getValue(String.class);
+                    String username = userSnapshot.child("username").getValue(String.class);
+                    
                     if (userId != null && profileUrl != null && !profileUrl.isEmpty()) {
                         profileImageUrlCache.put(userId, profileUrl);
+                    }
+                    
+                    if (userId != null && username != null && !username.isEmpty()) {
+                        usernameCache.put(userId, username);
                     }
                 }
                 notifyDataSetChanged();
@@ -182,7 +192,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("ChatAdapter", "Error loading profile image URLs: " + error.getMessage());
+                Log.e("ChatAdapter", "Error loading user data: " + error.getMessage());
             }
         });
     }
@@ -190,6 +200,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     public static class ChatViewHolder extends RecyclerView.ViewHolder {
 
         private TextView textViewMessage, textViewOriginalMessage;
+        private TextView textViewReplySender, textViewReplyContent;
+        private LinearLayout replyPreviewContainer;
         private LoadingDotsView loadingDots;
         private DatabaseReference messagesRef;
         private String roomId;
@@ -203,6 +215,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             textViewMessage = itemView.findViewById(R.id.textViewMessage);
             textViewOriginalMessage = itemView.findViewById(R.id.textViewOriginalMessage);
             loadingDots = itemView.findViewById(R.id.loadingDots);
+            replyPreviewContainer = itemView.findViewById(R.id.replyPreviewContainer);
+            textViewReplySender = itemView.findViewById(R.id.textViewReplySender);
+            textViewReplyContent = itemView.findViewById(R.id.textViewReplyContent);
             this.messagesRef = messagesRef;
             this.roomId = roomId;
             this.adapter = adapter;
@@ -246,6 +261,40 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 } else {
                     loadingDots.setVisibility(View.GONE);
                     loadingDots.stopAnimation();
+                }
+            }
+            
+            // Handle reply preview if this is a reply message
+            if (replyPreviewContainer != null) {
+                if (message.isReply()) {
+                    replyPreviewContainer.setVisibility(View.VISIBLE);
+                    
+                    // Set the original sender's name
+                    String originalSenderId = message.getReplyToSenderId();
+                    String originalSenderName = adapter.usernameCache.get(originalSenderId);
+                    if (originalSenderName != null) {
+                        textViewReplySender.setText(originalSenderName);
+                    } else {
+                        textViewReplySender.setText("User");
+                    }
+                    
+                    // Set the original message content
+                    String originalMessage = message.getReplyToMessage();
+                    if (originalMessage != null) {
+                        textViewReplyContent.setText(originalMessage);
+                    } else {
+                        textViewReplyContent.setText("Original message unavailable");
+                    }
+                    
+                    // Set click listener to navigate to the original message
+                    replyPreviewContainer.setOnClickListener(v -> {
+                        String originalMessageId = message.getReplyToMessageId();
+                        if (originalMessageId != null && !originalMessageId.isEmpty()) {
+                            scrollToMessage(originalMessageId);
+                        }
+                    });
+                } else {
+                    replyPreviewContainer.setVisibility(View.GONE);
                 }
             }
 
@@ -517,6 +566,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
             popupWindow.setElevation(10);
 
+            TextView replyItem = popupView.findViewById(R.id.menuItemReply);
             TextView regenerateItem = popupView.findViewById(R.id.menuItemRegenerate);
             TextView toggleOriginalItem = popupView.findViewById(R.id.menuItemToggleOriginal);
             TextView removeTranslationItem = popupView.findViewById(R.id.menuItemRemoveTranslation);
@@ -553,6 +603,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 }
             }
 
+            replyItem.setOnClickListener(v -> {
+                handleReplyClick(message);
+                popupWindow.dismiss();
+            });
+            
             regenerateItem.setOnClickListener(v -> {
                 handleMessageTranslationClick(message);
                 popupWindow.dismiss();
@@ -592,5 +647,67 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
             popupWindow.showAsDropDown(anchor, 0, -anchor.getHeight());
         }
+        
+        private void handleReplyClick(Message message) {
+            // Store the message being replied to in the adapter
+            adapter.replyingToMessage = message;
+            
+            // Notify the ChatActivity that we're replying to a message
+            if (context instanceof ChatActivity) {
+                ((ChatActivity) context).showReplyingToUI(message);
+            }
+        }
+        
+        private void scrollToMessage(String messageId) {
+            int position = adapter.findPositionById(messageId);
+            if (position != -1) {
+                // Highlight the message briefly
+                RecyclerView recyclerView = ((ChatActivity) context).getRecyclerView();
+                if (recyclerView != null) {
+                    recyclerView.scrollToPosition(position);
+                    
+                    // Get the view for the message and highlight it briefly
+                    recyclerView.post(() -> {
+                        RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(position);
+                        if (viewHolder != null && viewHolder.itemView != null) {
+                            highlightView(viewHolder.itemView);
+                        }
+                    });
+                }
+            }
+        }
+        
+        private void highlightView(View view) {
+            // Save the original background color
+            CardView cardView = view.findViewById(R.id.cardMessage);
+            if (cardView != null) {
+                int originalColor = cardView.getCardBackgroundColor().getDefaultColor();
+                
+                // Change to highlight color
+                cardView.setCardBackgroundColor(android.graphics.Color.parseColor("#FFE082"));
+                
+                // Restore original color after delay
+                new android.os.Handler().postDelayed(() -> {
+                    cardView.setCardBackgroundColor(originalColor);
+                }, 1000);
+            }
+        }
+    }
+    
+    public Message getReplyingToMessage() {
+        return replyingToMessage;
+    }
+    
+    public void clearReplyingToMessage() {
+        replyingToMessage = null;
+    }
+    
+    /**
+     * Gets the username for a given user ID from the cache
+     * @param userId The user ID to look up
+     * @return The username if found, null otherwise
+     */
+    public String getUsernameFromCache(String userId) {
+        return usernameCache.get(userId);
     }
 }

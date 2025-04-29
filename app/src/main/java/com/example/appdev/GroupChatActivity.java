@@ -20,6 +20,7 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -76,6 +77,12 @@ public class GroupChatActivity extends AppCompatActivity {
     private boolean isAdmin = false;
     private int previousMessageCount = 0;
     private boolean translateEnabled = true;
+    
+    // Reply UI elements
+    private LinearLayout replyContainer;
+    private TextView replyToSenderName;
+    private TextView replyToMessageText;
+    private ImageButton buttonCancelReply;
     
     private static final int SPEECH_REQUEST_CODE = 100;
 
@@ -184,6 +191,17 @@ public class GroupChatActivity extends AppCompatActivity {
         recyclerViewGroupChat = findViewById(R.id.recyclerViewGroupChat);
         chatBox = findViewById(R.id.chatBox);
         buttonSend = findViewById(R.id.buttonSend);
+        
+        // Initialize reply UI elements
+        replyContainer = findViewById(R.id.replyContainer);
+        replyToSenderName = findViewById(R.id.replyToSenderName);
+        replyToMessageText = findViewById(R.id.replyToMessageText);
+        buttonCancelReply = findViewById(R.id.buttonCancelReply);
+        
+        // Set up cancel reply button
+        if (buttonCancelReply != null) {
+            buttonCancelReply.setOnClickListener(v -> cancelReply());
+        }
         
         // Set chatbox hint with user's language
         chatBox.setHint("Type a message in " + Variables.userLanguage + "...");
@@ -302,6 +320,14 @@ public class GroupChatActivity extends AppCompatActivity {
             messageData.put("senderProfileUrl", currentUserProfileUrl);
         }
         
+        // Add reply information if replying to a message
+        GroupMessage replyingToMessage = groupChatAdapter.getReplyingToMessage();
+        if (replyingToMessage != null) {
+            messageData.put("replyToMessageId", replyingToMessage.getMessageId());
+            messageData.put("replyToSenderId", replyingToMessage.getSenderId());
+            messageData.put("replyToMessage", replyingToMessage.getMessage());
+        }
+        
         Log.d("GroupChatActivity", "Sending message: " + messageId);
         
         // Save message to Firebase with empty translations
@@ -311,6 +337,11 @@ public class GroupChatActivity extends AppCompatActivity {
                     // Always translate group messages
                     Log.d("GroupChatActivity", "Message saved, now translating: " + messageId);
                     translateGroupMessage(messageText, messageId);
+                    
+                    // Clear reply UI after sending
+                    if (groupChatAdapter.getReplyingToMessage() != null) {
+                        cancelReply();
+                    }
                 } else {
                     Log.e("GroupChatActivity", "Failed to send message: " + task.getException());
                     CustomNotification.showNotification(this, "Failed to send message", false);
@@ -626,5 +657,68 @@ public class GroupChatActivity extends AppCompatActivity {
         }
         
         return super.onOptionsItemSelected(item);
+    }
+    
+    /**
+     * Shows the reply UI when a user chooses to reply to a message
+     * @param message The message being replied to
+     */
+    public void showReplyingToUI(GroupMessage message) {
+        if (replyContainer == null) return;
+        
+        // Show the reply container
+        replyContainer.setVisibility(View.VISIBLE);
+        
+        // Set the sender name
+        String senderId = message.getSenderId();
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        
+        if (senderId.equals(currentUserId)) {
+            replyToSenderName.setText("You");
+        } else {
+            // Look up the username from the adapter's cache
+            String username = groupChatAdapter.getUsernameFromCache(senderId);
+            if (username != null && !username.isEmpty()) {
+                replyToSenderName.setText(username);
+            } else {
+                replyToSenderName.setText("User");
+            }
+        }
+        
+        // Set the message text (truncate if too long)
+        String messageText = message.getMessage();
+        if (messageText != null) {
+            if (messageText.length() > 50) {
+                messageText = messageText.substring(0, 47) + "...";
+            }
+            replyToMessageText.setText(messageText);
+        } else {
+            replyToMessageText.setText("[Message unavailable]");
+        }
+        
+        // Focus on the chat box
+        chatBox.requestFocus();
+    }
+    
+    /**
+     * Cancels the current reply action
+     */
+    private void cancelReply() {
+        if (replyContainer != null) {
+            replyContainer.setVisibility(View.GONE);
+        }
+        
+        // Clear the replying to message in the adapter
+        if (groupChatAdapter != null) {
+            groupChatAdapter.clearReplyingToMessage();
+        }
+    }
+    
+    /**
+     * Gets the RecyclerView for scrolling to messages
+     * @return The RecyclerView instance
+     */
+    public RecyclerView getRecyclerView() {
+        return recyclerViewGroupChat;
     }
 }

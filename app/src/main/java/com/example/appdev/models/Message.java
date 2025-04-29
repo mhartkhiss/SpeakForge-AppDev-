@@ -12,11 +12,17 @@ public class Message {
     private String translationMode;
     private Map<String, String> translations;
     private String translationState; // Can be "TRANSLATING", "TRANSLATED", "REMOVED", or null
+    private String replyToMessageId; // ID of the message this is replying to
+    private String replyToSenderId; // ID of the sender of the original message
+    private String replyToMessage; // Content of the original message
 
     public Message() {
         // Default constructor required for Firebase
         translations = new HashMap<>();
         translationState = null;
+        replyToMessageId = null;
+        replyToSenderId = null;
+        replyToMessage = null;
     }
 
     public Message(String messageId, String message, long timestamp, String senderId) {
@@ -26,6 +32,9 @@ public class Message {
         this.senderId = senderId;
         this.translations = new HashMap<>();
         this.translationState = null;
+        this.replyToMessageId = null;
+        this.replyToSenderId = null;
+        this.replyToMessage = null;
     }
 
     public String getMessageId() {
@@ -125,6 +134,34 @@ public class Message {
 
     public void setTranslationState(String translationState) {
         this.translationState = translationState;
+    }
+    
+    public String getReplyToMessageId() {
+        return replyToMessageId;
+    }
+
+    public void setReplyToMessageId(String replyToMessageId) {
+        this.replyToMessageId = replyToMessageId;
+    }
+
+    public String getReplyToSenderId() {
+        return replyToSenderId;
+    }
+
+    public void setReplyToSenderId(String replyToSenderId) {
+        this.replyToSenderId = replyToSenderId;
+    }
+
+    public String getReplyToMessage() {
+        return replyToMessage;
+    }
+
+    public void setReplyToMessage(String replyToMessage) {
+        this.replyToMessage = replyToMessage;
+    }
+    
+    public boolean isReply() {
+        return replyToMessageId != null && !replyToMessageId.isEmpty();
     }
 }
 

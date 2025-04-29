@@ -42,6 +42,62 @@
       app:layout_constraintVertical_bias="0.9"
       app:stackFromEnd="true" />
 
+  <!-- Reply container -->
+  <LinearLayout
+      android:id="@+id/replyContainer"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:background="#F5F5F5"
+      android:elevation="8dp"
+      android:padding="8dp"
+      android:visibility="gone"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintBottom_toTopOf="@id/inputContainer">
+
+      <View
+          android:layout_width="4dp"
+          android:layout_height="match_parent"
+          android:background="#3F51B5"
+          android:layout_marginEnd="8dp" />
+
+      <LinearLayout
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:orientation="vertical">
+
+          <TextView
+              android:id="@+id/replyToSenderName"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="Username"
+              android:textStyle="bold"
+              android:textColor="#3F51B5"
+              android:textSize="14sp" />
+
+          <TextView
+              android:id="@+id/replyToMessageText"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="Original message"
+              android:textColor="#757575"
+              android:maxLines="2"
+              android:ellipsize="end"
+              android:textSize="12sp" />
+      </LinearLayout>
+
+      <ImageButton
+          android:id="@+id/buttonCancelReply"
+          android:layout_width="24dp"
+          android:layout_height="24dp"
+          android:layout_gravity="center_vertical"
+          android:background="?attr/selectableItemBackgroundBorderless"
+          android:src="@drawable/ic_close"
+          android:tint="#757575" />
+  </LinearLayout>
+
   <LinearLayout
       android:id="@+id/inputContainer"
       android:layout_width="0dp"

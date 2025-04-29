@@ -1,12 +1,15 @@
 package com.example.appdev.adapters;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -17,6 +20,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.appdev.GroupChatActivity;
 import com.example.appdev.R;
 import com.example.appdev.Variables;
 import com.example.appdev.models.GroupMessage;
@@ -54,6 +58,7 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
     private DatabaseReference usersRef;
     private String visibleOriginalMessageId = null;
     private String regeneratingMessageId = null;
+    private GroupMessage replyingToMessage = null;
 
     public GroupChatAdapter() {
         this.messages = new ArrayList<>();
@@ -188,6 +193,8 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
     public static class GroupChatViewHolder extends RecyclerView.ViewHolder {
         private TextView textViewMessage, textViewOriginalMessage;
         private TextView textViewSenderName;
+        private TextView textViewReplySender, textViewReplyContent;
+        private LinearLayout replyPreviewContainer;
         private LoadingDotsView loadingDots;
         private de.hdodenhof.circleimageview.CircleImageView imageViewProfile;
         private Context context;
@@ -204,6 +211,9 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
             textViewSenderName = itemView.findViewById(R.id.textViewSenderName);
             loadingDots = itemView.findViewById(R.id.loadingDots);
             imageViewProfile = itemView.findViewById(R.id.imageViewProfile);
+            replyPreviewContainer = itemView.findViewById(R.id.replyPreviewContainer);
+            textViewReplySender = itemView.findViewById(R.id.textViewReplySender);
+            textViewReplyContent = itemView.findViewById(R.id.textViewReplyContent);
             this.context = context;
             this.groupId = groupId;
             this.adapter = adapter;
@@ -255,6 +265,40 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
                 } else {
                     loadingDots.setVisibility(View.GONE);
                     loadingDots.stopAnimation();
+                }
+            }
+            
+            // Handle reply preview if this is a reply message
+            if (replyPreviewContainer != null) {
+                if (message.isReply()) {
+                    replyPreviewContainer.setVisibility(View.VISIBLE);
+                    
+                    // Set the original sender's name
+                    String originalSenderId = message.getReplyToSenderId();
+                    String originalSenderName = adapter.usernameCache.get(originalSenderId);
+                    if (originalSenderName != null) {
+                        textViewReplySender.setText(originalSenderName);
+                    } else {
+                        textViewReplySender.setText("User");
+                    }
+                    
+                    // Set the original message content
+                    String originalMessage = message.getReplyToMessage();
+                    if (originalMessage != null) {
+                        textViewReplyContent.setText(originalMessage);
+                    } else {
+                        textViewReplyContent.setText("Original message unavailable");
+                    }
+                    
+                    // Set click listener to navigate to the original message
+                    replyPreviewContainer.setOnClickListener(v -> {
+                        String originalMessageId = message.getReplyToMessageId();
+                        if (originalMessageId != null && !originalMessageId.isEmpty()) {
+                            scrollToMessage(originalMessageId);
+                        }
+                    });
+                } else {
+                    replyPreviewContainer.setVisibility(View.GONE);
                 }
             }
 
@@ -403,6 +447,7 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
             popupWindow.setElevation(10); // Add shadow
 
             // Find the TextView items in the custom layout
+            TextView replyItem = popupView.findViewById(R.id.menuItemReply);
             TextView regenerateItem = popupView.findViewById(R.id.menuItemRegenerate);
             TextView toggleOriginalItem = popupView.findViewById(R.id.menuItemToggleOriginal);
             TextView removeTranslationItem = popupView.findViewById(R.id.menuItemRemoveTranslation);
@@ -411,6 +456,12 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
             String userLanguage = Variables.userLanguage;
             String senderLanguage = message.getSenderLanguage();
             Map<String, String> translations = message.getTranslations();
+            
+            // Set up reply item click listener
+            replyItem.setOnClickListener(v -> {
+                handleReplyClick(message);
+                popupWindow.dismiss();
+            });
             
             // Determine if the message is essentially untranslated for the current user
             boolean isUntranslated = senderLanguage != null && 
@@ -676,5 +727,67 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
                 }
             }
         }
+        
+        private void handleReplyClick(GroupMessage message) {
+            // Store the message being replied to in the adapter
+            adapter.replyingToMessage = message;
+            
+            // Notify the GroupChatActivity that we're replying to a message
+            if (context instanceof GroupChatActivity) {
+                ((GroupChatActivity) context).showReplyingToUI(message);
+            }
+        }
+        
+        private void scrollToMessage(String messageId) {
+            int position = adapter.findPositionById(messageId);
+            if (position != -1) {
+                // Highlight the message briefly
+                RecyclerView recyclerView = ((GroupChatActivity) context).getRecyclerView();
+                if (recyclerView != null) {
+                    recyclerView.scrollToPosition(position);
+                    
+                    // Get the view for the message and highlight it briefly
+                    recyclerView.post(() -> {
+                        RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(position);
+                        if (viewHolder != null && viewHolder.itemView != null) {
+                            highlightView(viewHolder.itemView);
+                        }
+                    });
+                }
+            }
+        }
+        
+        private void highlightView(View view) {
+            // Save the original background color
+            CardView cardView = view.findViewById(R.id.cardMessage);
+            if (cardView != null) {
+                int originalColor = cardView.getCardBackgroundColor().getDefaultColor();
+                
+                // Change to highlight color
+                cardView.setCardBackgroundColor(Color.parseColor("#FFE082"));
+                
+                // Restore original color after delay
+                new Handler().postDelayed(() -> {
+                    cardView.setCardBackgroundColor(originalColor);
+                }, 1000);
+            }
+        }
+    }
+    
+    public GroupMessage getReplyingToMessage() {
+        return replyingToMessage;
+    }
+    
+    public void clearReplyingToMessage() {
+        replyingToMessage = null;
+    }
+    
+    /**
+     * Gets the username for a given user ID from the cache
+     * @param userId The user ID to look up
+     * @return The username if found, null otherwise
+     */
+    public String getUsernameFromCache(String userId) {
+        return usernameCache.get(userId);
     }
 }

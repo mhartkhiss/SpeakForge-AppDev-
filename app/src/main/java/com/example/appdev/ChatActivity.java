@@ -16,6 +16,7 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -59,6 +60,12 @@ public class ChatActivity extends AppCompatActivity {
     private int previousMessageCount = 0;
     private String recipientTranslator = "google"; // default value
     private String recipientId;
+    
+    // Reply UI elements
+    private LinearLayout replyContainer;
+    private TextView replyToSenderName;
+    private TextView replyToMessageText;
+    private ImageButton buttonCancelReply;
 
 
     //Establish Connection
@@ -113,6 +120,17 @@ public class ChatActivity extends AppCompatActivity {
         recyclerViewChat = findViewById(R.id.recyclerViewChat);
         chatBox = findViewById(R.id.chatBox);
         buttonSend = findViewById(R.id.buttonSend);
+        
+        // Initialize reply UI elements
+        replyContainer = findViewById(R.id.replyContainer);
+        replyToSenderName = findViewById(R.id.replyToSenderName);
+        replyToMessageText = findViewById(R.id.replyToMessageText);
+        buttonCancelReply = findViewById(R.id.buttonCancelReply);
+        
+        // Set up cancel reply button
+        if (buttonCancelReply != null) {
+            buttonCancelReply.setOnClickListener(v -> cancelReply());
+        }
 
         // Set chatbox hint with user's language
         chatBox.setHint("Type a message in " + Variables.userLanguage + "...");
@@ -278,6 +296,14 @@ public class ChatActivity extends AppCompatActivity {
             messageData.put("senderLanguage", Variables.userLanguage); // Store sender's language
             messageData.put("translationMode", Variables.isFormalTranslationMode ? "formal" : "casual"); // Store translation mode (formal/casual)
             messageData.put("translationState", "TRANSLATING"); // Set initial state to TRANSLATING
+            
+            // Add reply information if replying to a message
+            Message replyingToMessage = chatAdapter.getReplyingToMessage();
+            if (replyingToMessage != null) {
+                messageData.put("replyToMessageId", replyingToMessage.getMessageId());
+                messageData.put("replyToSenderId", replyingToMessage.getSenderId());
+                messageData.put("replyToMessage", replyingToMessage.getMessage());
+            }
 
             // Save the message to Firebase
             messagesRef.child(roomId).child(messageId).setValue(messageData)
@@ -285,6 +311,11 @@ public class ChatActivity extends AppCompatActivity {
                     // Message saved successfully, now translate it
                     translateMessage(targetLanguage, message, messageId);
                     chatBox.setText("");
+                    
+                    // Clear reply UI after sending
+                    if (chatAdapter.getReplyingToMessage() != null) {
+                        cancelReply();
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Log.e("ChatActivity", "Failed to save message: " + e.getMessage());
@@ -376,6 +407,72 @@ public class ChatActivity extends AppCompatActivity {
         }
         return text;
     }
+    
+    /**
+     * Shows the reply UI when a user chooses to reply to a message
+     * @param message The message being replied to
+     */
+    public void showReplyingToUI(Message message) {
+        if (replyContainer == null) return;
+        
+        // Show the reply container
+        replyContainer.setVisibility(View.VISIBLE);
+        
+        // Set the sender name
+        String senderId = message.getSenderId();
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        
+        if (senderId.equals(currentUserId)) {
+            replyToSenderName.setText("You");
+        } else {
+            // Look up the username from Firebase
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(senderId);
+            userRef.child("username").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String username = snapshot.getValue(String.class);
+                    if (username != null && !username.isEmpty()) {
+                        replyToSenderName.setText(username);
+                    } else {
+                        replyToSenderName.setText("User");
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    replyToSenderName.setText("User");
+                }
+            });
+        }
+        
+        // Set the message text (truncate if too long)
+        String messageText = message.getMessage();
+        if (messageText != null) {
+            if (messageText.length() > 50) {
+                messageText = messageText.substring(0, 47) + "...";
+            }
+            replyToMessageText.setText(messageText);
+        } else {
+            replyToMessageText.setText("[Message unavailable]");
+        }
+        
+        // Focus on the chat box
+        chatBox.requestFocus();
+    }
+    
+    /**
+     * Cancels the current reply action
+     */
+    private void cancelReply() {
+        if (replyContainer != null) {
+            replyContainer.setVisibility(View.GONE);
+        }
+        
+        // Clear the replying to message in the adapter
+        if (chatAdapter != null) {
+            chatAdapter.clearReplyingToMessage();
+        }
+    }
 
 
 
@@ -433,6 +530,14 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
     }
-
-
+    
+    
+    
+    /**
+     * Gets the RecyclerView for scrolling to messages
+     * @return The RecyclerView instance
+     */
+    public RecyclerView getRecyclerView() {
+        return recyclerViewChat;
+    }
 }
