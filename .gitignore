@@ -19,3 +19,6 @@ cursor/aisettings
 
 # windsurf rules
 .windsurfrules
+
+#roo files
+*.roomodes
