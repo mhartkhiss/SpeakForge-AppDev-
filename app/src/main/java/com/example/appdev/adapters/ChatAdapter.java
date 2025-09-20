@@ -302,14 +302,34 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             if (textViewMessage != null) {
                  // Hide main text if loading is active for this message type
                  textViewMessage.setVisibility(showLoading ? View.GONE : View.VISIBLE);
-                 
+
                  // Set text and listeners only if not loading
-                 if (!showLoading) { 
-                    if (isSentMessage) {
+                 if (!showLoading) {
+                    if (message.isSessionEnd()) {
+                        // --- Session End Message Logic ---
+                        String senderName = adapter.usernameCache.get(message.getSenderId());
+                        if (senderName == null) {
+                            senderName = "User";
+                        }
+                        textViewMessage.setText(senderName + " has left the session");
+                        textViewMessage.setTextColor(context.getResources().getColor(android.R.color.darker_gray));
+                        textViewMessage.setTextSize(14);
+                        textViewMessage.setTypeface(null, Typeface.ITALIC);
+                        textViewMessage.setGravity(android.view.Gravity.CENTER);
+                        textViewMessage.setOnClickListener(null);
+                        textViewMessage.setOnLongClickListener(null);
+
+                        // Style the message card for session end messages
+                        View cardView = (View) textViewMessage.getParent().getParent();
+                        if (cardView instanceof CardView) {
+                            CardView messageCard = (CardView) cardView;
+                            messageCard.setCardBackgroundColor(context.getResources().getColor(android.R.color.transparent));
+                        }
+                    } else if (isSentMessage) {
                         // --- Sent message logic ---
                         // Sent messages always show original text
                         textViewMessage.setText(message.getMessage());
-                        textViewMessage.setOnClickListener(null); 
+                        textViewMessage.setOnClickListener(null);
                         textViewMessage.setOnLongClickListener(null);
 
                     } else {
@@ -567,6 +587,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             popupWindow.setElevation(10);
 
             TextView replyItem = popupView.findViewById(R.id.menuItemReply);
+            // Temporarily hide the reply option
+            replyItem.setVisibility(View.GONE);
+            
             TextView regenerateItem = popupView.findViewById(R.id.menuItemRegenerate);
             TextView toggleOriginalItem = popupView.findViewById(R.id.menuItemToggleOriginal);
             TextView removeTranslationItem = popupView.findViewById(R.id.menuItemRemoveTranslation);
@@ -603,10 +626,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                 }
             }
 
-            replyItem.setOnClickListener(v -> {
-                handleReplyClick(message);
-                popupWindow.dismiss();
-            });
+            // Reply functionality temporarily disabled
+            replyItem.setOnClickListener(null);
             
             regenerateItem.setOnClickListener(v -> {
                 handleMessageTranslationClick(message);

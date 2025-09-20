@@ -34,10 +34,61 @@ speakforge-appdev/
 │           ├── senderLanguage: String (language of the sender)
 │           ├── translationMode: String (formal or casual)
 │           ├── translationState: String (TRANSLATING, TRANSLATED, REMOVED, or null)
+│           ├── isVoiceMessage: Boolean (false for text messages, true for voice messages)
+│           ├── voiceText: String (transcribed voice text, same as message for voice messages)
+│           ├── replyToMessageId: String (ID of the message this is replying to)
+│           ├── replyToSenderId: String (ID of the sender of the original message)
+│           ├── replyToMessage: String (Content of the original message)
 │           └── translations/
 │               ├── translation1: String (first translation of the message)
 │               ├── translation2: String (second translation of the message)
 │               └── translation3: String (third translation of the message)
+│
+├── connect_chats/
+│   └── {sessionId}/  (composed of user1id_user2id - voice-only sessions)
+│       └── {messageId}/
+│           ├── messageId: String
+│           ├── message: String (transcribed voice message)
+│           ├── timestamp: Long
+│           ├── senderId: String
+│           ├── senderLanguage: String (language of the sender)
+│           ├── translationMode: String (formal or casual)
+│           ├── translationState: String (TRANSLATING, TRANSLATED, REMOVED, or null)
+│           ├── isVoiceMessage: Boolean (always true for connect chat messages)
+│           ├── voiceText: String (transcribed voice text, same as message)
+│           ├── isSessionEnd: Boolean (true if this is a session end message)
+│           ├── replyToMessageId: String (ID of the message this is replying to)
+│           ├── replyToSenderId: String (ID of the sender of the original message)
+│           ├── replyToMessage: String (Content of the original message)
+│           └── translations/
+│               ├── translation1: String (first translation of the message)
+│               ├── translation2: String (second translation of the message)
+│               └── translation3: String (third translation of the message)
+│
+├── connection_requests/
+│   └── {requestId}/  (unique request identifier)
+│       ├── requestId: String
+│       ├── fromUserId: String (user who initiated the request)
+│       ├── toUserId: String (user who should receive the request)
+│       ├── sessionId: String (proposed connect chat session ID)
+│       ├── status: String (PENDING, ACCEPTED, REJECTED, TIMEOUT, EXPIRED, CANCELLED)
+│       ├── timestamp: Long (when request was created)
+│       ├── fromUserName: String
+│       ├── fromUserLanguage: String
+│       ├── fromUserProfileImageUrl: String
+│       └── expiresAt: Long (when request expires)
+│
+├── voice_messages/
+│   └── {roomId}/  (composed of user1id_user2id)
+│       └── {messageId}/
+│           ├── messageId: String
+│           ├── voiceText: String (original spoken text)
+│           ├── translatedText: String (translated text, null if not translated)
+│           ├── timestamp: Long
+│           ├── senderId: String
+│           ├── senderLanguage: String (language of the sender)
+│           ├── translationMode: String (formal or casual)
+│           └── translationState: String (TRANSLATING, TRANSLATED, or null)
 │
 ├── groups/
 │   └── {groupId}/
@@ -65,6 +116,20 @@ speakforge-appdev/
 │           └── translations/
 │               └── {language}: String (message translated to specific language, including original in sender's language)
 │
+├── usage_statistics/
+│   └── {date}/  (YYYY-MM-DD format)
+│       ├── date: String (YYYY-MM-DD)
+│       ├── totalUsers: Number
+│       ├── activeUsersLast7Days: Number
+│       ├── premiumUsers: Number
+│       ├── freeUsers: Number
+│       ├── newUsersToday: Number
+│       ├── dailyLoginCount: Number
+│       ├── languageDistribution: Object
+│       │   └── {language}: Number (count of users using this language)
+│       ├── createdAt: String (ISO timestamp)
+│       └── calculatedAt: String (ISO timestamp when stats were calculated)
+│
 ```
 
 ## Details of Key Nodes
@@ -77,10 +142,10 @@ The `users` node stores information about registered users:
 - **username**: Display name of the user
 - **email**: User's email address
 - **profileImageUrl**: URL to the user's profile image (stored in Firebase Storage)
-- **language**: User's preferred language
+- **language**: User's preferred language (optional, set when user first logs in)
 - **accountType**: Type of user account (e.g., free, premium)
 - **createdAt**: Timestamp of account creation
-- **lastLoginDate**: Timestamp of the last login
+- **lastLoginDate**: Timestamp of the last login (optional, set when user first logs in)
 - **translator**: Preferred translation service (default: "google")
 - **lastMessage**: Last message sent by the user
 - **lastMessageTime**: Timestamp of the last message
@@ -140,6 +205,29 @@ The `group_messages` node organizes messages by group conversation:
   - **translationMode**: Formal or casual translation style
   - **translations**: Map of language codes to translated message strings
     - **{language}**: Message translated to specific language, including original in sender's language
+
+### Usage Statistics
+
+The `usage_statistics` node stores daily snapshots of application usage metrics for historical analysis:
+
+- **date**: Date in YYYY-MM-DD format (used as the key)
+- **totalUsers**: Total number of registered users on this date
+- **activeUsersLast7Days**: Number of unique users who logged in during the 7 days ending on this date
+- **premiumUsers**: Number of users with premium accounts on this date
+- **freeUsers**: Number of users with free accounts on this date
+- **newUsersToday**: Number of new user registrations on this specific date
+- **dailyLoginCount**: Number of unique users who logged in on this specific date
+- **languageDistribution**: Object containing the count of users by preferred language
+  - **{language}**: Number of users who have this language set as their preference
+- **createdAt**: ISO timestamp when this record was first created
+- **calculatedAt**: ISO timestamp when these statistics were last calculated/updated
+
+This structure enables:
+- Historical trend analysis
+- Percentage change calculations vs previous periods
+- Growth rate tracking
+- Language preference evolution over time
+- User engagement pattern analysis
 
 ## Local Application Data
 

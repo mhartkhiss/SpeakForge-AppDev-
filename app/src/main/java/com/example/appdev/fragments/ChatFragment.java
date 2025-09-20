@@ -123,19 +123,20 @@ public class ChatFragment extends Fragment {
             }
         });
 
+
         // Set up group chat button click listener
         buttonGroupChat.setOnClickListener(v -> {
             // Make sure user is not a guest user
-            String currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null ? 
+            String currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null ?
                     FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
             boolean isGuestUser = "guest".equals(currentUserId);
-            
+
             if (isGuestUser) {
-                CustomNotification.showNotification(requireContext(), 
+                CustomNotification.showNotification(requireContext(),
                         "You need to be logged in to use group chats", false);
                 return;
             }
-            
+
             // Navigate to GroupListActivity
             startActivity(new Intent(requireContext(), com.example.appdev.GroupListActivity.class));
         });

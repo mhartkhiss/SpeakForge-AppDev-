@@ -15,6 +15,9 @@ public class Message {
     private String replyToMessageId; // ID of the message this is replying to
     private String replyToSenderId; // ID of the sender of the original message
     private String replyToMessage; // Content of the original message
+    private Boolean isVoiceMessage; // Indicates if this message originated from voice input
+    private String voiceText; // The transcribed voice text (same as message for voice messages)
+    private Boolean isSessionEnd; // Indicates if this is a session end message
 
     public Message() {
         // Default constructor required for Firebase
@@ -23,6 +26,9 @@ public class Message {
         replyToMessageId = null;
         replyToSenderId = null;
         replyToMessage = null;
+        isVoiceMessage = false;
+        voiceText = null;
+        isSessionEnd = false;
     }
 
     public Message(String messageId, String message, long timestamp, String senderId) {
@@ -35,6 +41,8 @@ public class Message {
         this.replyToMessageId = null;
         this.replyToSenderId = null;
         this.replyToMessage = null;
+        this.isVoiceMessage = false;
+        this.voiceText = null;
     }
 
     public String getMessageId() {
@@ -162,6 +170,38 @@ public class Message {
     
     public boolean isReply() {
         return replyToMessageId != null && !replyToMessageId.isEmpty();
+    }
+
+    public Boolean getIsVoiceMessage() {
+        return isVoiceMessage;
+    }
+
+    public void setIsVoiceMessage(Boolean isVoiceMessage) {
+        this.isVoiceMessage = isVoiceMessage;
+    }
+
+    public String getVoiceText() {
+        return voiceText;
+    }
+
+    public void setVoiceText(String voiceText) {
+        this.voiceText = voiceText;
+    }
+
+    public boolean isVoiceMessage() {
+        return isVoiceMessage != null && isVoiceMessage;
+    }
+
+    public Boolean getIsSessionEnd() {
+        return isSessionEnd;
+    }
+
+    public void setIsSessionEnd(Boolean isSessionEnd) {
+        this.isSessionEnd = isSessionEnd;
+    }
+
+    public boolean isSessionEnd() {
+        return isSessionEnd != null && isSessionEnd;
     }
 }
 

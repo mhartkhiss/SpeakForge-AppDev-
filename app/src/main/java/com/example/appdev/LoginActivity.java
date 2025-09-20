@@ -114,6 +114,10 @@ public class LoginActivity extends BaseAuthActivity {
                 userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        // Update last login date using ISO format for consistency with admin panel
+                        String currentTimestamp = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault()).format(new java.util.Date());
+                        userRef.child("lastLoginDate").setValue(currentTimestamp);
+                        
                         if (!dataSnapshot.hasChild("translator")) {
                             userRef.child("translator").setValue("google");
                         }

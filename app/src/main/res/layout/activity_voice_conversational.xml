@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/chat_background">
+    android:background="@drawable/background">
 
     <!-- Header -->
     <androidx.cardview.widget.CardView
@@ -16,7 +16,7 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@color/colorPrimary"
+            android:background="?attr/colorPrimary"
             android:paddingHorizontal="16dp">
 
             <!-- Back Button -->
@@ -30,7 +30,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_arrow_back"
+                android:src="@drawable/ic_back"
                 app:tint="#FFFFFF" />
 
             <!-- User Profile Picture -->
@@ -65,7 +65,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_more"
+                android:src="@drawable/ic_more_vert"
                 app:tint="#FFFFFF" />
 
         </RelativeLayout>
@@ -89,7 +89,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@color/colorPrimary"
+        android:background="?attr/colorPrimary"
         android:orientation="vertical"
         android:padding="16dp">
 

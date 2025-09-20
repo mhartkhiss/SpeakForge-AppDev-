@@ -31,8 +31,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.example.appdev.utils.ConnectionRequestManager;
 
 public class MainActivity extends AppCompatActivity {
+
+    public ViewPager viewPager; // Made public for fragment access
 
     private void loadApiKeys() {
         // Existing klusterai keys loading
@@ -212,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
         userDataListener();
 
         // Set up tabbed interface
-        ViewPager viewPager = findViewById(R.id.viewPager);
+        viewPager = findViewById(R.id.viewPager);
         TabLayout tabLayout = findViewById(R.id.tabLayout);
 
         TabAdapter adapter = new TabAdapter(getSupportFragmentManager());
@@ -241,6 +244,10 @@ public class MainActivity extends AppCompatActivity {
             // User is not logged in, redirect to WelcomeScreen
             startActivity(new Intent(this, WelcomeScreen.class));
             finish();
+        } else {
+            // Reset tracking state for fresh app session and start listening for connection requests
+            ConnectionRequestManager.getInstance().resetTrackingState();
+            ConnectionRequestManager.getInstance().startListeningForRequests(this);
         }
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -337,6 +344,13 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         // Prevent going back
         moveTaskToBack(true);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Stop listening for connection requests to prevent memory leaks
+        ConnectionRequestManager.getInstance().stopListeningForRequests();
     }
 
 }

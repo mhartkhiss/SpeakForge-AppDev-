@@ -232,6 +232,10 @@ public class WelcomeScreen extends AppCompatActivity {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             if (dataSnapshot.exists()) {
+                                                            // Update last login date for auto-login using ISO format for consistency with admin panel
+                            String currentTimestamp = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault()).format(new java.util.Date());
+                            userRef.child("lastLoginDate").setValue(currentTimestamp);
+                                
                                 String language = dataSnapshot.child("language").getValue(String.class);
                                 if (language != null) {
                                     Intent intent = new Intent(WelcomeScreen.this, MainActivity.class);

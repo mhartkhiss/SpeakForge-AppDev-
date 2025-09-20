@@ -8,9 +8,10 @@ This document provides a comprehensive overview of the translation features impl
 
 1. [Basic Translation](#basic-translation)
 2. [Conversational Mode](#conversational-mode)
-3. [Technical Implementation](#technical-implementation)
-4. [Backend Integration](#backend-integration)
-5. [Key Differences](#key-differences)
+3. [Voice Conversational Translation](#voice-conversational-translation)
+4. [Technical Implementation](#technical-implementation)
+5. [Backend Integration](#backend-integration)
+6. [Key Differences](#key-differences)
 
 ## Basic Translation
 
@@ -250,6 +251,142 @@ User B Speaks → Speech Recognition → Translation → User A Sees Result
 - **Language Constraints**: Prevents same language selection
 - **Memory Management**: Proper cleanup on activity destroy
 
+## Voice Conversational Translation
+
+### Overview
+Voice conversational translation provides a real-time, voice-based communication interface that enables seamless conversation between speakers of different languages through Firebase Realtime Database integration.
+
+### Implementation Structure
+
+#### Main Components
+- **Activity**: `VoiceConversationalActivity.java`
+- **Layout**: `activity_voice_conversational.xml`
+- **Adapter**: `VoiceMessageAdapter.java`
+- **Model**: `VoiceMessage.java`
+
+#### Key Files
+```
+app/src/main/java/com/example/appdev/
+├── VoiceConversationalActivity.java
+├── adapters/VoiceMessageAdapter.java
+├── models/VoiceMessage.java
+└── res/layout/activity_voice_conversational.xml
+```
+
+### User Interface
+
+#### Layout Structure
+```
+┌─────────────────────────────────────┐
+│           Header Bar                 │ ← User info and navigation
+├─────────────────────────────────────┤
+│                                     │
+│       Voice Messages                │ ← Left/right aligned messages
+│       RecyclerView                  │
+│                                     │
+├─────────────────────────────────────┤
+│   Voice Input Container             │
+│   ┌─────────────────────────────┐   │
+│   │     Tap microphone to       │   │
+│   │        speak message        │   │
+│   │                             │   │
+│   │         [🎤]                │   │
+│   └─────────────────────────────┘   │
+└─────────────────────────────────────┘
+```
+
+#### Message Display
+- **Left Alignment**: Messages received from other users (blue bubbles)
+- **Right Alignment**: Messages sent by current user (orange/red bubbles)
+- **Voice Text**: Original spoken text in colored bubbles
+- **Translated Text**: Translation shown below in neutral bubbles
+- **Timestamps**: Display time for each message
+
+### Voice Recognition System
+
+#### Speech-to-Text Integration
+```java
+// Voice recognition setup in VoiceConversationalActivity
+private void startVoiceRecognition() {
+    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                   RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak your message...");
+
+    startActivityForResult(intent, SPEECH_REQUEST_CODE);
+}
+```
+
+#### Voice Message Flow
+1. **Voice Input**: User taps microphone button
+2. **Speech Recognition**: Converts speech to text
+3. **Translation**: Sends to backend for translation
+4. **Firebase Storage**: Stores message and translation
+5. **Real-time Display**: Shows in chat interface
+
+### Firebase Integration
+
+#### Voice Messages Structure
+```json
+{
+  "voice_messages": {
+    "{roomId}": {
+      "{messageId}": {
+        "messageId": "string",
+        "voiceText": "original spoken text",
+        "translatedText": "translated text",
+        "timestamp": 1234567890,
+        "senderId": "userId",
+        "senderLanguage": "English",
+        "translationMode": "formal/casual",
+        "translationState": "TRANSLATING/TRANSLATED/null"
+      }
+    }
+  }
+}
+```
+
+#### Real-time Synchronization
+- **Automatic Updates**: Messages appear instantly for both users
+- **Translation States**: TRANSLATING → TRANSLATED → displayed
+- **Error Handling**: Graceful fallback for translation failures
+
+### Conversation Workflow
+
+#### Starting a Voice Conversation
+1. User selects "Connect with Other Users" mode
+2. Chooses recipient from contact list
+3. VoiceConversationalActivity launches
+4. Real-time voice messaging begins
+
+#### During Voice Conversation
+```
+User A Speaks → Speech Recognition → Translation → Firebase → User B Receives
+    ↓                                                            ↓
+User B Speaks → Speech Recognition → Translation → Firebase → User A Receives
+```
+
+### Features
+
+#### Voice Input Features
+- **Continuous Recognition**: One-tap voice input per message
+- **Language Support**: Multi-language speech recognition
+- **Error Recovery**: Automatic retry on recognition failures
+- **Permission Handling**: Proper microphone permission management
+
+#### Translation Features
+- **Real-time Translation**: Instant translation after speech recognition
+- **Multiple Translators**: Support for Google, DeepSeek, Claude, Gemini
+- **Formal/Casual Modes**: Language style selection
+- **Context Awareness**: Improved translation quality
+
+#### UI Enhancements
+- **Chat-like Interface**: Familiar messaging experience
+- **Visual Feedback**: Status indicators during processing
+- **Message Bubbles**: Color-coded for sent/received messages
+- **Responsive Design**: Adapts to different screen sizes
+
 ## Technical Implementation
 
 ### Translation Architecture
@@ -364,19 +501,21 @@ public static final String API_REGENERATE_TRANSLATION_URL = API_BASE_URL + "rege
 
 ## Key Differences
 
-### Basic Translation vs Conversational Mode
+### Translation Modes Comparison
 
-| Feature | Basic Translation | Conversational Mode |
-|---------|------------------|-------------------|
-| **Interface** | Single-user, text-focused | Dual-user, speech-focused |
-| **Input Method** | Text input or voice | Continuous speech recognition |
-| **Translation Trigger** | Manual (button press) | Automatic (speech completion) |
-| **Language Selection** | Independent | Mutual exclusion |
-| **UI Layout** | Standard fragment | Split-screen, rotated sections |
-| **Real-time** | No | Yes, continuous |
-| **Backend Usage** | No (external APIs) | No (external APIs) |
-| **History** | Local storage | No history (real-time only) |
-| **State Management** | Simple | Complex (mutual exclusion) |
+| Feature | Basic Translation | Conversational Mode | Voice Conversational |
+|---------|------------------|-------------------|-------------------|
+| **Interface** | Single-user, text-focused | Dual-user, speech-focused | Multi-user, chat-focused |
+| **Input Method** | Text input or voice | Continuous speech recognition | Voice input only |
+| **Translation Trigger** | Manual (button press) | Automatic (speech completion) | Automatic (voice recognition) |
+| **Language Selection** | Independent | Mutual exclusion | Independent |
+| **UI Layout** | Standard fragment | Split-screen, rotated sections | Chat interface, left/right alignment |
+| **Real-time** | No | Yes, continuous | Yes, real-time messaging |
+| **Backend Usage** | No (external APIs) | No (external APIs) | Yes (Firebase Realtime Database) |
+| **History** | Local storage | No history (real-time only) | Firebase storage |
+| **State Management** | Simple | Complex (mutual exclusion) | Real-time synchronization |
+| **Device Requirement** | Single device | Single device (two users) | Multiple devices (networked) |
+| **Connectivity** | Offline-capable | Offline-capable | Requires internet connection |
 
 ### Technical Differences
 
@@ -407,11 +546,20 @@ public static final String API_REGENERATE_TRANSLATION_URL = API_BASE_URL + "rege
 - Travel communication
 - Business meetings
 
+#### Voice Conversational Translation
+- Remote language exchange
+- International business calls
+- Language tutoring sessions
+- Travel coordination
+- Family communication across languages
+- Professional interpretation services
+
 ## Conclusion
 
-Both translation features provide comprehensive language translation capabilities with different focuses:
+The SpeakForge application provides three comprehensive translation capabilities, each designed for specific communication scenarios:
 
 - **Basic Translation**: Comprehensive, feature-rich text translation with history and multiple options
-- **Conversational Mode**: Real-time, speech-based communication for natural language exchange
+- **Conversational Mode**: Real-time, speech-based communication for natural language exchange on a single device
+- **Voice Conversational Translation**: Multi-device, real-time voice messaging with instant translation via Firebase
 
-The implementation demonstrates clean architecture patterns, proper error handling, and excellent user experience design, making the app suitable for both casual users and language professionals.
+The implementation demonstrates clean architecture patterns, proper error handling, and excellent user experience design, making the app suitable for both casual users and language professionals across various communication scenarios.

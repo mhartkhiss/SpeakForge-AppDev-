@@ -115,7 +115,7 @@ public class VoiceConversationalActivity extends AppCompatActivity {
         voiceStatusText = findViewById(R.id.voiceStatusText);
 
         // Initialize RecyclerView
-        voiceMessageAdapter = new VoiceMessageAdapter(voiceMessagesRef, roomId, this);
+        voiceMessageAdapter = new VoiceMessageAdapter(voiceMessagesRef, roomId);
 
         recyclerViewVoiceChat.setAdapter(voiceMessageAdapter);
 

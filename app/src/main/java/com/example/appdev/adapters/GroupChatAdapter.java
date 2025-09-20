@@ -448,6 +448,9 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
 
             // Find the TextView items in the custom layout
             TextView replyItem = popupView.findViewById(R.id.menuItemReply);
+            // Temporarily hide the reply option
+            replyItem.setVisibility(View.GONE);
+            
             TextView regenerateItem = popupView.findViewById(R.id.menuItemRegenerate);
             TextView toggleOriginalItem = popupView.findViewById(R.id.menuItemToggleOriginal);
             TextView removeTranslationItem = popupView.findViewById(R.id.menuItemRemoveTranslation);
@@ -457,11 +460,8 @@ public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.Grou
             String senderLanguage = message.getSenderLanguage();
             Map<String, String> translations = message.getTranslations();
             
-            // Set up reply item click listener
-            replyItem.setOnClickListener(v -> {
-                handleReplyClick(message);
-                popupWindow.dismiss();
-            });
+            // Reply functionality temporarily disabled
+            replyItem.setOnClickListener(null);
             
             // Determine if the message is essentially untranslated for the current user
             boolean isUntranslated = senderLanguage != null && 

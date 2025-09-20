@@ -15,7 +15,10 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.util.Size;
 import android.view.View;
@@ -23,7 +26,17 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import android.app.Dialog;
+
+import com.bumptech.glide.Glide;
+import com.example.appdev.ConnectChatActivity;
+import com.example.appdev.utils.ConnectionRequestManager;
 import com.example.appdev.utils.CustomNotification;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
@@ -197,14 +210,8 @@ public class QRScanActivity extends AppCompatActivity {
             }
 
             if (userId != null && username != null && language != null) {
-                // Launch ChatActivity with the scanned user info
-                Intent intent = new Intent(this, ChatActivity.class);
-                intent.putExtra("userId", userId);
-                intent.putExtra("username", username);
-                intent.putExtra("recipientLanguage", language);
-                intent.putExtra("profileImageUrl", profileImageUrl);
-                startActivity(intent);
-                finish(); // Close the scanning activity
+                // Immediately send connection request and show waiting dialog
+                sendConnectionRequestAndShowWaiting(userId, username, language, profileImageUrl);
             } else {
                 // Invalid QR code format
                 runOnUiThread(() -> {
@@ -222,6 +229,202 @@ public class QRScanActivity extends AppCompatActivity {
                 isScanning = true; // Resume scanning
             });
         }
+    }
+
+    private void sendConnectionRequestAndShowWaiting(String userId, String username, String language, String profileImageUrl) {
+        // Fetch additional user details from Firebase
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    String email = dataSnapshot.child("email").getValue(String.class);
+                    String fullUsername = dataSnapshot.child("username").getValue(String.class);
+                    String userLanguage = dataSnapshot.child("language").getValue(String.class);
+                    String userProfileImageUrl = dataSnapshot.child("profileImageUrl").getValue(String.class);
+
+                    // Show the waiting dialog and send request
+                    showWaitingDialog(userId, fullUsername != null ? fullUsername : username,
+                                    userLanguage != null ? userLanguage : language,
+                                    userProfileImageUrl != null ? userProfileImageUrl : profileImageUrl);
+                } else {
+                    // User not found, show basic info
+                    showWaitingDialog(userId, username, language, profileImageUrl);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Error fetching user details", databaseError.toException());
+                // Show basic info on error
+                showWaitingDialog(userId, username, language, profileImageUrl);
+            }
+        });
+    }
+
+    private void showWaitingDialog(String userId, String username, String language, String profileImageUrl) {
+        runOnUiThread(() -> {
+            Dialog waitingDialog = new Dialog(this);
+            waitingDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+            waitingDialog.setContentView(R.layout.connect_confirmation_dialog);
+
+            // Set dialog properties
+            android.view.Window window = waitingDialog.getWindow();
+            if (window != null) {
+                window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                               android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+
+            // Initialize dialog views
+            de.hdodenhof.circleimageview.CircleImageView profileImage = waitingDialog.findViewById(R.id.profileImage);
+            TextView userNameText = waitingDialog.findViewById(R.id.userName);
+            TextView userLanguageText = waitingDialog.findViewById(R.id.userLanguage);
+            TextView statusText = waitingDialog.findViewById(R.id.statusText);
+            TextView waitingText = waitingDialog.findViewById(R.id.waitingText);
+            androidx.appcompat.widget.AppCompatButton cancelButton = waitingDialog.findViewById(R.id.cancelButton);
+            ImageButton closeButton = waitingDialog.findViewById(R.id.closeButton);
+
+            // Set user information
+            userNameText.setText(username);
+            userLanguageText.setText("Language: " + language);
+            statusText.setText("Sending request...");
+            waitingText.setText("Please wait...");
+
+            // Load profile image
+            if (profileImageUrl != null && !profileImageUrl.equals("none")) {
+                Glide.with(this)
+                        .load(profileImageUrl)
+                        .placeholder(R.drawable.default_userpic)
+                        .into(profileImage);
+            } else {
+                profileImage.setImageResource(R.drawable.default_userpic);
+            }
+
+            // Store requestId for cancellation
+            final String[] currentRequestId = {null};
+
+            // Immediately send the connection request
+            ConnectionRequestManager.getInstance().createConnectionRequest(
+                userId, username, language, profileImageUrl,
+                new ConnectionRequestManager.ConnectionRequestCallback() {
+                    @Override
+                    public void onSuccess(com.example.appdev.models.ConnectionRequest request) {
+                        currentRequestId[0] = request.getRequestId();
+                        runOnUiThread(() -> {
+                            statusText.setText("Request sent successfully!");
+                            statusText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                            waitingText.setText("Waiting for " + username + " to respond...");
+
+                            // Listen for request status changes
+                            listenForRequestStatus(request.getRequestId(), waitingDialog, statusText, waitingText, username);
+                        });
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        runOnUiThread(() -> {
+                            statusText.setText("Failed to send request");
+                            statusText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                            waitingText.setText(error);
+                            cancelButton.setText("Close");
+                        });
+                    }
+                });
+
+            // Set click listeners
+            cancelButton.setOnClickListener(v -> {
+                // Cancel the connection request if it exists
+                if (currentRequestId[0] != null) {
+                    ConnectionRequestManager.getInstance().cancelConnectionRequest(currentRequestId[0]);
+                }
+                waitingDialog.dismiss();
+                isScanning = true; // Resume scanning
+            });
+
+            closeButton.setOnClickListener(v -> {
+                // Cancel the connection request if it exists
+                if (currentRequestId[0] != null) {
+                    ConnectionRequestManager.getInstance().cancelConnectionRequest(currentRequestId[0]);
+                }
+                waitingDialog.dismiss();
+                isScanning = true; // Resume scanning
+            });
+
+            waitingDialog.setOnCancelListener(dialog -> {
+                isScanning = true; // Resume scanning when dialog is cancelled
+            });
+
+            waitingDialog.setCancelable(false); // Prevent back button from dismissing
+            waitingDialog.show();
+        });
+    }
+
+    private void listenForRequestStatus(String requestId, Dialog waitingDialog, TextView statusText, TextView waitingText, String username) {
+        DatabaseReference requestRef = FirebaseDatabase.getInstance()
+                .getReference("connection_requests").child(requestId);
+
+        requestRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.exists()) return;
+
+                String status = dataSnapshot.child("status").getValue(String.class);
+                if (status == null) return;
+
+                runOnUiThread(() -> {
+                    switch (status) {
+                        case "ACCEPTED":
+                            statusText.setText("Request accepted!");
+                            statusText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                            waitingText.setText("Opening chat...");
+                            // Dismiss dialog after showing success message
+                            new android.os.Handler().postDelayed(() -> {
+                                if (waitingDialog.isShowing()) {
+                                    waitingDialog.dismiss();
+                                }
+                            }, 1500);
+                            break;
+
+                        case "REJECTED":
+                            statusText.setText("Request rejected");
+                            statusText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                            waitingText.setText("The connection request was declined.");
+                            // Auto-dismiss after showing the message
+                            new android.os.Handler().postDelayed(() -> {
+                                if (waitingDialog.isShowing()) {
+                                    waitingDialog.dismiss();
+                                    isScanning = true; // Resume scanning
+                                }
+                            }, 3000);
+                            break;
+
+                        case "TIMEOUT":
+                        case "EXPIRED":
+                            statusText.setText("Request expired");
+                            statusText.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
+                            waitingText.setText("The request has expired.");
+                            // Auto-dismiss after showing the message
+                            new android.os.Handler().postDelayed(() -> {
+                                if (waitingDialog.isShowing()) {
+                                    waitingDialog.dismiss();
+                                    isScanning = true; // Resume scanning
+                                }
+                            }, 3000);
+                            break;
+
+                        default:
+                            // Still pending
+                            break;
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "Error listening for request status", databaseError.toException());
+            }
+        });
     }
 
     @Override

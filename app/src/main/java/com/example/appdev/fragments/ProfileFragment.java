@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.appdev.QRScanActivity;
 import com.example.appdev.UpgradeAccountActivity;
 import com.example.appdev.models.User;
 import com.example.appdev.subcontrollers.ChangePassControl;
@@ -64,6 +65,7 @@ public class ProfileFragment extends Fragment {
     private LinearLayout btnMenuSelectTranslator;
     private LinearLayout btnMenuChangeLanguage;
     private LinearLayout btnMenuChangePassword;
+    private LinearLayout btnMenuShareQR;
     private ChangeUsernameControl changeUsernameControl;
     private ViewGroup translatorButtonsContainer;
     private TextView friendsCountView;
@@ -172,6 +174,7 @@ public class ProfileFragment extends Fragment {
         btnMenuChangeLanguage = view.findViewById(R.id.btnMenuChangeLanguage);
         btnMenuChangePassword = view.findViewById(R.id.btnMenuChangePassword);
         btnMenuSelectTranslator = view.findViewById(R.id.btnMenuSelectTranslator);
+        btnMenuShareQR = view.findViewById(R.id.btnMenuShareQR);
 
         changeUsernameControl = new ChangeUsernameControl(this, null, null, layoutProfile);
 
@@ -296,6 +299,10 @@ public class ProfileFragment extends Fragment {
                 }
                 showBottomSheetDialog(R.layout.fragment_profile_sub_changetranslator, "Select Translator");
             });
+        }
+
+        if (btnMenuShareQR != null) {
+            btnMenuShareQR.setOnClickListener(v -> showQRCodeDialog());
         }
 
     }
@@ -447,5 +454,49 @@ public class ProfileFragment extends Fragment {
         };
         
         messagesRef.addValueEventListener(friendsCountListener);
+    }
+
+    private void showQRCodeDialog() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || "guest".equals(Variables.userUID)) {
+            CustomNotification.showNotification(requireContext(),
+                    "You need to be logged in to share QR code", false);
+            return;
+        }
+
+        // Create a bottom sheet dialog for QR code display
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
+        View bottomSheetView = LayoutInflater.from(requireContext()).inflate(
+                R.layout.qr_code_share_dialog, null);
+
+        // Initialize views
+        ImageView qrCodeImage = bottomSheetView.findViewById(R.id.qrCodeImage);
+        TextView userNameText = bottomSheetView.findViewById(R.id.userNameText);
+        ImageButton closeButton = bottomSheetView.findViewById(R.id.closeButton);
+
+        // Set user name
+        userNameText.setText(Variables.userDisplayName);
+
+        // Generate QR code
+        com.example.appdev.utils.QRCodeGenerator qrGenerator = new com.example.appdev.utils.QRCodeGenerator();
+        android.graphics.Bitmap qrBitmap = qrGenerator.generateUserQRCode(
+                Variables.userUID,
+                Variables.userDisplayName,
+                Variables.userLanguage,
+                null); // Profile image URL can be added later
+
+        if (qrBitmap != null) {
+            qrCodeImage.setImageBitmap(qrBitmap);
+        } else {
+            CustomNotification.showNotification(requireContext(),
+                    "Failed to generate QR code", false);
+            return;
+        }
+
+        // Set close button listener
+        closeButton.setOnClickListener(v -> bottomSheetDialog.dismiss());
+
+        bottomSheetDialog.setContentView(bottomSheetView);
+        bottomSheetDialog.show();
     }
 }

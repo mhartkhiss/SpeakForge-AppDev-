@@ -163,7 +163,7 @@
         },
         
         "language": {
-          ".validate": "newData.isString()"
+          ".validate": "!newData.exists() || newData.isString()"
         },
         
         "translator": {
@@ -171,6 +171,59 @@
         },
         
         "profileImageUrl": {
+          ".validate": "newData.isString()"
+        }
+      }
+    },
+
+    // Usage statistics for admin dashboard
+    "usage_statistics": {
+      // Allow read access for authenticated users (admin dashboard needs this)
+      ".read": "auth !== null",
+      // Allow write access for authenticated users (server-side admin operations)
+      ".write": "auth !== null",
+      
+      "$date": {
+        // Validate date format (YYYY-MM-DD)
+        ".validate": "newData.hasChildren(['date', 'totalUsers', 'calculatedAt'])",
+        
+        "date": {
+          ".validate": "newData.isString()"
+        },
+        
+        "totalUsers": {
+          ".validate": "newData.isNumber()"
+        },
+        
+        "activeUsersLast7Days": {
+          ".validate": "newData.isNumber()"
+        },
+        
+        "premiumUsers": {
+          ".validate": "newData.isNumber()"
+        },
+        
+        "freeUsers": {
+          ".validate": "newData.isNumber()"
+        },
+        
+        "newUsersToday": {
+          ".validate": "newData.isNumber()"
+        },
+        
+        "dailyLoginCount": {
+          ".validate": "newData.isNumber()"
+        },
+        
+        "languageDistribution": {
+          ".validate": "newData.hasChildren()"
+        },
+        
+        "createdAt": {
+          ".validate": "newData.isString()"
+        },
+        
+        "calculatedAt": {
           ".validate": "newData.isString()"
         }
       }

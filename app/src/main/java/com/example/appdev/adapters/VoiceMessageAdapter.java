@@ -21,7 +21,7 @@ public class VoiceMessageAdapter extends RecyclerView.Adapter<VoiceMessageAdapte
     private DatabaseReference messagesRef;
     private String roomId;
 
-    public VoiceMessageAdapter(DatabaseReference messagesRef, String roomId, VoiceConversationalActivity activity) {
+    public VoiceMessageAdapter(DatabaseReference messagesRef, String roomId) {
         this.messagesRef = messagesRef;
         this.roomId = roomId;
     }

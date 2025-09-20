@@ -98,7 +98,7 @@ public class SignUpActivity extends BaseAuthActivity implements View.OnClickList
                             if (user != null) {
                                 String userId = user.getUid();
                                 String username = email;
-                                String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+                                String timestamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).format(new Date());
                                 FirebaseDatabase.getInstance().getReference("users")
                                         .child(userId)
                                         .setValue(new User(userId, username, email, "none", "free", null, timestamp, timestamp, "google"))

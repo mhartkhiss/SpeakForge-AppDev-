@@ -30,8 +30,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.appdev.R;
+import com.example.appdev.QRScanActivity;
 import com.example.appdev.Variables;
 import com.example.appdev.ConversationalActivity;
+import com.example.appdev.MainActivity;
 import com.example.appdev.models.Languages;
 import com.example.appdev.utils.SpeechRecognitionDialog;
 import com.example.appdev.utils.CustomNotification;
@@ -359,7 +361,7 @@ public class BasicTranslationFragment extends Fragment {
         });
 
         btnStartConversation.setOnClickListener(v -> {
-            startConversationalMode();
+            showConversationalModeSelectionDialog();
         });
 
         // Add formality toggle listener
@@ -777,13 +779,59 @@ public class BasicTranslationFragment extends Fragment {
         translatorDialog.show();
     }
 
-    private void startConversationalMode() {
+    private void showConversationalModeSelectionDialog() {
+        Dialog modeDialog = new Dialog(requireContext());
+        modeDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        modeDialog.setContentView(R.layout.conversational_mode_selection_dialog);
+
+        Window window = modeDialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        // Setup mode selection buttons
+        LinearLayout container = modeDialog.findViewById(R.id.modeSelectionContainer);
+
+        // Single-Device Mode Button
+        View singleDeviceButton = LayoutInflater.from(requireContext())
+                .inflate(R.layout.conversational_mode_button, container, false);
+        ((TextView) singleDeviceButton.findViewById(R.id.modeTitle)).setText("Single-Device Mode");
+        ((TextView) singleDeviceButton.findViewById(R.id.modeDescription))
+                .setText("Two users on one device with upside-down screen");
+        ((ImageView) singleDeviceButton.findViewById(R.id.modeIcon))
+                .setImageResource(R.drawable.ic_single_device);
+        singleDeviceButton.setOnClickListener(v -> {
+            modeDialog.dismiss();
+            startSingleDeviceConversationalMode();
+        });
+        container.addView(singleDeviceButton);
+
+        // Connect with Other Users Mode Button
+        View connectUsersButton = LayoutInflater.from(requireContext())
+                .inflate(R.layout.conversational_mode_button, container, false);
+        ((TextView) connectUsersButton.findViewById(R.id.modeTitle)).setText("Connect with Other Users");
+        ((TextView) connectUsersButton.findViewById(R.id.modeDescription))
+                .setText("Voice chat with remote users via Firebase");
+        ((ImageView) connectUsersButton.findViewById(R.id.modeIcon))
+                .setImageResource(R.drawable.ic_connect_users);
+        connectUsersButton.setOnClickListener(v -> {
+            modeDialog.dismiss();
+            startConnectUsersConversationalMode();
+        });
+        container.addView(connectUsersButton);
+
+        modeDialog.show();
+    }
+
+    private void startSingleDeviceConversationalMode() {
         View rootView = getView();
         if (rootView != null) {
             // Disable interaction immediately
             rootView.setClickable(false);
             rootView.setEnabled(false);
-            
+
             // Use ViewPropertyAnimator for smoother fade out
             rootView.animate()
                    .alpha(0f)
@@ -794,6 +842,102 @@ public class BasicTranslationFragment extends Fragment {
                        requireActivity().overridePendingTransition(0, 0);
                    })
                    .start();
+        }
+    }
+
+    private void startConnectUsersConversationalMode() {
+        showUserConnectionOptionsDialog();
+    }
+
+    private void showUserConnectionOptionsDialog() {
+        Dialog connectionDialog = new Dialog(requireContext());
+        connectionDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        connectionDialog.setContentView(R.layout.user_connection_options_dialog);
+
+        Window window = connectionDialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        // Initialize QR code view
+        ImageView userQRCodeImage = connectionDialog.findViewById(R.id.userQRCodeImage);
+
+        // Generate and display user's QR code
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null && !"guest".equals(Variables.userUID)) {
+            com.example.appdev.utils.QRCodeGenerator qrGenerator = new com.example.appdev.utils.QRCodeGenerator();
+            android.graphics.Bitmap qrBitmap = qrGenerator.generateUserQRCode(
+                    Variables.userUID,
+                    Variables.userDisplayName,
+                    Variables.userLanguage,
+                    null); // Profile image URL can be added later
+
+            if (qrBitmap != null) {
+                userQRCodeImage.setImageBitmap(qrBitmap);
+            } else {
+                CustomNotification.showNotification(requireContext(),
+                        "Failed to generate QR code", false);
+            }
+        } else {
+            // Show login required message
+            CustomNotification.showNotification(requireContext(),
+                    "Login required to display QR code", false);
+        }
+
+        // Set up click listeners
+        View scanQRButton = connectionDialog.findViewById(R.id.scanQRButton);
+        View searchUsersButton = connectionDialog.findViewById(R.id.searchUsersButton);
+        ImageButton closeButton = connectionDialog.findViewById(R.id.closeButton);
+
+        scanQRButton.setOnClickListener(v -> {
+            connectionDialog.dismiss();
+            startQRScanForConnection();
+        });
+
+        searchUsersButton.setOnClickListener(v -> {
+            connectionDialog.dismiss();
+            startUserSearchForConnection();
+        });
+
+        closeButton.setOnClickListener(v -> connectionDialog.dismiss());
+
+        connectionDialog.show();
+    }
+
+
+    private void startQRScanForConnection() {
+        // Check if user is logged in
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || "guest".equals(Variables.userUID)) {
+            CustomNotification.showNotification(requireContext(),
+                    "You need to be logged in to scan QR codes", false);
+            return;
+        }
+
+        // Start QR scan activity
+        Intent intent = new Intent(requireContext(), QRScanActivity.class);
+        startActivity(intent);
+    }
+
+    private void startUserSearchForConnection() {
+        // Check if user is logged in
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || "guest".equals(Variables.userUID)) {
+            CustomNotification.showNotification(requireContext(),
+                    "You need to be logged in to search for users", false);
+            return;
+        }
+
+        // Navigate to chat tab to show user search
+        // This will switch to the chat tab where users can search for other users
+        if (getActivity() instanceof MainActivity) {
+            MainActivity mainActivity = (MainActivity) getActivity();
+            // Switch to chat tab (index 2)
+            mainActivity.viewPager.setCurrentItem(2);
+            CustomNotification.showNotification(requireContext(),
+                    "Switched to chat tab - use search to find users", true);
         }
     }
 
