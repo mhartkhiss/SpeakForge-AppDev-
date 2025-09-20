@@ -104,17 +104,17 @@
                 android:visibility="gone"
                 android:alpha="0" />
 
-            <ImageButton
-                android:id="@+id/formalityToggleButton"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/profileButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_marginStart="8dp"
-                android:padding="10dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/translation_mode_casual"
-                android:contentDescription="@string/translation_mode_toggle_description"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="@null" />
+                android:src="@drawable/default_userpic"
+                app:civ_border_width="2dp"
+                app:civ_border_color="@android:color/white"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Open profile" />
 
         </LinearLayout>
 

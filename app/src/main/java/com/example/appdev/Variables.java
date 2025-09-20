@@ -7,6 +7,7 @@ public class Variables {
     // Server Constant variables
     public static final String API_BASE_URL = "https://06jwj9s0-8000.asse.devtunnels.ms/api/";
     public static final String API_TRANSLATE_DB_URL = API_BASE_URL + "translate-db/";
+    public static final String API_TRANSLATE_DB_CONTEXT_URL = API_BASE_URL + "translate-db-context/";
     public static final String API_TRANSLATE_GROUP_URL = API_BASE_URL + "translate-group/";
     public static final String API_TRANSLATE_GROUP_CONTEXT_URL = API_BASE_URL + "translate-group-context/";
     public static final String API_TRANSLATE_VOICE_URL = API_BASE_URL + "translate-voice/";

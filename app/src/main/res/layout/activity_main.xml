@@ -8,36 +8,9 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/viewPager"
+    <FrameLayout
+        android:id="@+id/mainContentFrame"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/tabLayout"/>
-
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#E0E0E0"
-        android:layout_alignParentBottom="true">
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:icon="@drawable/ic_profile"
-            android:text="Profile" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:icon="@drawable/ic_voice"
-            android:text="Voice" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:icon="@drawable/ic_chat"
-            android:text="Chat" />
-    </com.google.android.material.tabs.TabLayout>
+        android:layout_height="match_parent" />
 
 </RelativeLayout>

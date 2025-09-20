@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+
 import com.bumptech.glide.Glide;
 import com.example.appdev.adapters.ChatAdapter;
 import com.example.appdev.adapters.ConnectChatAdapter;
@@ -48,6 +49,7 @@ public class ConnectChatActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewChat;
     private ImageButton buttonMic;
+    private ImageButton buttonChat;
     private com.google.android.material.textfield.TextInputEditText textInputMessage;
     private ImageButton buttonSendText;
     private LinearLayout textInputContainer;
@@ -62,6 +64,8 @@ public class ConnectChatActivity extends AppCompatActivity {
     private String recipientId;
     private long sessionStartTime;
     private boolean sessionEnded = false;
+    private boolean historyEnabled = false;
+    private ImageButton buttonHistory;
 
     // Reply UI elements
     private LinearLayout replyContainer;
@@ -134,6 +138,7 @@ public class ConnectChatActivity extends AppCompatActivity {
         // Initialize views
         recyclerViewChat = findViewById(R.id.recyclerViewChat);
         buttonMic = findViewById(R.id.buttonMic);
+        buttonChat = findViewById(R.id.buttonChat);
 
         // Initialize text input elements (for testing)
         textInputMessage = findViewById(R.id.textInputMessage);
@@ -146,9 +151,18 @@ public class ConnectChatActivity extends AppCompatActivity {
         replyToMessageText = findViewById(R.id.replyToMessageText);
         buttonCancelReply = findViewById(R.id.buttonCancelReply);
 
+        // Initialize history button from the included layout
+        View includeUser = findViewById(R.id.includeUser);
+        buttonHistory = includeUser.findViewById(R.id.buttonHistory);
+
         // Set up cancel reply button
         if (buttonCancelReply != null) {
             buttonCancelReply.setOnClickListener(v -> cancelReply());
+        }
+
+        // Set up history button
+        if (buttonHistory != null) {
+            buttonHistory.setOnClickListener(v -> toggleHistory());
         }
 
         // Initialize RecyclerView
@@ -163,6 +177,23 @@ public class ConnectChatActivity extends AppCompatActivity {
 
         // Set click listener for mic button
         buttonMic.setOnClickListener(v -> startSpeechRecognition());
+
+        // Set click listener for chat button
+        buttonChat.setOnClickListener(v -> {
+            if (textInputContainer.getVisibility() == View.GONE) {
+                textInputContainer.setVisibility(View.VISIBLE);
+                buttonChat.setImageResource(R.drawable.ic_close);
+            } else {
+                textInputContainer.setVisibility(View.GONE);
+                buttonChat.setImageResource(R.drawable.ic_chat);
+                // Hide keyboard if showing
+                android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager)
+                    getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                if (imm != null && getCurrentFocus() != null) {
+                    imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                }
+            }
+        });
 
         // Set click listener for text send button
         if (buttonSendText != null) {
@@ -182,7 +213,8 @@ public class ConnectChatActivity extends AppCompatActivity {
 
         // Back button removed - no longer needed
 
-        loadMessages();
+        // Set up real-time listener for messages (shows current session messages)
+        setupRealtimeListener();
 
         DatabaseReference recipientLanguageRef = FirebaseDatabase.getInstance().getReference("users").child(recipientId).child("language");
         recipientLanguageRef.addValueEventListener(new ValueEventListener() {
@@ -308,14 +340,18 @@ public class ConnectChatActivity extends AppCompatActivity {
             requestBody.put("text", messageTextOG);
             requestBody.put("source_language", Variables.userLanguage);
             requestBody.put("target_language", targetLanguage);
-            requestBody.put("mode", Variables.isFormalTranslationMode ? "formal" : "casual");
+            requestBody.put("translation_mode", Variables.isFormalTranslationMode ? "formal" : "casual");
             requestBody.put("variants", "single"); // Add variants parameter explicitly
-            requestBody.put("translator", recipientTranslator);
-            requestBody.put("session_id", sessionId);
+            requestBody.put("model", recipientTranslator);
+            requestBody.put("room_id", sessionId);
             requestBody.put("message_id", messageId);
-            requestBody.put("update_state", true); // Tell API to update translationState
+            requestBody.put("current_user_id", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            requestBody.put("recipient_id", recipientId);
+            requestBody.put("context_depth", 25); // Up to 25 messages for context for better topic awareness
+            requestBody.put("use_context", true); // Enable context-aware translation
+            requestBody.put("session_start_time", sessionStartTime); // Only use messages from current session
 
-            String apiUrl = Variables.API_TRANSLATE_DB_URL;
+            String apiUrl = Variables.API_TRANSLATE_DB_CONTEXT_URL;
 
             new AsyncTask<Void, Void, Boolean>() {
                 @Override
@@ -341,7 +377,7 @@ public class ConnectChatActivity extends AppCompatActivity {
                                     response.append(responseLine.trim());
                                 }
 
-                                // With API_TRANSLATE_DB_URL, Firebase is updated directly by the server
+                                // With API_TRANSLATE_DB_CONTEXT_URL, Firebase is updated directly by the server
                                 return true;
                             }
                         } else {
@@ -475,7 +511,53 @@ public class ConnectChatActivity extends AppCompatActivity {
         }
     }
 
-    private void loadMessages() {
+    private void toggleHistory() {
+        historyEnabled = !historyEnabled;
+
+        if (historyEnabled) {
+            // Enable history - load all messages
+            buttonHistory.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FF5722")));
+            loadAllMessages();
+        } else {
+            // Disable history - clear messages and start fresh
+            buttonHistory.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#666666")));
+            clearMessages();
+        }
+    }
+
+    private void loadAllMessages() {
+        if (sessionId != null) {
+            messagesRef.child(sessionId).orderByChild("timestamp").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    List<Message> messages = new ArrayList<>();
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        Message message = snapshot.getValue(Message.class);
+                        if (message != null) {
+                            // Mark this message as a voice message for the ConnectChatActivity
+                            message.setIsVoiceMessage(true);
+                            message.setVoiceText(message.getMessage());
+                            messages.add(message);
+                        }
+                    }
+                    chatAdapter.setMessages(messages);
+
+                    // Scroll to bottom when loading history
+                    if (messages.size() > 0) {
+                        recyclerViewChat.scrollToPosition(messages.size() - 1);
+                    }
+                    previousMessageCount = messages.size();
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.e("ConnectChatActivity", "Error loading message history: " + databaseError.getMessage());
+                }
+            });
+        }
+    }
+
+    private void setupRealtimeListener() {
         if (sessionId != null) {
             messagesRef.child(sessionId).orderByChild("timestamp").addValueEventListener(new ValueEventListener() {
                 @Override
@@ -489,24 +571,40 @@ public class ConnectChatActivity extends AppCompatActivity {
                             message.setVoiceText(message.getMessage());
                             messages.add(message);
                         }
-
                     }
-                    chatAdapter.setMessages(messages);
 
-                    // Only scroll if new messages are added
-                    int newSize = messages.size();
+                    // Always show current session messages, but hide history if disabled
+                    List<Message> messagesToShow = new ArrayList<>();
+                    long sessionStartTime = ConnectChatActivity.this.sessionStartTime;
+
+                    for (Message message : messages) {
+                        // Show messages from current session or if history is enabled
+                        if (message.getTimestamp() >= sessionStartTime || historyEnabled) {
+                            messagesToShow.add(message);
+                        }
+                    }
+
+                    chatAdapter.setMessages(messagesToShow);
+
+                    // Scroll if new messages are added
+                    int newSize = messagesToShow.size();
                     if (newSize > previousMessageCount) {
-                        recyclerViewChat.scrollToPosition(chatAdapter.getItemCount() - 1);
+                        recyclerViewChat.scrollToPosition(newSize - 1);
                     }
                     previousMessageCount = newSize;
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
-                    Log.e("ConnectChatActivity", "Error loading messages: " + databaseError.getMessage());
+                    Log.e("ConnectChatActivity", "Error in realtime listener: " + databaseError.getMessage());
                 }
             });
         }
+    }
+
+    private void clearMessages() {
+        chatAdapter.setMessages(new ArrayList<>());
+        previousMessageCount = 0;
     }
 
     private void startSpeechRecognition() {

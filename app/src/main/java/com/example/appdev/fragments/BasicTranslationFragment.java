@@ -48,6 +48,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+import com.bumptech.glide.Glide;
 import com.example.appdev.models.User;
 
 import java.util.ArrayList;
@@ -114,7 +115,7 @@ public class BasicTranslationFragment extends Fragment {
     private FloatingActionButton stopTranslationButton;
     private AsyncTask<String, Void, String> currentTranslator;
     private FloatingActionButton btnStartConversation;
-    private ImageButton formalityToggleButton;
+    private de.hdodenhof.circleimageview.CircleImageView profileButton;
     private SpeechRecognitionHelper speechHelper;
     private LoadingDotsView loadingDotsView;
     private TextView[] dots;
@@ -173,7 +174,7 @@ public class BasicTranslationFragment extends Fragment {
         currentTranslatorText = view.findViewById(R.id.currentTranslatorText);
         translatorIcon = view.findViewById(R.id.translatorIcon);
         btnStartConversation = view.findViewById(R.id.startConversationButton);
-        formalityToggleButton = view.findViewById(R.id.formalityToggleButton);
+        profileButton = view.findViewById(R.id.profileButton);
         outputLanguageSelection = view.findViewById(R.id.languageSpinner);  // Initialize Spinner here
         btnHistory = view.findViewById(R.id.btnHistory);
         modeFeedbackText = view.findViewById(R.id.modeFeedbackText);
@@ -182,10 +183,8 @@ public class BasicTranslationFragment extends Fragment {
         TranslationModeManager.initializeFromPreferences(requireContext());
         
         // Explicitly initialize toggle button
-        if (formalityToggleButton != null) {
-            // Set the icon based on mode
-            updateFormalityToggleIcon();
-        }
+        // Load user profile picture
+        loadUserProfilePicture();
 
         // Initialize spinner with default values
         setupLanguageSpinners();  // Initial setup
@@ -365,8 +364,8 @@ public class BasicTranslationFragment extends Fragment {
         });
 
         // Add formality toggle listener
-        if (formalityToggleButton != null) {
-            formalityToggleButton.setOnClickListener(v -> toggleFormality());
+        if (profileButton != null) {
+            profileButton.setOnClickListener(v -> openProfile());
         }
     }
 
@@ -380,10 +379,7 @@ public class BasicTranslationFragment extends Fragment {
         btnTranslate.setVisibility(hasText ? View.VISIBLE : View.GONE);
         btnClear.setVisibility(hasText ? View.VISIBLE : View.GONE);
         
-        // Keep formality toggle button always visible
-        if (formalityToggleButton != null) {
-            formalityToggleButton.setVisibility(View.VISIBLE);
-        }
+        // Profile button is always visible
     }
 
     private void translateAnimation() {
@@ -428,8 +424,7 @@ public class BasicTranslationFragment extends Fragment {
         btnHistory.setEnabled(false);
         btnHistory.animate().alpha(disabledAlpha).setDuration(300);
         
-        formalityToggleButton.setEnabled(false);
-        formalityToggleButton.animate().alpha(disabledAlpha).setDuration(300);
+        // Profile button remains enabled during translation
         
         // Disable language selection
         outputLanguageSelection.setEnabled(false);
@@ -484,8 +479,7 @@ public class BasicTranslationFragment extends Fragment {
         btnHistory.setEnabled(true);
         btnHistory.animate().alpha(1f).setDuration(300);
         
-        formalityToggleButton.setEnabled(true);
-        formalityToggleButton.animate().alpha(1f).setDuration(300);
+        // Profile button is always enabled
         
         // Enable language selection
         outputLanguageSelection.setEnabled(true);
@@ -930,15 +924,9 @@ public class BasicTranslationFragment extends Fragment {
             return;
         }
 
-        // Navigate to chat tab to show user search
-        // This will switch to the chat tab where users can search for other users
-        if (getActivity() instanceof MainActivity) {
-            MainActivity mainActivity = (MainActivity) getActivity();
-            // Switch to chat tab (index 2)
-            mainActivity.viewPager.setCurrentItem(2);
-            CustomNotification.showNotification(requireContext(),
-                    "Switched to chat tab - use search to find users", true);
-        }
+        // Navigate to SearchUsersActivity
+        Intent intent = new Intent(requireContext(), com.example.appdev.SearchUsersActivity.class);
+        startActivity(intent);
     }
 
     @Override
@@ -951,8 +939,6 @@ public class BasicTranslationFragment extends Fragment {
             rootView.setEnabled(true);
             rootView.setClickable(true);
         }
-        // Refresh UI based on current formality mode
-        updateFormalityToggleIcon();
     }
 
     private void showLanguageSelectionDialog() {
@@ -997,10 +983,7 @@ public class BasicTranslationFragment extends Fragment {
         
         // Update shared preferences
         TranslationModeManager.saveToPreferences(requireContext(), Variables.isFormalTranslationMode);
-        
-        // Update the toggle button icon
-        updateFormalityToggleIcon();
-        
+
         // Show feedback to the user
         String feedbackMessage = Variables.isFormalTranslationMode ? 
                                 "Formal Translation" : "Casual Translation";
@@ -1012,14 +995,48 @@ public class BasicTranslationFragment extends Fragment {
     /**
      * Update the formality toggle button icon based on current mode
      */
-    private void updateFormalityToggleIcon() {
-        if (formalityToggleButton != null) {
-            // Set the icon based on mode
-            formalityToggleButton.setImageResource(
-                Variables.isFormalTranslationMode ? 
-                R.drawable.translation_mode_formal : 
-                R.drawable.translation_mode_casual
-            );
+    private void openProfile() {
+        // Open ProfileFragment
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).openProfileFragment();
+        }
+    }
+
+    private void loadUserProfilePicture() {
+        if (profileButton != null && getActivity() != null) {
+            // Load user's profile picture
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+            FirebaseUser currentUser = auth.getCurrentUser();
+
+            if (currentUser != null) {
+                DatabaseReference userRef = FirebaseDatabase.getInstance()
+                    .getReference("users")
+                    .child(currentUser.getUid())
+                    .child("profileImageUrl");
+
+                userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        String profileImageUrl = dataSnapshot.getValue(String.class);
+                        if (profileImageUrl != null && !profileImageUrl.equals("none") && !profileImageUrl.isEmpty()) {
+                            Glide.with(getActivity())
+                                .load(profileImageUrl)
+                                .placeholder(R.drawable.default_userpic)
+                                .error(R.drawable.default_userpic)
+                                .into(profileButton);
+                        } else {
+                            profileButton.setImageResource(R.drawable.default_userpic);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        profileButton.setImageResource(R.drawable.default_userpic);
+                    }
+                });
+            } else {
+                profileButton.setImageResource(R.drawable.default_userpic);
+            }
         }
     }
 

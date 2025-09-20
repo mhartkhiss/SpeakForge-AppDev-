@@ -96,12 +96,13 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         }
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, ChatActivity.class);
-            intent.putExtra("userId", user.getUserId());
-            intent.putExtra("username", user.getUsername());
-            intent.putExtra("recipientLanguage", user.getLanguage());
-            intent.putExtra("profileImageUrl", user.getProfileImageUrl());
-            context.startActivity(intent);
+            // Chat feature temporarily disabled
+            // Intent intent = new Intent(context, ChatActivity.class);
+            // intent.putExtra("userId", user.getUserId());
+            // intent.putExtra("username", user.getUsername());
+            // intent.putExtra("recipientLanguage", user.getLanguage());
+            // intent.putExtra("profileImageUrl", user.getProfileImageUrl());
+            // context.startActivity(intent);
         });
 
         // Set click listener for more button

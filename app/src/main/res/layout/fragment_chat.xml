@@ -36,6 +36,25 @@
 
         </androidx.cardview.widget.CardView>
 
+        <!-- Search Users Button -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="8dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp">
+
+            <ImageView
+                android:id="@+id/buttonSearchUsers"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#50C4ED"
+                android:padding="12dp"
+                android:src="@drawable/ic_search"
+                app:tint="@android:color/white" />
+
+        </androidx.cardview.widget.CardView>
+
         <!-- Group Chat Button -->
         <androidx.cardview.widget.CardView
             android:layout_width="56dp"
@@ -48,7 +67,7 @@
                 android:id="@+id/buttonGroupChat"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#2196F3"
+                android:background="#FBA834"
                 android:padding="12dp"
                 android:src="@drawable/ic_group"
                 app:tint="@android:color/white" />

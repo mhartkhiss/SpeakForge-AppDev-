@@ -66,6 +66,9 @@ public class ProfileFragment extends Fragment {
     private LinearLayout btnMenuChangeLanguage;
     private LinearLayout btnMenuChangePassword;
     private LinearLayout btnMenuShareQR;
+    private LinearLayout btnMenuTranslationMode;
+    private ImageButton btnTranslationModeToggle;
+    private TextView textViewTranslationModeValue;
     private ChangeUsernameControl changeUsernameControl;
     private ViewGroup translatorButtonsContainer;
     private TextView friendsCountView;
@@ -106,8 +109,7 @@ public class ProfileFragment extends Fragment {
                 view.findViewById(R.id.textViewEmail).setVisibility(View.GONE);
             if (view.findViewById(R.id.btnLogout) != null)
                 view.findViewById(R.id.btnLogout).setVisibility(View.GONE);
-            if (view.findViewById(R.id.btnBack) != null)
-                view.findViewById(R.id.btnBack).setVisibility(View.GONE);
+            // Keep back button visible for all users (they need to navigate back)
             if (view.findViewById(R.id.textViewMemberSince) != null)
                 view.findViewById(R.id.textViewMemberSince).setVisibility(View.GONE);
             if (view.findViewById(R.id.textViewFriendsCount) != null)
@@ -175,8 +177,14 @@ public class ProfileFragment extends Fragment {
         btnMenuChangePassword = view.findViewById(R.id.btnMenuChangePassword);
         btnMenuSelectTranslator = view.findViewById(R.id.btnMenuSelectTranslator);
         btnMenuShareQR = view.findViewById(R.id.btnMenuShareQR);
+        btnMenuTranslationMode = view.findViewById(R.id.btnMenuTranslationMode);
+        btnTranslationModeToggle = view.findViewById(R.id.btnTranslationModeToggle);
+        textViewTranslationModeValue = view.findViewById(R.id.textViewTranslationModeValue);
 
         changeUsernameControl = new ChangeUsernameControl(this, null, null, layoutProfile);
+
+        // Initialize translation mode UI
+        updateTranslationModeUI();
 
         // Add user type layout initialization
         View layoutUserType = view.findViewById(R.id.layoutUserType);
@@ -265,6 +273,26 @@ public class ProfileFragment extends Fragment {
     // method to set listeners for the buttons and other elements in the profile fragment
     private void setListeners(){
 
+        //BACK BUTTON LISTENER
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                // Go back to the main translation screen
+                if (getActivity() != null) {
+                    // Check if there's a back stack entry and pop it
+                    if (getActivity().getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                        getActivity().getSupportFragmentManager().popBackStack();
+                    } else {
+                        // Fallback: directly replace with BasicTranslationFragment
+                        getActivity().getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.mainContentFrame, new BasicTranslationFragment())
+                            .commit();
+                    }
+                }
+            });
+            // Make sure button is visible
+            btnBack.setVisibility(View.VISIBLE);
+        }
+
         //LOGOUT LISTENER
         btnLogout.setOnClickListener(v -> logout());
 
@@ -303,6 +331,14 @@ public class ProfileFragment extends Fragment {
 
         if (btnMenuShareQR != null) {
             btnMenuShareQR.setOnClickListener(v -> showQRCodeDialog());
+        }
+
+        // Translation mode toggle
+        if (btnMenuTranslationMode != null) {
+            btnMenuTranslationMode.setOnClickListener(v -> toggleTranslationMode());
+        }
+        if (btnTranslationModeToggle != null) {
+            btnTranslationModeToggle.setOnClickListener(v -> toggleTranslationMode());
         }
 
     }
@@ -498,5 +534,32 @@ public class ProfileFragment extends Fragment {
 
         bottomSheetDialog.setContentView(bottomSheetView);
         bottomSheetDialog.show();
+    }
+
+    private void toggleTranslationMode() {
+        // Toggle the translation mode
+        Variables.isFormalTranslationMode = !Variables.isFormalTranslationMode;
+
+        // Save to SharedPreferences
+        com.example.appdev.utils.TranslationModeManager.saveToPreferences(requireContext(), Variables.isFormalTranslationMode);
+
+        // Update the UI
+        updateTranslationModeUI();
+
+        // Show feedback
+        String modeText = Variables.isFormalTranslationMode ? "Formal" : "Casual";
+        Toast.makeText(requireContext(), "Translation mode set to " + modeText, Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateTranslationModeUI() {
+        if (btnTranslationModeToggle != null && textViewTranslationModeValue != null) {
+            if (Variables.isFormalTranslationMode) {
+                btnTranslationModeToggle.setImageResource(R.drawable.translation_mode_formal);
+                textViewTranslationModeValue.setText("Formal");
+            } else {
+                btnTranslationModeToggle.setImageResource(R.drawable.translation_mode_casual);
+                textViewTranslationModeValue.setText("Casual");
+            }
+        }
     }
 }

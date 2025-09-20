@@ -119,12 +119,12 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ChatIt
             intent.putExtra("groupImageUrl", chatItem.getImageUrl());
             context.startActivity(intent);
         } else {
-            // Open direct chat
-            Intent intent = new Intent(context, ChatActivity.class);
-            intent.putExtra("userId", chatItem.getId());
-            intent.putExtra("username", chatItem.getName());
-            intent.putExtra("profileImageUrl", chatItem.getImageUrl());
-            context.startActivity(intent);
+            // Open direct chat - temporarily disabled
+            // Intent intent = new Intent(context, ChatActivity.class);
+            // intent.putExtra("userId", chatItem.getId());
+            // intent.putExtra("username", chatItem.getName());
+            // intent.putExtra("profileImageUrl", chatItem.getImageUrl());
+            // context.startActivity(intent);
         }
     }
 

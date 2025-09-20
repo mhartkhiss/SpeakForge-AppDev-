@@ -95,6 +95,7 @@ public class ChatFragment extends Fragment {
         androidx.appcompat.widget.SearchView searchViewUsers = view.findViewById(R.id.searchViewUsers);
         emptyStateText = view.findViewById(R.id.emptyStateText);
         View buttonGroupChat = view.findViewById(R.id.buttonGroupChat);
+        View buttonSearchUsers = view.findViewById(R.id.buttonSearchUsers);
 
         // Initialize RecyclerView
         recyclerViewUsers.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -123,6 +124,23 @@ public class ChatFragment extends Fragment {
             }
         });
 
+
+        // Set up search users button click listener
+        buttonSearchUsers.setOnClickListener(v -> {
+            // Make sure user is not a guest user
+            String currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null ?
+                    FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+            boolean isGuestUser = "guest".equals(currentUserId);
+
+            if (isGuestUser) {
+                CustomNotification.showNotification(requireContext(),
+                        "You need to be logged in to search users", false);
+                return;
+            }
+
+            // Navigate to SearchUsersActivity
+            startActivity(new Intent(requireContext(), com.example.appdev.SearchUsersActivity.class));
+        });
 
         // Set up group chat button click listener
         buttonGroupChat.setOnClickListener(v -> {

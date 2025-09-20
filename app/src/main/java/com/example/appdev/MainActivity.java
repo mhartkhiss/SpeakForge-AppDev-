@@ -10,20 +10,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
-import androidx.viewpager.widget.ViewPager;
-
 import android.util.Log;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.appdev.adapters.TabAdapter;
-import com.example.appdev.fragments.ChatFragment;
-import com.example.appdev.fragments.ProfileFragment;
 import com.example.appdev.fragments.BasicTranslationFragment;
+import com.example.appdev.fragments.ProfileFragment;
 import com.example.appdev.models.User;
 import com.example.appdev.utils.TranslationModeManager;
-import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -35,7 +30,7 @@ import com.example.appdev.utils.ConnectionRequestManager;
 
 public class MainActivity extends AppCompatActivity {
 
-    public ViewPager viewPager; // Made public for fragment access
+    private BasicTranslationFragment basicTranslationFragment;
 
     private void loadApiKeys() {
         // Existing klusterai keys loading
@@ -214,25 +209,11 @@ public class MainActivity extends AppCompatActivity {
         // Check if user data is available
         userDataListener();
 
-        // Set up tabbed interface
-        viewPager = findViewById(R.id.viewPager);
-        TabLayout tabLayout = findViewById(R.id.tabLayout);
-
-        TabAdapter adapter = new TabAdapter(getSupportFragmentManager());
-        adapter.addFragment(new ProfileFragment(), "Profile");
-        adapter.addFragment(new BasicTranslationFragment(), "Voice");
-        adapter.addFragment(new ChatFragment(), "Chat");
-
-        viewPager.setAdapter(adapter);
-        tabLayout.setupWithViewPager(viewPager);
-
-        // Set tab icons
-        tabLayout.getTabAt(0).setIcon(R.drawable.ic_person);
-        tabLayout.getTabAt(1).setIcon(R.drawable.ic_voice);
-        tabLayout.getTabAt(2).setIcon(R.drawable.ic_chat);
-
-        // Set starting tab to the middle one (Voice)
-        viewPager.setCurrentItem(1);
+        // Show BasicTranslationFragment directly (no tabs)
+        basicTranslationFragment = new BasicTranslationFragment();
+        getSupportFragmentManager().beginTransaction()
+            .replace(R.id.mainContentFrame, basicTranslationFragment)
+            .commit();
 
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
@@ -250,94 +231,15 @@ public class MainActivity extends AppCompatActivity {
             ConnectionRequestManager.getInstance().startListeningForRequests(this);
         }
 
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                int position = tab.getPosition();
-                
-                // Check for guest user (either way)
-                boolean isGuestUser = "guest".equals(Variables.userUID);
-                if (!isGuestUser && FirebaseAuth.getInstance().getCurrentUser() != null) {
-                    isGuestUser = "guest".equals(Variables.userUID);
-                }
 
-                if ((position == 0 || position == 2) && isGuestUser) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setTitle("Login Required")
-                            .setMessage("You need to login to use this feature. Do you want to login now?")
-                            .setPositiveButton("Yes", (dialog, which) -> {
-                                // Sign out the current user and proceed to LoginActivity
-                                if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-                                    mAuth.signOut();
-                                }
-                                // Reset guest user variables
-                                Variables.userUID = "";
-                                Variables.userEmail = "";
-                                Variables.userAccountType = "";
-                                
-                                // Clear guest user state in SharedPreferences
-                                SharedPreferences prefs = getSharedPreferences(Variables.PREFS_NAME, MODE_PRIVATE);
-                                SharedPreferences.Editor editor = prefs.edit();
-                                editor.putBoolean(Variables.PREF_IS_GUEST_USER, false);
-                                editor.apply();
-                                
-                                startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                                finish(); // Finish the current activity to prevent returning to it
-                            })
-                            .setNegativeButton("No", (dialog, which) -> {
-                                // Dismiss the dialog if user chooses not to login
-                                dialog.dismiss();
-                                tabLayout.getTabAt(1).select(); // Select the voice tab
-                            })
-                            .setOnCancelListener(dialog -> {
-                                // Redirect the user to the voice tab when the dialog is canceled
-                                tabLayout.getTabAt(1).select(); // Select the voice tab
-                            })
-                            .create()
-                            .show();
-                }
-            }
+    }
 
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-                // Unused method but must be implemented
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-                // Unused method but must be implemented
-
-            }
-        });
-
-
-        // Add custom tab items with icons
-        for (int i = 0; i < tabLayout.getTabCount(); i++) {
-            TabLayout.Tab tab = tabLayout.getTabAt(i);
-            if (tab != null) {
-                tab.setCustomView(R.layout.custom_tab_item);
-                TextView tabText = tab.getCustomView().findViewById(R.id.tabText);
-                ImageView tabIcon = tab.getCustomView().findViewById(R.id.tabIcon);
-                tabText.setText(adapter.getPageTitle(i));
-                switch (i) {
-                    case 0:
-                        tabIcon.setImageResource(R.drawable.ic_profile);
-                        break;
-                    case 1:
-                        tabIcon.setImageResource(R.drawable.ic_translate_fragment);
-                        break;
-                    case 2:
-                        tabIcon.setImageResource(R.drawable.ic_chat);
-                        break;
-                }
-
-            }
-        }
-        // Select the "Voice" tab as the default tab
-        TabLayout.Tab defaultTab = tabLayout.getTabAt(1); // Index of the "Voice" tab
-        if (defaultTab != null) {
-            defaultTab.select();
-        }
+    public void openProfileFragment() {
+        ProfileFragment profileFragment = new ProfileFragment();
+        getSupportFragmentManager().beginTransaction()
+            .replace(R.id.mainContentFrame, profileFragment)
+            .addToBackStack(null)
+            .commit();
     }
 
     @Override

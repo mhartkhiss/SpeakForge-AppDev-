@@ -102,6 +102,10 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppDev.NoActionBar" />
         <activity
+            android:name=".SearchUsersActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".ConversationalActivity"
             android:exported="false"
             android:screenOrientation="portrait"

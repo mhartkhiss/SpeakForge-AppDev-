@@ -94,7 +94,7 @@
       
       "$groupId": {
         // Add index on timestamp field for message ordering and context retrieval
-        ".indexOn": ["timestamp"],
+        ".indexOn": "timestamp",
         // More specific rules for group messages can be added here if needed
         // But for now, we'll use a simpler approach to get it working
         ".read": "auth !== null",
@@ -126,6 +126,138 @@
           
           "timestamp": {
             ".validate": "newData.isNumber()"
+          }
+        }
+      }
+    },
+
+    "connect_chats": {
+      // Allow authenticated users to read/write connect chat messages
+      ".read": "auth !== null",
+      ".write": "auth !== null",
+
+      "$sessionId": {
+        // Add index on timestamp field for message ordering and context retrieval
+        ".indexOn": "timestamp",
+
+        "$messageId": {
+          // Basic validation for connect chat messages
+          ".validate": "newData.hasChildren(['message', 'senderId', 'timestamp'])",
+
+          "senderId": {
+            ".validate": "newData.isString() && newData.val() === auth.uid"
+          },
+
+          "message": {
+            ".validate": "newData.isString()"
+          },
+
+          "voiceText": {
+            ".validate": "newData.isString()"
+          },
+
+          "timestamp": {
+            ".validate": "newData.isNumber()"
+          },
+
+          "translationState": {
+            ".validate": "!newData.exists() || newData.isString() || newData.val() === null"
+          },
+
+          "translationMode": {
+            ".validate": "!newData.exists() || newData.isString()"
+          },
+
+          "isVoiceMessage": {
+            ".validate": "!newData.exists() || newData.isBoolean()"
+          },
+
+          "senderLanguage": {
+            ".validate": "!newData.exists() || newData.isString()"
+          }
+        }
+      }
+    },
+
+    "connection_requests": {
+      // Allow authenticated users to read/write connection requests
+      ".read": "auth !== null",
+      ".write": "auth !== null",
+
+      "$requestId": {
+        // Add index on timestamp for request ordering
+        ".indexOn": "timestamp",
+
+        ".validate": "newData.hasChildren(['requestId', 'fromUserId', 'toUserId', 'status', 'timestamp'])",
+
+        "requestId": {
+          ".validate": "newData.isString() && newData.val() === $requestId"
+        },
+
+        "fromUserId": {
+          ".validate": "newData.isString() && newData.val() === auth.uid"
+        },
+
+        "toUserId": {
+          ".validate": "newData.isString()"
+        },
+
+        "status": {
+          ".validate": "newData.isString() && (newData.val() === 'PENDING' || newData.val() === 'ACCEPTED' || newData.val() === 'REJECTED' || newData.val() === 'TIMEOUT' || newData.val() === 'EXPIRED' || newData.val() === 'CANCELLED')"
+        },
+
+        "timestamp": {
+          ".validate": "newData.isNumber()"
+        },
+
+        "expiresAt": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+
+    "voice_messages": {
+      // Allow authenticated users to read/write voice messages
+      ".read": "auth !== null",
+      ".write": "auth !== null",
+
+      "$roomId": {
+        // Add index on timestamp for message ordering
+        ".indexOn": "timestamp",
+
+        "$messageId": {
+          ".validate": "newData.hasChildren(['messageId', 'voiceText', 'timestamp', 'senderId'])",
+
+          "messageId": {
+            ".validate": "newData.isString() && newData.val() === $messageId"
+          },
+
+          "voiceText": {
+            ".validate": "newData.isString()"
+          },
+
+          "translatedText": {
+            ".validate": "!newData.exists() || newData.isString() || newData.val() === null"
+          },
+
+          "timestamp": {
+            ".validate": "newData.isNumber()"
+          },
+
+          "senderId": {
+            ".validate": "newData.isString() && newData.val() === auth.uid"
+          },
+
+          "senderLanguage": {
+            ".validate": "!newData.exists() || newData.isString()"
+          },
+
+          "translationMode": {
+            ".validate": "!newData.exists() || newData.isString()"
+          },
+
+          "translationState": {
+            ".validate": "!newData.exists() || newData.isString() || newData.val() === null"
           }
         }
       }
@@ -172,6 +304,14 @@
         
         "profileImageUrl": {
           ".validate": "newData.isString()"
+        },
+
+        "contactsettings": {
+          "$contactUserId": {
+            "translateMessages": {
+              ".validate": "newData.isBoolean()"
+            }
+          }
         }
       }
     },
