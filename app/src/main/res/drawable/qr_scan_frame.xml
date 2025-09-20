@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Transparent background -->
+    <item android:drawable="@android:color/transparent" />
+
+    <!-- Corner lines -->
+    <item>
+        <shape android:shape="rectangle">
+            <!-- Top-left corner -->
+            <stroke android:width="4dp" android:color="@android:color/white" />
+            <size android:width="50dp" android:height="4dp" />
+        </shape>
+    </item>
+
+    <item android:top="0dp" android:right="0dp">
+        <shape android:shape="rectangle">
+            <!-- Top-right corner -->
+            <stroke android:width="4dp" android:color="@android:color/white" />
+            <size android:width="50dp" android:height="4dp" />
+        </shape>
+    </item>
+
+    <item android:bottom="0dp" android:left="0dp">
+        <shape android:shape="rectangle">
+            <!-- Bottom-left corner -->
+            <stroke android:width="4dp" android:color="@android:color/white" />
+            <size android:width="50dp" android:height="4dp" />
+        </shape>
+    </item>
+
+    <item android:bottom="0dp" android:right="0dp">
+        <shape android:shape="rectangle">
+            <!-- Bottom-right corner -->
+            <stroke android:width="4dp" android:color="@android:color/white" />
+            <size android:width="50dp" android:height="4dp" />
+        </shape>
+    </item>
+
+    <item android:left="0dp" android:top="50dp">
+        <shape android:shape="rectangle">
+            <!-- Left line -->
+            <stroke android:width="4dp" android:color="@android:color/white" />
+            <size android:width="4dp" android:height="150dp" />
+        </shape>
+    </item>
+
+    <item android:right="0dp" android:top="50dp">
+        <shape android:shape="rectangle">
+            <!-- Right line -->
+            <stroke android:width="4dp" android:color="@android:color/white" />
+            <size android:width="4dp" android:height="150dp" />
+        </shape>
+    </item>
+
+    <item android:left="50dp" android:bottom="0dp">
+        <shape android:shape="rectangle">
+            <!-- Bottom line -->
+            <stroke android:width="4dp" android:color="@android:color/white" />
+            <size android:width="150dp" android:height="4dp" />
+        </shape>
+    </item>
+
+    <item android:left="50dp" android:top="0dp">
+        <shape android:shape="rectangle">
+            <!-- Top line -->
+            <stroke android:width="4dp" android:color="@android:color/white" />
+            <size android:width="150dp" android:height="4dp" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E0E0E0"
+    android:fitsSystemWindows="true"
+    tools:context=".ConnectChatActivity">
+
+  <include
+      android:id="@+id/includeUser"
+      layout="@layout/item_contact"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent" />
+
+  <!-- Chat messages RecyclerView -->
+  <androidx.recyclerview.widget.RecyclerView
+      android:id="@+id/recyclerViewChat"
+      android:layout_width="0dp"
+      android:layout_height="0dp"
+      android:background="@android:color/transparent"
+      android:clipToPadding="false"
+      android:paddingBottom="16dp"
+      android:windowSoftInputMode="adjustResize"
+      app:layout_constraintBottom_toTopOf="@id/inputContainer"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="0.0"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/includeUser"
+      app:layout_constraintVertical_bias="0.9"
+      app:stackFromEnd="true" />
+
+  <!-- Reply container -->
+  <LinearLayout
+      android:id="@+id/replyContainer"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      android:background="#F5F5F5"
+      android:elevation="8dp"
+      android:padding="8dp"
+      android:visibility="gone"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintBottom_toTopOf="@id/inputContainer">
+
+      <View
+          android:layout_width="4dp"
+          android:layout_height="match_parent"
+          android:background="#3F51B5"
+          android:layout_marginEnd="8dp" />
+
+      <LinearLayout
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:orientation="vertical">
+
+          <TextView
+              android:id="@+id/replyToSenderName"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="Username"
+              android:textStyle="bold"
+              android:textColor="#3F51B5"
+              android:textSize="14sp" />
+
+          <TextView
+              android:id="@+id/replyToMessageText"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="Original message"
+              android:textColor="#757575"
+              android:maxLines="2"
+              android:ellipsize="end"
+              android:textSize="12sp" />
+      </LinearLayout>
+
+      <ImageButton
+          android:id="@+id/buttonCancelReply"
+          android:layout_width="24dp"
+          android:layout_height="24dp"
+          android:layout_gravity="center_vertical"
+          android:background="?attr/selectableItemBackgroundBorderless"
+          android:src="@drawable/ic_close"
+          android:tint="#757575" />
+  </LinearLayout>
+
+  <!-- Input container -->
+  <LinearLayout
+      android:id="@+id/inputContainer"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:background="#FFFFFF"
+      android:elevation="8dp"
+      android:padding="16dp"
+      android:layout_marginBottom="0dp"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintBottom_toBottomOf="parent">
+
+    <!-- Text input container (for testing) -->
+    <LinearLayout
+        android:id="@+id/textInputContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp"
+        android:gravity="center_vertical">
+
+      <!-- Text input field -->
+      <com.google.android.material.textfield.TextInputEditText
+          android:id="@+id/textInputMessage"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:layout_marginEnd="8dp"
+          android:hint="Type a message (for testing)"
+          android:textColorHint="#757575"
+          android:textColor="#000000"
+          android:textSize="14sp"
+          android:background="@android:drawable/editbox_background_normal"
+          android:padding="12dp"
+          android:maxLines="3"
+          android:inputType="textMultiLine"
+          android:imeOptions="actionSend"
+          android:fontFamily="@font/poppins" />
+
+      <!-- Send button -->
+      <ImageButton
+          android:id="@+id/buttonSendText"
+          android:layout_width="48dp"
+          android:layout_height="48dp"
+          android:src="@drawable/ic_send"
+          android:background="@drawable/circle_background"
+          android:padding="12dp"
+          android:tint="#4CAF50"
+          android:scaleType="fitCenter"
+          android:contentDescription="Send message" />
+
+    </LinearLayout>
+
+    <!-- Voice input section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center">
+
+      <!-- Voice indicator text -->
+      <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="Or tap to speak"
+          android:textColor="#757575"
+          android:textSize="14sp"
+          android:layout_marginBottom="8dp"
+          android:fontFamily="@font/poppins_medium" />
+
+      <!-- Mic button -->
+      <ImageButton
+          android:id="@+id/buttonMic"
+          android:layout_width="72dp"
+          android:layout_height="72dp"
+          android:src="@drawable/ic_voice"
+          android:background="@drawable/circle_background"
+          android:padding="18dp"
+          android:tint="#FF5722"
+          android:scaleType="fitCenter" />
+
+    </LinearLayout>
+
+  </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
